@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Lid top small -->
+  <rect x="8" y="2" width="8" height="2" rx="1" fill="currentColor" />
+  <!-- Top bar -->
+  <rect x="4" y="5" width="16" height="2" rx="1" fill="currentColor" />
+  <!-- Body -->
+  <path d="M6 8c0 0 0.5 10 1 12 0.4 1.5 1 2 2 2h6c1 0 1.6-0.5 2-2 0.5-2 1-12 1-12H6z" fill="currentColor" />
+  <!-- Left slit -->
+  <rect x="9" y="10" width="1.5" height="8" rx="0.75" fill="white" />
+  <!-- Right slit -->
+  <rect x="13.5" y="10" width="1.5" height="8" rx="0.75" fill="white" />
+</svg>
