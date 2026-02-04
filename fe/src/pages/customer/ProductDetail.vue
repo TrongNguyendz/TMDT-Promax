@@ -536,14 +536,14 @@ class="px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transitio
 <script setup>
 import { onMounted, ref, watch, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useProductsStore } from '../stores/products';
-import { useCartStore } from '../stores/cart';
-import { useWishlistStore } from '../stores/wishlist';
-import { useUserStore } from '../stores/user';
-import { useUIStore } from '../stores/ui';
-import api from '../utils/product_service_api'; 
-import { formatCurrency } from '../utils/helpers';
-import { postAIRequest, getAIResponse } from '../utils/AI_service';
+import { useProductsStore } from '../../stores/products';
+import { useCartStore } from '../../stores/cart';
+import { useWishlistStore } from '../../stores/wishlist';
+import { useUserStore } from '../../stores/user';
+import { useUIStore } from '../../stores/ui';
+import api from '../../utils/product_service_api'; 
+import { formatCurrency } from '../../utils/helpers';
+import { postAIRequest, getAIResponse } from '../../utils/AI_service';
 const route = useRoute();
 const productStore = useProductsStore();
 const cart = useCartStore();

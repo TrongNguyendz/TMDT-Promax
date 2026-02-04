@@ -15,8 +15,8 @@
 
 <script setup>
 import { reactive } from 'vue';
-import InputField from '../components/forms/InputField.vue';
-import { useUIStore } from '../stores/ui';
+import InputField from '../../components/forms/InputField.vue';
+import { useUIStore } from '../../stores/ui';
 const ui = useUIStore();
 const form = reactive({ name: '', email: '', message: '' });
 function send() {

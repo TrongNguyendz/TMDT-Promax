@@ -144,8 +144,8 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useOrderStore } from '../stores/order';
-import { formatCurrency } from '../utils/helpers';
+import { useOrderStore } from '../../stores/order';
+import { formatCurrency } from '../../utils/helpers';
 
 const route = useRoute();
 const router = useRouter();

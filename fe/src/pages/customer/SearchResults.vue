@@ -38,9 +38,9 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useProductsStore } from '../stores/products';
-import { useCartStore } from '../stores/cart';
-import ProductCard from '../components/common/ProductCard.vue';
+import { useProductsStore } from '../../stores/products';
+import { useCartStore } from '../../stores/cart';
+import ProductCard from '../../components/common/ProductCard.vue';
 
 const route = useRoute();
 const productStore = useProductsStore();

@@ -161,11 +161,11 @@
 
 <script setup>
 import { computed } from 'vue';
-import { useCartStore } from '../stores/cart';
-import { useUserStore } from '../stores/user'; 
-import { useUIStore } from '../stores/ui';
+import { useCartStore } from '../../stores/cart';
+import { useUserStore } from '../../stores/user'; 
+import { useUIStore } from '../../stores/ui';
 import { useRouter } from 'vue-router';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency } from '../../utils/helpers';
 
 const cart = useCartStore();
 const userStore = useUserStore();

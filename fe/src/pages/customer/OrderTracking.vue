@@ -75,7 +75,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
-import OrderAPI from '../utils/order_service_api';
+import OrderAPI from '../../utils/order_service_api';
 
 const route = useRoute();
 const orderId = route.params.orderId;
