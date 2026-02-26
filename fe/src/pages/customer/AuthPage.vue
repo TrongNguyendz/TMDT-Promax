@@ -149,7 +149,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
 import { Login, Register, ForgotPassword } from '../../utils/user_service_api';
-import bgImage from '../assets/auth.jpg';
+import bgImage from '../../assets/auth.jpg';
 import axios from 'axios';
 
 const route = useRoute();
