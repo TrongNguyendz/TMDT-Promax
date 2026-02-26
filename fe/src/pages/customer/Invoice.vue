@@ -232,8 +232,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
-import { formatCurrency } from '../utils/helpers';
-import { useOrderStore } from '../stores/order';
+import { formatCurrency } from '../../utils/helpers';
+import { useOrderStore } from '../../stores/order';
 import html2pdf from 'html2pdf.js';
 
 const route = useRoute();

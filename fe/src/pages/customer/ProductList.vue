@@ -113,11 +113,11 @@
 
 <script setup>
 import { onMounted, reactive, computed, ref, watch } from 'vue';
-import { useProductsStore } from '../stores/products';
-import { useCartStore } from '../stores/cart';
-import InputField from '../components/forms/InputField.vue';
-import SelectDropdown from '../components/forms/SelectDropdown.vue';
-import ProductCard from '../components/common/ProductCard.vue';
+import { useProductsStore } from '../../stores/products';
+import { useCartStore } from '../../stores/cart';
+import InputField from '../../components/forms/InputField.vue';
+import SelectDropdown from '../../components/forms/SelectDropdown.vue';
+import ProductCard from '../../components/common/ProductCard.vue';
 
 // Init Stores
 const productsStore = useProductsStore();

@@ -65,14 +65,14 @@
 
 <script setup>
 import { onMounted, ref, computed, watch } from 'vue';
-import ProductCard from '../components/common/ProductCard.vue';
-import BannerCarousel from '../components/common/BannerCarousel.vue';
+import ProductCard from '../../components/common/ProductCard.vue';
+import BannerCarousel from '../../components/common/BannerCarousel.vue';
 
-import Chatbot from '../components/common/chatbot.vue';
-import { useCartStore } from '../stores/cart';
-import { useProductsStore } from '../stores/products';
-import { getListBanners } from '../utils/banner_service_api';
-import voucher from '../components/common/voucher.vue';
+import Chatbot from '../../components/common/chatbot.vue';
+import { useCartStore } from '../../stores/cart';
+import { useProductsStore } from '../../stores/products';
+import { getListBanners } from '../../utils/banner_service_api';
+import voucher from '../../components/common/voucher.vue';
 const cart = useCartStore();
 const productsStore = useProductsStore();
 

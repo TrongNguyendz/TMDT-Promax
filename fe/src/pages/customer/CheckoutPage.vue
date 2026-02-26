@@ -56,18 +56,18 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { useCartStore } from '../stores/cart';
-import { useCheckoutStore } from '../stores/checkout';
-import { useOrderStore } from '../stores/order';
-import { useUIStore } from '../stores/ui';
-import { useUserStore } from '../stores/user';
+import { useCartStore } from '../../stores/cart';
+import { useCheckoutStore } from '../../stores/checkout';
+import { useOrderStore } from '../../stores/order';
+import { useUIStore } from '../../stores/ui';
+import { useUserStore } from '../../stores/user';
 
-import CheckoutStep from '../components/checkout/CheckoutStep.vue';   
-import OrdersSummary from '../components/checkout/OrderSummary.vue'; 
-import Step1Review from '../components/checkout/Step1Review.vue';
-import Step2Shipping from '../components/checkout/Step2Shipping.vue';
-import Step3Payment from '../components/checkout/Step3Payment.vue';
-import Step4Success from '../components/checkout/Step4Success.vue';
+import CheckoutStep from '../../components/checkout/CheckoutStep.vue';   
+import OrdersSummary from '../../components/checkout/OrderSummary.vue'; 
+import Step1Review from '../../components/checkout/Step1Review.vue';
+import Step2Shipping from '../../components/checkout/Step2Shipping.vue';
+import Step3Payment from '../../components/checkout/Step3Payment.vue';
+import Step4Success from '../../components/checkout/Step4Success.vue';
 
 const cart = useCartStore();
 const checkout = useCheckoutStore();
