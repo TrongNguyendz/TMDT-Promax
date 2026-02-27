@@ -4,15 +4,15 @@
   "description": "E-commerce Microservices Architecture",
   "scripts": {
     "start:all": "concurrently \"npm run start:gateway\" \"npm run start:user\" \"npm run start:product\" \"npm run start:order\" \"npm run start:payment\" \"npm run start:notification\" \"npm run start:admin\"",
-    "start:gateway": "cd api-gateway(Trọng) && node server.js",
-    "start:user": "cd user-service(Trọng) && node server.js",
-    "start:product": "cd product-service(Quyền) && node server.js",
-    "start:order": "cd order-service(Quyền) && node server.js",
-    "start:payment": "cd payment-service(Sơn) && node server.js",
-    "start:notification": "cd notification-service(Nghĩa) && node server.js",
-    "start:admin": "cd admin-service(Trọng-Quyền-Sơn-Nghĩa) && node server.js",
+    "start:gateway": "cd api-gateway && node server.js",
+    "start:user": "cd user-service && node server.js",
+    "start:product": "cd product-service && node server.js",
+    "start:order": "cd order-service && node server.js",
+    "start:payment": "cd payment-service && node server.js",
+    "start:notification": "cd notification-service && node server.js",
+    "start:admin": "cd admin-service && node server.js",
     "seed": "node seed.js",
-    "seed:clean": "rm user-service(Trọng)/data/user_service.db product-service(Quyền)/data/product_service.db order-service(Quyền)/data/order_service.db payment-service(Sơn)/data/payment_service.db notification-service(Nghĩa)/data/notification_service.db && npm run seed"
+    "seed:clean": "rm user-service/data/user_service.db product-service/data/product_service.db order-service/data/order_service.db payment-service/data/payment_service.db notification-service/data/notification_service.db && npm run seed"
   },
   "keywords": [
     "microservices",

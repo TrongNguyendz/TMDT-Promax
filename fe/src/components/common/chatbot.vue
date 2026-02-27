@@ -26,7 +26,7 @@
                 <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-gray-900 bg-green-500"></span>
               </div>
               <div>
-                <h3 class="text-sm font-black uppercase tracking-widest italic">UNQILO AI</h3>
+                <h3 class="text-sm font-black uppercase tracking-widest italic">Goghevent AI</h3>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Hỗ trợ trực tuyến</p>
               </div>
             </div>

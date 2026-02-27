@@ -11,7 +11,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         </div>
         <div>
-          <div class="text-lg font-black tracking-tighter text-gray-900 dark:text-white uppercase italic">UNQUILO Admin</div>
+          <div class="text-lg font-black tracking-tighter text-gray-900 dark:text-white uppercase italic">Goghevent Admin</div>
           <div class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Quản lí</div>
         </div>
       </div>
