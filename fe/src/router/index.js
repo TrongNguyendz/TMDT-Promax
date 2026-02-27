@@ -2,24 +2,24 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../stores/user';
 
 // Core pages (lazy loaded)
-const HomePage = () => import('../pages/HomePage.vue');
-const ProductList = () => import('../pages/ProductList.vue');
-const ProductDetail = () => import('../pages/ProductDetail.vue');
-const CartPage = () => import('../pages/CartPage.vue');
-const CheckoutPage = () => import('../pages/CheckoutPage.vue');
-const AuthPage = () => import('../pages/AuthPage.vue');
-const WishlistPage = () => import('../pages/WishlistPage.vue');
-const SearchResults = () => import('../pages/SearchResults.vue');
-const AboutPage = () => import('../pages/AboutPage.vue');
-const ContactPage = () => import('../pages/ContactPage.vue');
-const PolicyPage = () => import('../pages/PolicyPage.vue');
+const HomePage = () => import('../pages/customer/HomePage.vue');
+const ProductList = () => import('../pages/customer/ProductList.vue');
+const ProductDetail = () => import('../pages/customer/ProductDetail.vue');
+const CartPage = () => import('../pages/customer/CartPage.vue');
+const CheckoutPage = () => import('../pages/customer/CheckoutPage.vue');
+const AuthPage = () => import('../pages/customer/AuthPage.vue');
+const WishlistPage = () => import('../pages/customer/WishlistPage.vue');
+const SearchResults = () => import('../pages/customer/SearchResults.vue');
+const AboutPage = () => import('../pages/customer/AboutPage.vue');
+const ContactPage = () => import('../pages/customer/ContactPage.vue');
+const PolicyPage = () => import('../pages/customer/PolicyPage.vue');
 
 // User pages
-const ProfilePage = () => import('../pages/ProfilePage.vue');
-const OrderHistory = () => import('../pages/OrderHistory.vue');
-const OrderDetail = () => import('../pages/OrderDetail.vue');
-const OrderTracking = () => import('../pages/OrderTracking.vue');
-const Invoice = () => import('../pages/Invoice.vue');
+const ProfilePage = () => import('../pages/customer/ProfilePage.vue');
+const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
+const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
+const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
+const Invoice = () => import('../pages/customer/Invoice.vue');
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');

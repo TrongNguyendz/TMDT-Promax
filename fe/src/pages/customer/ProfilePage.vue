@@ -130,11 +130,11 @@
 
 <script setup>
 import { reactive, ref, computed } from "vue";
-import { useUserStore } from "../stores/user";
-import { useUIStore } from "../stores/ui";
+import { useUserStore } from "../../stores/user";
+import { useUIStore } from "../../stores/ui";
 import { useRouter } from "vue-router";
-import InputField from "../components/forms/InputField.vue";
-import { UpdateProfile, UpdateUserAvatar } from "../utils/user_service_api";
+import InputField from "../../components/forms/InputField.vue";
+import { UpdateProfile, UpdateUserAvatar } from "../../utils/user_service_api";
 
 // Avatar mặc định (Pepe OK siêu ngầu)
 import defaultAvatar from "@/assets/default_user.jpg"; 
