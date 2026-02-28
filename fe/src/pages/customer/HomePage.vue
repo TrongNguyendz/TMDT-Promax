@@ -75,6 +75,8 @@ import { useProductsStore } from '../../stores/products';
 import { getListBanners } from '../../utils/banner_service_api';
 import voucher from '../../components/common/voucher.vue';
 
+
+
 const cart = useCartStore();
 const productsStore = useProductsStore();
 
