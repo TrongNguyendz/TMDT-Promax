@@ -28,7 +28,7 @@
         <Step2Shipping 
           v-if="checkout.currentStep === 2" 
           :shippingInfo="checkout.shippingInfo" 
-          v-model="checkout.paymentMethod"
+          v-model:paymentMethod="checkout.paymentMethod"
           @prev="checkout.previousStep" 
           @next="handleShippingNext" 
         />
