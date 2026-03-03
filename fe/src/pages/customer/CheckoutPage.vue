@@ -28,7 +28,11 @@
         <Step2Shipping 
           v-if="checkout.currentStep === 2" 
           :shippingInfo="checkout.shippingInfo" 
-          v-model:paymentMethod="checkout.paymentMethod"
+          :paymentMethod="checkout.paymentMethod"
+          @update:paymentMethod="newVal => { 
+            console.log('[PARENT] Nhận update paymentMethod:', newVal);
+            checkout.paymentMethod = newVal;
+          }"
           @prev="checkout.previousStep" 
           @next="handleShippingNext" 
         />
