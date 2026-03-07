@@ -31,6 +31,7 @@ const BannerManagement = () => import('../pages/admin/BannerManagement.vue');
 const ReportPage = () => import('../pages/admin/ReportPage.vue');
 const AdminInvoiceManagement = () => import('../pages/admin/AdminInvoiceManagement.vue');
 const VoucherManagement = () => import('../pages/admin/VoucherManagement.vue');
+const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
 
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
@@ -42,6 +43,8 @@ const StaffProfile = () => import('../pages/Staff/Profile.vue');
 const StaffPacking = () => import('../pages/Staff/Packing.vue');
 const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
 const StaffIventory = () => import('../pages/Staff/Inventory.vue');
+const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
+
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
@@ -70,6 +73,7 @@ const routes = [
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
 
 	// Staff routes (can be added similarly to admin routes if needed)
 	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },
@@ -79,7 +83,10 @@ const routes = [
 	{ path: '/staff/support', component: StaffSupport, meta: { requiresStaff: true } },
 	{ path: '/staff/profile', component: StaffProfile, meta: { requiresStaff: true } },
 	{ path: '/staff/packing', component: StaffPacking, meta: { requiresStaff: true } },
-	{ path: '/staff/inventory', component: StaffIventory, meta: { requiresStaff: true } }
+	{ path: '/staff/inventory', component: StaffIventory, meta: { requiresStaff: true } } ,
+	{ path: '/staff/schedule', component: StaffSchedule, meta: { requiresStaff: true } }
+	
+	
 ];
 
 // Add catch-all route for 404
