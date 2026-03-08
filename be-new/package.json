@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:user\" \"npm run start:product\" \"npm run start:order\" \"npm run start:payment\" \"npm run start:notification\" \"npm run start:admin\"",
+    "start:gateway": "cd api-gateway && node server.js",
+    "start:user": "cd user-service && node server.js",
+    "start:product": "cd product-service && node server.js",
+    "start:order": "cd order-service && node server.js",
+    "start:payment": "cd payment-service && node server.js",
+    "start:notification": "cd notification-service && node server.js",
+    "start:admin": "cd admin-service && node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

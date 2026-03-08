@@ -179,136 +179,211 @@ function toggleMode() {
 }
 
 const handleLogin = async () => {
-	loginForm.username = loginForm.username.trim();
+  // 1. Trim các trường nhập liệu
+  loginForm.username = loginForm.username.trim();
+  loginForm.password = loginForm.password.trim();   // ← Bổ sung trim password
 
-	if (!loginForm.username || !loginForm.password) {
-		ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
-		return;
-	}
-	try {
-		const res = await Login({
-			username: loginForm.username,
-			email: loginForm.username,
-			password: loginForm.password,
-		});
+  // 2. Kiểm tra bắt buộc (early return)
+  if (!loginForm.username || !loginForm.password) {
+    ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
+    return;
+  }
 
-		const result = res.data;
+  // Bổ sung: Không cho phép khoảng trắng trong mật khẩu
+  if (loginForm.password.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Mật khẩu không được chứa khoảng trắng (space)',
+    });
+    return;
+  }
 
-		if (result.success) {
-			user.login({
-				token: result.data.token,
-				profile: {
-					id: result.data.user.id,
-					username: result.data.user.username,
-					email: result.data.user.email,
-					fullname: result.data.user.full_name,
-					phone: result.data.user.phone,
-					avatar_url: result.data.user.avatar_url,
-					role: result.data.user.role,
-				},
-				role: result.data.user.role
-			});
+  // Bổ sung: Username không nên chứa khoảng trắng (phổ biến khi login bằng username)
+  if (loginForm.username.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Tên đăng nhập không được chứa khoảng trắng',
+    });
+    return;
+  }
 
-			ui.pushToast({ type: 'success', message: result.message || 'Đăng nhập thành công!' });
+  try {
+    const res = await Login({
+      username: loginForm.username,
+      email: loginForm.username,     // giữ nguyên logic cũ (hỗ trợ login bằng username hoặc email)
+      password: loginForm.password,  // đã trim
+    });
 
-			loginForm.username = '';
-			loginForm.password = '';
+    const result = res.data;
 
-			const redirect = route.query.redirect || '/';
+    // Kiểm tra success rõ ràng hơn
+    if (result.success && result.data?.token && result.data?.user) {
+      user.login({
+        token: result.data.token,
+        profile: {
+          id: result.data.user.id,
+          username: result.data.user.username,
+          email: result.data.user.email,
+          fullname: result.data.user.full_name,   // chú ý key là fullname (không phải fullName)
+          phone: result.data.user.phone,
+          avatar_url: result.data.user.avatar_url,
+          role: result.data.user.role,
+        },
+        role: result.data.user.role,
+      });
 
-			if (result.data.user.role === 'admin') {
-				router.replace('/admin/welcome');
-			} else {
-				router.replace(redirect);
-			}
+      ui.pushToast({
+        type: 'success',
+        message: result.message || 'Đăng nhập thành công!',
+      });
 
-		} else {
-			ui.pushToast({ type: 'error', message: result.message || 'Đăng nhập thất bại' });
-		}
+      // Reset form
+      loginForm.username = '';
+      loginForm.password = '';
 
-	} catch (err) {
-		console.error('Login error:', err);
+      // Xử lý redirect
+      const redirect = route.query.redirect || '/';
 
-		let errorMsg = 'Lỗi kết nối đến server';
+      if (result.data.user.role === 'admin') {
+        router.replace('/admin/welcome');
+      } else {
+        router.replace(redirect);
+      }
+    } else {
+      // Server trả success = false
+      ui.pushToast({
+        type: 'error',
+        message: result.message || 'Đăng nhập thất bại',
+      });
+    }
+  } catch (err) {
+    console.error('Login error:', err);
 
-		if (err.response?.data?.message) {
-			errorMsg = err.response.data.message;
-		} else if (err.response?.status === 401) {
-			errorMsg = 'Tài khoản hoặc mật khẩu không đúng';
-		} else if (err.response?.status === 400) {
-			errorMsg = 'Dữ liệu gửi lên không hợp lệ';
-		}
+    let errorMsg = 'Lỗi kết nối đến server, vui lòng thử lại sau';
 
-		ui.pushToast({ type: 'error', message: errorMsg });
-	}
+    if (err.response?.data?.message) {
+      errorMsg = err.response.data.message;
+    } else if (err.response?.status === 401) {
+      errorMsg = 'Tên đăng nhập hoặc mật khẩu không đúng';
+    } else if (err.response?.status === 400) {
+      errorMsg = 'Dữ liệu gửi lên không hợp lệ';
+    } else if (err.response?.status === 429) {
+      errorMsg = 'Quá nhiều lần thử, vui lòng thử lại sau vài phút';
+    }
+
+    ui.pushToast({ type: 'error', message: errorMsg });
+  }
 };
 
 const handleRegister = async () => {
-	registerForm.username = registerForm.username.trim();
-	registerForm.email = registerForm.email.trim();
-	registerForm.phone = registerForm.phone.trim();
-	registerForm.fullName = registerForm.fullName.trim();
+  // 1. Trim tất cả các trường (bao gồm password và confirm)
+  registerForm.username  = registerForm.username.trim();
+  registerForm.email     = registerForm.email.trim();
+  registerForm.phone     = registerForm.phone.trim();
+  registerForm.fullName  = registerForm.fullName.trim();
+  registerForm.password  = registerForm.password.trim();
+  registerForm.confirm   = registerForm.confirm.trim();
 
-	if (!registerForm.fullName || !registerForm.username || !registerForm.email ||
-		!registerForm.phone || !registerForm.password || !registerForm.confirm) {
-		ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
-		return;
-	}
+  // 2. Kiểm tra các điều kiện (early return để code dễ đọc)
+  if (!registerForm.fullName ||
+      !registerForm.username ||
+      !registerForm.email ||
+      !registerForm.phone ||
+      !registerForm.password ||
+      !registerForm.confirm) {
+    ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
+    return;
+  }
 
-	if (registerForm.password !== registerForm.confirm) {
-		ui.pushToast({ type: 'error', message: 'Mật khẩu xác nhận không khớp' });
-		return;
-	}
+  if (registerForm.password !== registerForm.confirm) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu xác nhận không khớp' });
+    return;
+  }
 
-	if (registerForm.password.length < 6) {
-		ui.pushToast({ type: 'error', message: 'Mật khẩu phải từ 6 ký tự trở lên' });
-		return;
-	}
+  if (registerForm.password.length < 6) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu phải từ 6 ký tự trở lên' });
+    return;
+  }
 
-	try {
-		const res = await Register({
-			username: registerForm.username,
-			email: registerForm.email,
-			password: registerForm.password,
-			full_name: registerForm.fullName,
-			phone: registerForm.phone,
-			role: ""
-		});
+  // Bổ sung: Không cho phép khoảng trắng (space) trong mật khẩu
+  if (registerForm.password.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Mật khẩu không được chứa khoảng trắng (space)',
+    });
+    return;
+  }
 
-		const result = res.data;
+  // Optional: Nếu muốn cấm mọi loại whitespace (tab, xuống dòng, v.v.)
+  // if (/\s/.test(registerForm.password)) {
+  //   ui.pushToast({ type: 'error', message: 'Mật khẩu không được chứa khoảng trắng hoặc ký tự trắng' });
+  //   return;
+  // }
 
-		if (result.success) {
-			ui.pushToast({ type: 'success', message: 'Đăng ký thành công!' });
+  // Optional: Kiểm tra username không chứa space (rất phổ biến)
+  if (registerForm.username.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Tên đăng nhập không được chứa khoảng trắng',
+    });
+    return;
+  }
 
-			user.login({
-				token: result.data.token,
-				profile: {
-					id: result.data.user.id,
-					username: result.data.user.username,
-					email: result.data.user.email,
-					name: result.data.user.full_name,
-					phone: result.data.user.phone,
-					avatar: result.data.user.avatar_url,
-					role: result.data.user.role,
-				},
-				role: result.data.user.role
-			});
+  try {
+    const res = await Register({
+      username: registerForm.username,
+      email: registerForm.email,
+      password: registerForm.password,      // đã trim
+      full_name: registerForm.fullName,
+      phone: registerForm.phone,
+      role: '',
+    });
 
-			registerForm.fullName = '';
-			registerForm.username = '';
-			registerForm.email = '';
-			registerForm.phone = '';
-			registerForm.password = '';
-			registerForm.confirm = '';
+    const result = res.data;
 
-			router.replace('/');
-		}
+    if (result.success && result.data) {
+      ui.pushToast({ type: 'success', message: 'Đăng ký thành công!' });
 
-	} catch (err) {
-		console.error(err);
-		const msg = err.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại';
-		ui.pushToast({ type: 'error', message: msg });
-	}
+      user.login({
+        token: result.data.token,
+        profile: {
+          id: result.data.user.id,
+          username: result.data.user.username,
+          email: result.data.user.email,
+          name: result.data.user.full_name,
+          phone: result.data.user.phone,
+          avatar: result.data.user.avatar_url,
+          role: result.data.user.role,
+        },
+        role: result.data.user.role,
+      });
+
+      // Reset form
+      registerForm.fullName = '';
+      registerForm.username = '';
+      registerForm.email    = '';
+      registerForm.phone    = '';
+      registerForm.password = '';
+      registerForm.confirm  = '';
+
+      router.replace('/');
+    } else {
+      // Trường hợp server trả success = false nhưng không throw error
+      ui.pushToast({
+        type: 'error',
+        message: result.message || 'Đăng ký thất bại, vui lòng thử lại',
+      });
+    }
+  } catch (err) {
+    console.error('Lỗi đăng ký:', err);
+
+    const errorMessage =
+      err.response?.data?.message ||
+      err.message ||
+      'Đăng ký thất bại, vui lòng thử lại';
+
+    ui.pushToast({ type: 'error', message: errorMessage });
+  }
 };
 
 const handleForgotPassword = async () => {

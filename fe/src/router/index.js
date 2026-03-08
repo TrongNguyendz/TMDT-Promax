@@ -33,6 +33,19 @@ const AdminInvoiceManagement = () => import('../pages/admin/AdminInvoiceManageme
 const VoucherManagement = () => import('../pages/admin/VoucherManagement.vue');
 const TransportManagement = () => import('../pages/admin/TransportPage.vue');
 const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPage.vue');
+const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
+
+// Staff pages (can be added similarly to admin pages if needed)
+// const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
+const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffOrders = () => import('../pages/Staff/Orders.vue');
+// const StaffEvents = () => import('../pages/Staff/Events.vue');
+const StaffSupport = () => import('../pages/Staff/Support.vue');
+const StaffProfile = () => import('../pages/Staff/Profile.vue');
+const StaffPacking = () => import('../pages/Staff/Packing.vue');
+const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
+const StaffIventory = () => import('../pages/Staff/Inventory.vue');
+const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
 
 const routes = [
 	{ path: '/', component: HomePage },
@@ -63,7 +76,22 @@ const routes = [
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
-	{ path: '/admin/transport', component: TransportManagement, meta: { requiresAdmin: true } }
+	{ path: '/admin/transport', component: TransportManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
+
+	// Staff routes (can be added similarly to admin routes if needed)
+	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },
+	{ path: '/staff/dashboard', component: StaffDashboard, meta: { requiresStaff: true } },
+	{ path: '/staff/orders', component: StaffOrders, meta: { requiresStaff: true } },
+	// { path: '/staff/events', component: StaffEvents, meta: { requiresStaff: true } },
+	{ path: '/staff/support', component: StaffSupport, meta: { requiresStaff: true } },
+	{ path: '/staff/profile', component: StaffProfile, meta: { requiresStaff: true } },
+	{ path: '/staff/packing', component: StaffPacking, meta: { requiresStaff: true } },
+	{ path: '/staff/inventory', component: StaffIventory, meta: { requiresStaff: true } } ,
+	{ path: '/staff/schedule', component: StaffSchedule, meta: { requiresStaff: true } }
+	
+	
 ];
 
 // Add catch-all route for 404
@@ -80,19 +108,19 @@ const router = createRouter({
 	}
 });
 
-router.beforeEach((to) => {
-	const user = useUserStore();
-	if (to.meta?.requiresAuth && !user.isAuthenticated) {
-		return { path: '/auth', query: { redirect: to.fullPath } };
-	}
-	if (to.meta?.publicOnly && user.isAuthenticated) {
-		return { path: '/' };
-	}
-	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
-		return { path: '/' };
-	}
-	return true;
-});
+// router.beforeEach((to) => {
+// 	const user = useUserStore();
+// 	if (to.meta?.requiresAuth && !user.isAuthenticated) {
+// 		return { path: '/auth', query: { redirect: to.fullPath } };
+// 	}
+// 	if (to.meta?.publicOnly && user.isAuthenticated) {
+// 		return { path: '/' };
+// 	}
+// 	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
+// 		return { path: '/' };
+// 	}
+// 	return true;
+// });
 
 export default router;
 
