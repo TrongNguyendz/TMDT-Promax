@@ -9,20 +9,15 @@
 		<div class="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
 			<div class="grid gap-4 md:grid-cols-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tìm kiếm hóa đơn</label>
-					<input 
-						v-model="searchQuery"
-						type="text"
-						placeholder="Mã hóa đơn, email, tên..."
-						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-					/>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tìm kiếm hóa
+						đơn</label>
+					<input v-model="searchQuery" type="text" placeholder="Mã hóa đơn, email, tên..."
+						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800" />
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng thái</label>
-					<select 
-						v-model="statusFilter"
-						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-					>
+					<select v-model="statusFilter"
+						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
 						<option value="">Tất cả trạng thái</option>
 						<option value="pending">Chờ xác nhận</option>
 						<option value="confirmed">Đã xác nhận</option>
@@ -32,11 +27,10 @@
 					</select>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng thái thanh toán</label>
-					<select 
-						v-model="paymentStatusFilter"
-						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-					>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng thái thanh
+						toán</label>
+					<select v-model="paymentStatusFilter"
+						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
 						<option value="">Tất cả</option>
 						<option value="paid">Đã thanh toán</option>
 						<option value="pending">Chờ thanh toán</option>
@@ -45,10 +39,8 @@
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">&nbsp;</label>
-					<button 
-						@click="applyFilters"
-						class="w-full rounded bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200"
-					>
+					<button @click="applyFilters"
+						class="w-full rounded bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200">
 						Tìm kiếm
 					</button>
 				</div>
@@ -70,8 +62,10 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-					<tr v-for="invoice in paginatedInvoices" :key="invoice.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-						<td class="px-6 py-4 font-mono font-semibold text-blue-600 dark:text-blue-400">{{ invoice.orderNumber }}</td>
+					<tr v-for="invoice in paginatedInvoices" :key="invoice.id"
+						class="hover:bg-gray-50 dark:hover:bg-gray-800">
+						<td class="px-6 py-4 font-mono font-semibold text-blue-600 dark:text-blue-400">{{
+							invoice.orderNumber }}</td>
 						<td class="px-6 py-4">
 							<div>
 								<p class="font-medium text-gray-900 dark:text-gray-100">{{ invoice.customer.name }}</p>
@@ -79,61 +73,51 @@
 							</div>
 						</td>
 						<td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ formatDate(invoice.orderDate) }}</td>
-						<td class="px-6 py-4 text-right font-semibold text-gray-900 dark:text-gray-100">{{ formatCurrency(invoice.total) }}</td>
+						<td class="px-6 py-4 text-right font-semibold text-gray-900 dark:text-gray-100">{{
+							formatCurrency(invoice.total) }}</td>
 						<td class="px-6 py-4 text-center">
-							<span 
-								:class="{
-									'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': invoice.status === 'pending',
-									'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': invoice.status === 'confirmed',
-									'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': invoice.status === 'shipped',
-									'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': invoice.status === 'delivered',
-									'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': invoice.status === 'cancelled'
-								}"
-								class="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-							>
+							<span :class="{
+								'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': invoice.status === 'pending',
+								'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': invoice.status === 'confirmed',
+								'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': invoice.status === 'shipped',
+								'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': invoice.status === 'delivered',
+								'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': invoice.status === 'cancelled'
+							}" class="inline-flex rounded-full px-3 py-1 text-xs font-medium">
 								{{ getStatusLabel(invoice.status) }}
 							</span>
 						</td>
 						<td class="px-6 py-4 text-center">
-							<span 
-								:class="{
-									'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': invoice.paymentStatus === 'paid',
-									'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': invoice.paymentStatus === 'pending',
-									'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': invoice.paymentStatus === 'failed'
-								}"
-								class="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-							>
+							<span :class="{
+								'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': invoice.paymentStatus === 'paid',
+								'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': invoice.paymentStatus === 'pending',
+								'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': invoice.paymentStatus === 'failed'
+							}" class="inline-flex rounded-full px-3 py-1 text-xs font-medium">
 								{{ getPaymentStatusLabel(invoice.paymentStatus) }}
 							</span>
 						</td>
 						<td class="px-6 py-4 text-center">
 							<div class="flex gap-2 justify-center">
-								<button 
-									@click="viewInvoice(invoice.id)"
-									title="Xem hóa đơn"
-									class="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-								>
+								<button @click="viewInvoice(invoice.id)" title="Xem hóa đơn"
+									class="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
 									</svg>
 								</button>
-								<button 
-									@click="printInvoice(invoice.id)"
-									title="In hóa đơn"
-									class="rounded-lg bg-gray-600 p-2 text-white hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800"
-								>
+								<button @click="printInvoice(invoice.id)" title="In hóa đơn"
+									class="rounded-lg bg-gray-600 p-2 text-white hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800">
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
 									</svg>
 								</button>
-								<button 
-									@click="downloadInvoicePDF(invoice.id)"
-									title="Tải PDF"
-									class="rounded-lg bg-green-600 p-2 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
-								>
+								<button @click="downloadInvoicePDF(invoice.id)" title="Tải PDF"
+									class="rounded-lg bg-green-600 p-2 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800">
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 									</svg>
 								</button>
 							</div>
@@ -145,7 +129,8 @@
 			<!-- No Results -->
 			<div v-if="filteredInvoices.length === 0" class="p-8 text-center text-gray-600 dark:text-gray-400">
 				<svg class="mx-auto mb-4 h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
 				<p>Không tìm thấy hóa đơn nào</p>
 			</div>
@@ -153,11 +138,8 @@
 
 		<!-- Pagination -->
 		<div v-if="filteredInvoices.length > 0" class="mt-6 flex items-center justify-center gap-3">
-			<button 
-				@click="currentPage = Math.max(1, currentPage - 1)"
-				:disabled="currentPage === 1"
-				class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-			>
+			<button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
+				class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
 				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
@@ -165,11 +147,8 @@
 			<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
 				Trang <span class="font-bold">{{ currentPage }}</span> / <span class="font-bold">{{ totalPages }}</span>
 			</span>
-			<button 
-				@click="currentPage = Math.min(totalPages, currentPage + 1)"
-				:disabled="currentPage === totalPages"
-				class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-			>
+			<button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
+				class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
 				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 				</svg>

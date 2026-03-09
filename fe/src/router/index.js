@@ -31,6 +31,8 @@ const BannerManagement = () => import('../pages/admin/BannerManagement.vue');
 const ReportPage = () => import('../pages/admin/ReportPage.vue');
 const AdminInvoiceManagement = () => import('../pages/admin/AdminInvoiceManagement.vue');
 const VoucherManagement = () => import('../pages/admin/VoucherManagement.vue');
+const TransportManagement = () => import('../pages/admin/TransportPage.vue');
+const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPage.vue');
 const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
 
 // Staff pages (can be added similarly to admin pages if needed)
@@ -57,6 +59,7 @@ const routes = [
 	{ path: '/about', component: AboutPage },
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
+	{ path: '/try-on/:id', component: TryOnClothesWithAI },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },
@@ -72,6 +75,8 @@ const routes = [
 	{ path: '/admin/banners', component: BannerManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/transport', component: TransportManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
 
