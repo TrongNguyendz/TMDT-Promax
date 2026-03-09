@@ -162,3 +162,14 @@ exports.clearTempPassword = async (userId) => {
     { new: true }
   );
 };
+
+exports.createStaff = async (payload) => {
+  const staffData = {
+    ...payload,
+    role: 'staff', // ép role luôn là staff
+  };
+
+  const user = new User(staffData);
+  await user.save();
+  return user;
+};

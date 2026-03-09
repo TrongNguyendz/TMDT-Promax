@@ -11,9 +11,9 @@ router.get('/health', staffController.healthCheck);
 // ─── CRUD cơ bản ────────────────────────────────────────────────
 router.get('/', staffController.listStaff);                    // GET /api/staff     → danh sách + filter + phân trang
 router.get('/:id', staffController.getStaffById);              // GET /api/staff/:id
-router.get('/code/:code', staffController.getStaffByCode);     // GET /api/staff/code/NV001
+// router.get('/code/:code', staffController.getStaffByCode);     // GET /api/staff/code/NV001
 
-router.post('/', staffController.createStaff);                 // POST /api/staff    → tạo nhân viên mới
+router.post('/', upload.single('avatar'), staffController.createStaff);                 // POST /api/staff    → tạo nhân viên mới
 
 router.put('/:id', staffController.updateStaff);               // PUT /api/staff/:id → cập nhật thông tin
 

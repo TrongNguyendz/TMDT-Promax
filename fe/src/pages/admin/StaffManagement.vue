@@ -47,7 +47,7 @@
       >
         <div class="relative aspect-[1/1] overflow-hidden rounded-[1.8rem] bg-gray-100 dark:bg-gray-950">
           <img
-            :src="staff.avatar || `https://via.placeholder.com/300?text=${staff.name.charAt(0)}`"
+            :src="getAvatar(staff.avatar)"
             :alt="staff.name"
             class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -184,7 +184,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Họ và Tên *</label>
-              <input v-model="formData.name" type="text" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white" required />
+              <input v-model="formData.full_name" type="text" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white" required />
             </div>
             <div class="space-y-2">
               <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Chức vụ *</label>
@@ -210,7 +210,7 @@
           </div>
 
           <!-- Avatar Upload -->
-          <div class="rounded-[2rem] border border-gray-100 bg-gray-50/50 p-8 dark:border-gray-800 dark:bg-gray-900/50">
+          <!-- <div class="rounded-[2rem] border border-gray-100 bg-gray-50/50 p-8 dark:border-gray-800 dark:bg-gray-900/50">
             <div class="flex items-center justify-between mb-8 border-b border-gray-100 pb-4 dark:border-gray-800">
               <label class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white italic">
                 Ảnh Đại Diện
@@ -258,7 +258,8 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
+
 
           <!-- Buttons -->
           <div class="flex gap-4 pt-6">
@@ -344,9 +345,22 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
+import {
+  getListStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  uploadStaffAvatar
+} from "../../utils/staff-service_api";
+import defaultAvatar from "@/assets/default_user.jpg"; 
 
 const ui = useUIStore();
 const user = useUserStore();
+const token = computed(() => user.token);
+
+const avatarPreview = ref('');
+const selectedFile = ref(null);
+const isUpdatingAvatar = ref(false);
 
 const activeTab = ref('management');
 const showModal = ref(false);
@@ -355,21 +369,54 @@ const editingId = ref(null);
 const staffToDelete = ref(null);
 
 const formData = reactive({
-  name: '',
-  position: '',
+  user_id: '',
+  full_name: '',
   email: '',
   phone: '',
-  avatar: ''
+  avatar_url: ''
 });
 
 const fileToUpload = ref(null);
 
+const API_BASE = "http://localhost:3007";
+
+const getAvatar = (avatar) => {
+  if (!avatar) return defaultAvatar;
+
+  // nếu đã là link đầy đủ thì dùng luôn
+  if (avatar.startsWith("http")) return avatar;
+
+  // nếu là path từ server
+  return API_BASE + avatar;
+};
+
 // Staff Data (sample)
-const staffData = ref([
-  { id: 1, name: 'Nguyễn Văn A', position: 'Manager', email: 'vana@example.com', phone: '0123456789', avatar: '' },
-  { id: 2, name: 'Trần Thị B', position: 'Staff', email: 'thib@example.com', phone: '0987654321', avatar: '' },
-  { id: 3, name: 'Lê Văn C', position: 'Intern', email: 'vanc@example.com', phone: '0112233445', avatar: '' },
+const staffDatasample = ref([
+  { id: 2000, name: 'Nguyễn Văn A', position: 'Manager', email: 'vana@example.com', phone: '0123456789', avatar: '' },
+  { id: 2001, name: 'Trần Thị B', position: 'Staff', email: 'thib@example.com', phone: '0987654321', avatar: '' },
+  { id: 2002, name: 'Lê Văn C', position: 'Intern', email: 'vanc@example.com', phone: '0112233445', avatar: '' },
 ]);
+const staffData = ref([]);
+
+const loadStaff = async () => {
+  try {
+    const res = await getListStaff(token.value);
+    console.log("Loaded staff data:", res.data);
+    const staffs = res.data.data;
+
+    staffData.value = staffs.map(s => ({
+      id: s.id,
+      user_id: s.user_id,
+      name: s.full_name,
+      email: s.email,
+      phone: s.phone,
+      status: s.status,
+      avatar: s.avatar_url
+    }));
+  } catch (err) {
+    console.error("Load staff failed:", err);
+  }
+};
 
 // Shifts Data
 const shifts = ref([]); // { id, staffId, date, start, end, type, color }
@@ -538,11 +585,51 @@ function openCreateModal() {
 }
 
 function editStaff(staff) {
+
   editingId.value = staff.id;
-  Object.assign(formData, staff);
-  fileToUpload.value = null;
+
+  formData.user_id = staff.user_id;
+  formData.full_name = staff.name;
+  formData.email = staff.email;
+  formData.phone = staff.phone;
+  formData.avatar_url = staff.avatar;
+  avatarPreview.value = staff.avatar || '/default-avatar.png';
   showModal.value = true;
 }
+
+const onFileChange = async (e) => {
+
+  const file = e.target.files[0];
+  if (!file) return;
+
+  selectedFile.value = file;
+
+  // preview ảnh
+  avatarPreview.value = URL.createObjectURL(file);
+
+  // nếu đang edit thì upload luôn
+  if (editingId.value) {
+
+    try {
+
+      isUpdatingAvatar.value = true;
+
+      await uploadStaffAvatar(editingId.value, file, token.value);
+
+      await loadStaff();
+
+    } catch (err) {
+
+      console.error("Upload avatar failed:", err);
+
+    } finally {
+
+      isUpdatingAvatar.value = false;
+
+    }
+  
+  }
+};
 
 function closeModal() {
   showModal.value = false;
@@ -564,58 +651,43 @@ function handleAvatarUpload(e) {
   reader.readAsDataURL(file);
 }
 
-function saveStaff() {
-  if (!formData.name || !formData.position || !formData.email) {
-    ui.pushToast({ type: 'error', message: 'Vui lòng điền đầy đủ thông tin bắt buộc' });
-    return;
-  }
-
-  const dataToSend = {
-    name: formData.name,
-    position: formData.position,
-    email: formData.email,
-    phone: formData.phone
-  };
-
-  if (fileToUpload.value) {
-    dataToSend.avatar = fileToUpload.value; // Nếu có API thật thì gửi file
-  }
-
+const saveStaff = async () => {
   try {
+
+    const payload = {
+      user_id: formData.user_id,
+      full_name: formData.full_name,
+      email: formData.email,
+      phone: formData.phone
+    };
+    console.log("Saving staff with payload:", payload, "Editing ID:", editingId.value);
     if (editingId.value) {
-      // Update existing
-      const index = staffData.value.findIndex(s => s.id === editingId.value);
-      if (index !== -1) {
-        staffData.value[index] = { 
-          ...staffData.value[index], 
-          ...dataToSend, 
-          avatar: formData.avatar 
-        };
-      }
-      ui.pushToast({ type: 'success', message: 'Cập nhật nhân viên thành công' });
+
+      await updateStaff(editingId.value, payload, token.value);
+
     } else {
-      // Create new
-      const newId = staffData.value.length ? Math.max(...staffData.value.map(s => s.id)) + 1 : 1;
-      staffData.value.push({ 
-        id: newId, 
-        ...dataToSend, 
-        avatar: formData.avatar 
-      });
-      ui.pushToast({ type: 'success', message: 'Thêm nhân viên thành công' });
+
+      const res = await createStaff(payload, token.value);
+
+      if (fileToUpload.value) {
+        await uploadStaffAvatar(res.data.data.id, fileToUpload.value, token.value);
+      }
+
     }
 
-    fileToUpload.value = null;
-    closeModal();
-  } catch (err) {
-    console.error('Lỗi lưu nhân viên:', err);
-    ui.pushToast({ type: 'error', message: 'Lưu nhân viên thất bại' });
-  }
-}
+    await loadStaff();
 
-function deleteStaff(staff) {
-  staffToDelete.value = staff;
-  showDeleteModal.value = true;
-}
+    showModal.value = false;
+
+  } catch (err) {
+    console.error("Save staff error:", err);
+  }
+};
+
+// function deleteStaff(staff) {
+//   staffToDelete.value = staff;
+//   showDeleteModal.value = true;
+// }
 
 function confirmDelete() {
   if (staffToDelete.value) {
@@ -634,6 +706,7 @@ function openBulkAssignModal() {
 
 onMounted(() => {
   // Nếu sau này có API thì load dữ liệu ở đây
+  loadStaff();
 });
 </script>
 
@@ -641,6 +714,7 @@ onMounted(() => {
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #e5e7eb;
   border-radius: 10px;
