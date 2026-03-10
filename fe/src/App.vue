@@ -1,14 +1,16 @@
 <template>
 	<div :class="[{ dark: isDark }]">
-		<DefaultLayout v-if="user.role !== 'admin'">
-			<RouterView />
-		</DefaultLayout>
-		<AdminLayout v-else>
-			<RouterView />
+		<AdminLayout v-if="user.role === 'admin'">
+		<RouterView />
 		</AdminLayout>
-		<!-- <StaffLayout >
-			<RouterView />
-		</StaffLayout> -->
+
+		<StaffLayout v-else-if="user.role === 'staff'">
+		<RouterView />
+		</StaffLayout>
+
+		<DefaultLayout v-else>
+		<RouterView />
+		</DefaultLayout>
 		<Toast />
 	</div>
 	<!-- Dark mode class applied to html element for Tailwind -->
