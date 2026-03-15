@@ -1,4 +1,5 @@
 const { Shift } = require('../models/shiftModel');
+const { Staff } = require('../models/staffModel'); 
 
 exports.healthCheck = (_req, res) => {
   res.json({
@@ -33,21 +34,99 @@ exports.listShifts = async (req, res) => {
 /**
  * GET /api/shifts/:id
  */
+// exports.getShiftById = async (req, res) => {
+//   try {
+//     const staff_id = Number(req.params.id);
+//     if (isNaN(staff_id)) {
+//       return res.status(400).json({ success: false, message: 'ID nhân viên không hợp lệ' });
+//     }
+//     console.log('Fetching shift for staff_id:', staff_id);
+//     const shift = await Shift.findOne({ staff_id });
+//     if (!shift) {
+//       return res.status(404).json({ success: false, message: 'Không tìm thấy ca làm việc' });
+//     }
+
+//     res.json({ success: true, data: shift.toObject() });
+//   } catch (error) {
+//     console.error('Get shift error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Không thể lấy thông tin ca',
+//       error: error.message
+//     });
+//   }
+// };
+
+// shiftController.js
+// exports.getShiftById = async (req, res) => {
+//   try {
+//     const staffId = Number(req.params.id);
+//     if (isNaN(staffId)) {
+//       return res.status(400).json({ success: false, message: 'ID nhân viên không hợp lệ' });
+//     }
+
+//     console.log('Fetching shifts for staff_id:', staffId);
+
+//     // Đổi findOne → find + sort (mới nhất trước)
+//     const shifts = await Shift.find({ staff_id: staffId })
+//       .sort({ shift_date: -1, start_time: 1 })   // sắp xếp: ngày mới → cũ, giờ sớm → muộn
+//       .lean();  // nhẹ hơn, không cần document mongoose
+
+//     if (shifts.length === 0) {
+//       return res.status(404).json({ success: false, message: 'Không tìm thấy ca làm việc nào cho nhân viên này' });
+//     }
+
+//     res.json({ 
+//       success: true, 
+//       data: shifts,               // giờ là array []
+//       count: shifts.length 
+//     });
+//   } catch (error) {
+//     console.error('Get shifts error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Không thể lấy thông tin ca',
+//       error: error.message
+//     });
+//   }
+// };
+
 exports.getShiftById = async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ success: false, message: 'ID ca không hợp lệ' });
+    const paramId = Number(req.params.id);
+    if (isNaN(paramId)) {
+      return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
     }
 
-    const shift = await Shift.findOne({ id });
-    if (!shift) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy ca làm việc' });
+    let staffId = paramId;
+
+    // Nếu truyền user_id thay vì staff_id → thử map sang staff_id
+    const staffByUser = await Staff.findOne({ user_id: paramId }).lean().select('id');
+    if (staffByUser) {
+      staffId = staffByUser.id; // ưu tiên dùng user_id nếu tìm thấy
+      console.log(`Mapped user_id ${paramId} → staff_id ${staffId}`);
     }
 
-    res.json({ success: true, data: shift.toObject() });
+    const shifts = await Shift.find({ staff_id: staffId })
+      .sort({ shift_date: -1, start_time: 1 })
+      .lean();
+
+    if (shifts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy ca làm việc cho nhân viên này'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: shifts,
+      count: shifts.length,
+      used_staff_id: staffId
+    });
+
   } catch (error) {
-    console.error('Get shift error:', error);
+    console.error('Get shifts error:', error);
     res.status(500).json({
       success: false,
       message: 'Không thể lấy thông tin ca',

@@ -7,6 +7,7 @@ require('./config/connectdata');
 
 const staffRoutes = require('./routes/staffRoutes');
 const shiftRoutes = require('./routes/shiftRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
 const app = express();
 
@@ -19,5 +20,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'upload')));
 
 app.use('/api/staff', staffRoutes);
 app.use('/api/shifts', shiftRoutes);
+app.use('/api/support', supportRoutes);
 
 module.exports = app;

@@ -107,15 +107,17 @@ import { ref, computed, onMounted } from 'vue';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
 // import { useShiftStore } from '../../stores/shift'; // giả định bạn có store quản lý shifts
-
+import {  getShiftById } from '../../utils/shift_service_api'; // giả định bạn có API để lấy ca làm việc
 const ui = useUIStore();
-const userStore = useUserStore();
+const user = useUserStore();
 const shiftStore = ref(); // nếu chưa có thì có thể dùng ref tạm
 
+
+
 // Thông tin nhân viên hiện tại (từ user store)
-const currentUser = computed(() => userStore.user);
-const currentUserName = computed(() => currentUser.value?.name || 'Nhân viên');
-const currentUserPosition = computed(() => currentUser.value?.position || '');
+
+const currentUserName = computed(() => user.profile?.username || 'Nhân viên');
+const currentUserPosition = computed(() => user.profile?.position || '');
 
 // Dữ liệu ca làm (lấy từ store hoặc API)
 const myShifts = ref([]); // chỉ chứa ca của nhân viên hiện tại
@@ -175,9 +177,15 @@ function getMyShiftsForDay(day) {
 }
 
 // Format giờ
-function formatTime(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+// function formatTime(isoString) {
+//   const date = new Date(isoString);
+//   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+// }
+
+function formatTime(timeStr) {
+  // timeStr đã là "08:00" hoặc "08:00:00"
+  const [h, m] = timeStr.split(':').slice(0, 2); // bỏ giây nếu có
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 }
 
 // Chuyển giờ thành pixel
@@ -202,27 +210,72 @@ const totalMyHours = computed(() => {
 });
 
 // Tải dữ liệu ca làm của nhân viên hiện tại
+// async function loadMyShifts() {
+//   try {
+//     // Nếu dùng Pinia store
+//     // myShifts.value = await shiftStore.fetchMyShifts(currentWeekStart.value, currentWeekEnd.value);
+
+//     // Hoặc gọi API trực tiếp
+//     // const res = await api.get('/shifts/my', {
+//     //   params: {
+//     //     start: currentWeekStart.value.toISOString().split('T')[0],
+//     //     end: currentWeekEnd.value.toISOString().split('T')[0]
+//     //   }
+//     // });
+//     // myShifts.value = res.data;
+
+//     // Dữ liệu mẫu tạm thời
+//     myShifts.value = [
+//       // { id: 1, date: '2025-03-10', start: '2025-03-10T08:00:00', end: '2025-03-10T17:00:00', type: 'Ca sáng', color: '#3b82f6' },
+//       // ...
+//     ];
+//   } catch (err) {
+//     ui.pushToast({ type: 'error', message: 'Không tải được lịch làm việc' });
+//   }
+// }
+
+// Tải ca làm việc của nhân viên hiện tại trong khoảng tuần
 async function loadMyShifts() {
   try {
-    // Nếu dùng Pinia store
-    // myShifts.value = await shiftStore.fetchMyShifts(currentWeekStart.value, currentWeekEnd.value);
+    const startDate = currentWeekStart.value.toISOString().split('T')[0];
+    const endDate   = currentWeekEnd.value.toISOString().split('T')[0];
 
-    // Hoặc gọi API trực tiếp
-    // const res = await api.get('/shifts/my', {
-    //   params: {
-    //     start: currentWeekStart.value.toISOString().split('T')[0],
-    //     end: currentWeekEnd.value.toISOString().split('T')[0]
-    //   }
-    // });
-    // myShifts.value = res.data;
+    // Giả sử endpoint backend hỗ trợ filter theo staff_id + khoảng ngày
+    // Nếu chưa có, bạn có thể dùng /shifts?staff_id=...&start_date=...&end_date=...
+    // Hoặc nếu endpoint /shifts/:staffId trả tất cả → lọc client-side (tạm thời ok nếu dữ liệu ít)
+    const staffId = user.profile?.id; // hoặc userStore.user.id
+    console.log('Loading shifts for staff ID:', staffId, 'from', startDate, 'to', endDate);
+    const res = await getShiftById(staffId,user.token); // hoặc endpoint phù hợp
+    console.log('dữ liệu nhận được:', res);
+    if (!res.data.success) {
+      throw new Error(res.data.message || 'Lỗi tải ca');
+    }
 
-    // Dữ liệu mẫu tạm thời
-    myShifts.value = [
-      // { id: 1, date: '2025-03-10', start: '2025-03-10T08:00:00', end: '2025-03-10T17:00:00', type: 'Ca sáng', color: '#3b82f6' },
-      // ...
-    ];
+    // Dữ liệu thô từ backend
+    const rawShifts = res.data.data || [];
+
+    // Chuyển đổi sang định dạng component mong đợi
+    myShifts.value = rawShifts
+      .filter(shift => {
+        // Chỉ giữ ca trong tuần hiện tại (tùy chọn - nếu backend đã filter thì bỏ)
+        const shiftDate = new Date(shift.shift_date);
+        return shiftDate >= currentWeekStart.value && shiftDate <= currentWeekEnd.value;
+      })
+      .map(shift => ({
+        id: shift.id,                    // 3000, 3001...
+        date: new Date(shift.shift_date).toISOString().split('T')[0],  // '2026-03-12'
+        start: `${shift.start_time}`,    // '08:00:00' hoặc '08:00'
+        end: `${shift.end_time}`,
+        type: shift.shift_type || 'Ca làm việc',  // fallback nếu null
+        color: shift.color || '#3b82f6',
+        // Nếu cần thêm: notes, status,...
+      }));
+
+    console.log('Loaded my shifts:', myShifts.value);
   } catch (err) {
+    console.error('Load shifts error:', err);
     ui.pushToast({ type: 'error', message: 'Không tải được lịch làm việc' });
+    myShifts.value = []; // reset nếu lỗi
   }
 }
 
