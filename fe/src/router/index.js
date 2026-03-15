@@ -34,7 +34,8 @@ const VoucherManagement = () => import('../pages/admin/VoucherManagement.vue');
 const TransportManagement = () => import('../pages/admin/TransportPage.vue');
 const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPage.vue');
 const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
-
+const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
+const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
 const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
@@ -46,6 +47,7 @@ const StaffPacking = () => import('../pages/Staff/Packing.vue');
 const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
 const StaffIventory = () => import('../pages/Staff/Inventory.vue');
 const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
+const StaffComment = () => import('../pages/Staff/Comment.vue')	
 
 const routes = [
 	{ path: '/', component: HomePage },
@@ -79,6 +81,8 @@ const routes = [
 	{ path: '/admin/transport', component: TransportManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
+    { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
+    { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },
 
 	// Staff routes (can be added similarly to admin routes if needed)
 	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },
@@ -89,9 +93,8 @@ const routes = [
 	{ path: '/staff/profile', component: StaffProfile, meta: { requiresStaff: true } },
 	{ path: '/staff/packing', component: StaffPacking, meta: { requiresStaff: true } },
 	{ path: '/staff/inventory', component: StaffIventory, meta: { requiresStaff: true } } ,
-	{ path: '/staff/schedule', component: StaffSchedule, meta: { requiresStaff: true } }
-	
-	
+	{ path: '/staff/schedule', component: StaffSchedule, meta: { requiresStaff: true } },
+    { path: '/staff/comments', component: StaffComment, meta: { requiresStaff: true } }
 ];
 
 // Add catch-all route for 404
