@@ -37,8 +37,27 @@
         </select>
       </div>
       <div class="space-y-4">
-        <ProductItem v-for="product in filteredProducts" :key="product.id" :product="product"/>
+        <ProductItem v-for="product in paginatedProducts" :key="product.id" :product="product"/>
       </div>
+      <button
+        @click="productPage--"
+        :disabled="productPage === 1"
+        class="px-3 py-1 border rounded"
+      >
+        Prev
+      </button>
+
+      <span class="px-3 py-1">
+        {{ productPage }} / {{ totalProductPages }}
+      </span>
+
+      <button
+        @click="productPage++"
+        :disabled="productPage === totalProductPages"
+        class="px-3 py-1 border rounded"
+      >
+        Next
+      </button>
     </div>
 
     <!-- Đơn hàng gần nhất -->
@@ -78,7 +97,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            <tr v-for="order in filteredOrders" :key="order.id">
+            <tr v-for="order in paginatedOrders" :key="order.id">
               <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">#{{ order.id }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-sm">{{ order.customer }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-sm">{{ order.items }}</td>
@@ -90,6 +109,25 @@
             </tr>
           </tbody>
         </table>
+        <button
+          @click="orderPage--"
+          :disabled="orderPage === 1"
+          class="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span class="px-3 py-1">
+          {{ orderPage }} / {{ totalOrderPages }}
+        </span>
+
+        <button
+          @click="orderPage++"
+          :disabled="orderPage === totalOrderPages"
+          class="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   </div>
@@ -188,6 +226,29 @@ const filteredOrders = computed(() => {
 
   return data
 })
+
+const paginatedProducts = computed(() => {
+  const start = (productPage.value - 1) * productPerPage
+  const end = start + productPerPage
+  return filteredProducts.value.slice(start, end)
+})
+
+const totalProductPages = computed(() =>
+  Math.ceil(filteredProducts.value.length / productPerPage)
+)
+
+const orderPage = ref(1)
+const orderPerPage = 10
+
+const paginatedOrders = computed(() => {
+  const start = (orderPage.value - 1) * orderPerPage
+  const end = start + orderPerPage
+  return filteredOrders.value.slice(start, end)
+})
+
+const totalOrderPages = computed(() =>
+  Math.ceil(filteredOrders.value.length / orderPerPage)
+)
 
 function getStatusClass(status) {
   if (status === 'Đã giao') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';

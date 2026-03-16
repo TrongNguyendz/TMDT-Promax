@@ -38,7 +38,7 @@ const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
-const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
 const StaffOrders = () => import('../pages/Staff/Orders.vue');
 // const StaffEvents = () => import('../pages/Staff/Events.vue');
 const StaffSupport = () => import('../pages/Staff/Support.vue');
