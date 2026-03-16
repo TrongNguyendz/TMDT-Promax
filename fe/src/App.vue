@@ -1,11 +1,16 @@
 <template>
 	<div :class="[{ dark: isDark }]">
-		<DefaultLayout v-if="user.role !== 'admin'">
-			<RouterView />
-		</DefaultLayout>
-		<AdminLayout v-else>
-			<RouterView />
+		<AdminLayout v-if="user.role === 'admin'">
+		<RouterView />
 		</AdminLayout>
+
+		<StaffLayout v-else-if="user.role === 'staff'">
+		<RouterView />
+		</StaffLayout>
+
+		<DefaultLayout v-else>
+		<RouterView />
+		</DefaultLayout>
 		<Toast />
 	</div>
 	<!-- Dark mode class applied to html element for Tailwind -->
@@ -18,6 +23,7 @@ import { useUserStore } from './stores/user';
 import { RouterView } from 'vue-router';
 import DefaultLayout from './components/layout/DefaultLayout.vue';
 import AdminLayout from './components/layout/AdminLayout.vue';
+import StaffLayout from './components/layout/StaffLayout.vue';
 import Toast from './components/common/Toast.vue';
 
 const ui = useUIStore();

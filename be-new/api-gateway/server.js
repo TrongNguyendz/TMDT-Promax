@@ -12,6 +12,9 @@ const paymentRoutes = require('./routes/payment');
 const notificationRoutes = require('./routes/notification');
 const adminRoutes = require('./routes/admin');
 const couponRoutes = require('./routes/coupon');
+const staffRoutes = require('./routes/staff');
+const shiftRoutes = require('./routes/shift');
+
 dotenv.config();
 
 const app = express();
@@ -39,7 +42,9 @@ app.get('/health', async (req, res) => {
       order: await checkServiceHealth(process.env.ORDER_SERVICE_URL),
       payment: await checkServiceHealth(process.env.PAYMENT_SERVICE_URL),
       notification: await checkServiceHealth(process.env.NOTIFICATION_SERVICE_URL),
-      admin: await checkServiceHealth(process.env.ADMIN_SERVICE_URL)
+      admin: await checkServiceHealth(process.env.ADMIN_SERVICE_URL),
+      staff: await checkServiceHealth(process.env.STAFF_SERVICE_URL)
+
     }
   };
   res.json(healthStatus);
@@ -47,10 +52,14 @@ app.get('/health', async (req, res) => {
 
 // API Versioning - v1 routes
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/staff', staffRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/shifts', shiftRoutes);
+
+
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', orderRoutes);
 

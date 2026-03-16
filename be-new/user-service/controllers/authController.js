@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
 
 const { hashPassword, comparePassword,generateTempPassword } = require('../functions/password');
+const { verifyEmailExists } = require('../functions/checkemail');
+
 const axios = require('axios');
 
 const signToken = (payload) =>
@@ -19,7 +21,7 @@ exports.healthCheck = (_req, res) => {
 exports.register = async (req, res) => {
   const requiredFields = ['username', 'email', 'password', 'full_name'];
   const missing = requiredFields.filter((field) => !req.body[field]);
-
+  const emailCheck = await verifyEmailExists(req.body.email);
   if (missing.length) {
     return res.status(400).json({
       success: false,
@@ -27,6 +29,12 @@ exports.register = async (req, res) => {
     });
   }
 
+  if (!emailCheck.valid) {
+    return res.status(400).json({
+      success: false,
+      message: emailCheck.reason
+    });
+  }
   try {
     const existingEmail = await UserModel.findByEmail(req.body.email);
     if (existingEmail) {
@@ -46,7 +54,7 @@ exports.register = async (req, res) => {
       full_name: req.body.full_name,
       phone: req.body.phone,
       avatar_url: req.body.avatar_url,
-      role: req.body.role || 'customer',
+      role: 'customer',
       status: 'active'
     });
 
@@ -327,4 +335,108 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+exports.createStaff = async (req, res) => {
+  console.log('========== BẮT ĐẦU CREATE STAFF ==========');
+  console.log('[DEBUG] Body nhận được từ client:', req.body);
 
+  const requiredFields = ['username', 'email', 'full_name'];
+  const missing = requiredFields.filter((field) => !req.body[field]);
+  const emailCheck = await verifyEmailExists(req.body.email);
+  if (!emailCheck.valid) {
+    return res.status(400).json({
+      success: false,
+      message: emailCheck.reason
+    });
+  }
+  console.log ('kiểm tra email xong:', emailCheck);
+  
+  if (missing.length) {
+    return res.status(400).json({
+      success: false,
+      message: `Thiếu các trường bắt buộc: ${missing.join(', ')}`
+    });
+  }
+
+  try {
+    // kiểm tra email
+    const existingEmail = await UserModel.findByEmail(req.body.email);
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email đã tồn tại'
+      });
+    }
+
+    // kiểm tra username
+    const existingUsername = await UserModel.findByUsername(req.body.username);
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username đã tồn tại'
+      });
+    }
+
+    // tạo mật khẩu tạm
+    const tempPassword = "12345678";
+    console.log('[DEBUG] Mật khẩu tạm được tạo:', tempPassword);
+
+    // hash mật khẩu
+    const password_hash = await hashPassword(tempPassword);
+
+    // tạo staff
+    const staff = await UserModel.createUser({
+      username: req.body.username,
+      email: req.body.email,
+      password_hash,
+      full_name: req.body.full_name,
+      phone: req.body.phone,
+      avatar_url: req.body.avatar_url,
+      role: 'staff',
+      status: 'active'
+    });
+
+    console.log('[DEBUG] Staff đã được tạo:', staff.id);
+
+    // gửi notification
+    // try {
+    //   console.log('[DEBUG] Gọi notification-service');
+
+    //   const notifyRes = await axios.post(
+    //     'http://localhost:3005/api/notifications',
+    //     {
+    //       user_id: staff.id,
+    //       notification_type: 'staff_created',
+    //       email_user: staff.email,
+    //       data: {
+    //         password: tempPassword
+    //       }
+    //     }
+    //   );
+
+    //   console.log(
+    //     '[DEBUG] Notification gửi thành công',
+    //     notifyRes.status
+    //   );
+
+    // } catch (notifyError) {
+    //   console.error('[LỖI] Gửi notification thất bại:', notifyError.message);
+    // }
+
+    const sanitized = UserModel.sanitizeUser(staff);
+
+    res.status(201).json({
+      success: true,
+      message: 'Tạo nhân viên thành công',
+      data: sanitized
+    });
+
+  } catch (error) {
+    console.error('[LỖI NGHIÊM TRỌNG] Create staff error:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Không thể tạo nhân viên',
+      error: error.message
+    });
+  }
+};

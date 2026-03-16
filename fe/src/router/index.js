@@ -31,6 +31,23 @@ const BannerManagement = () => import('../pages/admin/BannerManagement.vue');
 const ReportPage = () => import('../pages/admin/ReportPage.vue');
 const AdminInvoiceManagement = () => import('../pages/admin/AdminInvoiceManagement.vue');
 const VoucherManagement = () => import('../pages/admin/VoucherManagement.vue');
+const TransportManagement = () => import('../pages/admin/TransportPage.vue');
+const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPage.vue');
+const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
+const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
+const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
+// Staff pages (can be added similarly to admin pages if needed)
+// const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
+const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffOrders = () => import('../pages/Staff/Orders.vue');
+// const StaffEvents = () => import('../pages/Staff/Events.vue');
+const StaffSupport = () => import('../pages/Staff/Support.vue');
+const StaffProfile = () => import('../pages/Staff/Profile.vue');
+const StaffPacking = () => import('../pages/Staff/Packing.vue');
+const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
+const StaffIventory = () => import('../pages/Staff/Inventory.vue');
+const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
+const StaffComment = () => import('../pages/Staff/Comment.vue')	
 
 const routes = [
 	{ path: '/', component: HomePage },
@@ -44,6 +61,7 @@ const routes = [
 	{ path: '/about', component: AboutPage },
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
+	{ path: '/try-on/:id', component: TryOnClothesWithAI },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },
@@ -59,7 +77,24 @@ const routes = [
 	{ path: '/admin/banners', component: BannerManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
-	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } }
+	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/transport', component: TransportManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
+	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
+    { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
+    { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },
+
+	// Staff routes (can be added similarly to admin routes if needed)
+	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },
+	{ path: '/staff/dashboard', component: StaffDashboard, meta: { requiresStaff: true } },
+	{ path: '/staff/orders', component: StaffOrders, meta: { requiresStaff: true } },
+	// { path: '/staff/events', component: StaffEvents, meta: { requiresStaff: true } },
+	{ path: '/staff/support', component: StaffSupport, meta: { requiresStaff: true } },
+	{ path: '/staff/profile', component: StaffProfile, meta: { requiresStaff: true } },
+	{ path: '/staff/packing', component: StaffPacking, meta: { requiresStaff: true } },
+	{ path: '/staff/inventory', component: StaffIventory, meta: { requiresStaff: true } } ,
+	{ path: '/staff/schedule', component: StaffSchedule, meta: { requiresStaff: true } },
+    { path: '/staff/comments', component: StaffComment, meta: { requiresStaff: true } }
 ];
 
 // Add catch-all route for 404
