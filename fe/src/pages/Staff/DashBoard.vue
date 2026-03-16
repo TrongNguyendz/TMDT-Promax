@@ -39,25 +39,35 @@
       <div class="space-y-4">
         <ProductItem v-for="product in paginatedProducts" :key="product.id" :product="product"/>
       </div>
-      <button
-        @click="productPage--"
-        :disabled="productPage === 1"
-        class="px-3 py-1 border rounded"
-      >
-        Prev
-      </button>
+      <div class="flex justify-center items-center gap-2 mt-6">
+        <button
+          @click="productPage--"
+          :disabled="productPage === 1"
+          class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+        >
+          Prev
+        </button>
 
-      <span class="px-3 py-1">
-        {{ productPage }} / {{ totalProductPages }}
-      </span>
+        <button
+          v-for="page in totalProductPages"
+          :key="page"
+          @click="productPage = page"
+          :class="[
+            'px-2 py-1 text-sm border rounded-md min-w-[32px]',
+            page === productPage ? 'bg-teal-500 text-white border-teal-500' : ''
+          ]"
+        >
+          {{ page }}
+        </button>
 
-      <button
-        @click="productPage++"
-        :disabled="productPage === totalProductPages"
-        class="px-3 py-1 border rounded"
-      >
-        Next
-      </button>
+        <button
+          @click="productPage++"
+          :disabled="productPage === totalProductPages"
+          class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
     </div>
 
     <!-- Đơn hàng gần nhất -->
@@ -109,25 +119,35 @@
             </tr>
           </tbody>
         </table>
-        <button
-          @click="orderPage--"
-          :disabled="orderPage === 1"
-          class="px-3 py-1 border rounded"
-        >
-          Prev
-        </button>
+        <div class="flex justify-center items-center gap-2 mt-4">
+          <button
+            @click="orderPage--"
+            :disabled="orderPage === 1"
+            class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+          >
+            Prev
+          </button>
 
-        <span class="px-3 py-1">
-          {{ orderPage }} / {{ totalOrderPages }}
-        </span>
+          <button
+            v-for="page in totalOrderPages"
+            :key="page"
+            @click="orderPage = page"
+            :class="[
+              'px-2 py-1 text-sm border rounded-md min-w-[32px]',
+              page === orderPage ? 'bg-teal-500 text-white border-teal-500' : ''
+            ]"
+          >
+            {{ page }}
+          </button>
 
-        <button
-          @click="orderPage++"
-          :disabled="orderPage === totalOrderPages"
-          class="px-3 py-1 border rounded"
-        >
-          Next
-        </button>
+          <button
+            @click="orderPage++"
+            :disabled="orderPage === totalOrderPages"
+            class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -226,6 +246,9 @@ const filteredOrders = computed(() => {
 
   return data
 })
+
+const productPage = ref(1)
+const productPerPage = 6
 
 const paginatedProducts = computed(() => {
   const start = (productPage.value - 1) * productPerPage
