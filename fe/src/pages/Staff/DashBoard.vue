@@ -248,7 +248,7 @@ const filteredOrders = computed(() => {
 })
 
 const productPage = ref(1)
-const productPerPage = 6
+const productPerPage = 10
 
 const paginatedProducts = computed(() => {
   const start = (productPage.value - 1) * productPerPage
