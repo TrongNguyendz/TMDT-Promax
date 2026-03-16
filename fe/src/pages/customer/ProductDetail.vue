@@ -330,136 +330,105 @@
         </div>
 
         <!-- 2. Đánh giá -->
+        
         <div v-else-if="activeTab === 'reviews'" class="space-y-8">
-          <div
-            class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700"
-          >
-            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">
-              Viết đánh giá của bạn
-            </h3>
-            <div v-if="userStore.token">
-              <form @submit.prevent="submitReview">
-                <div class="mb-4">
-                  <label
-                    class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >Bạn cảm thấy thế nào?</label
-                  >
-                  <div class="flex gap-2">
-                    <button
-                      type="button"
-                      v-for="star in 5"
-                      :key="star"
-                      @click="newReview.rating = star"
-                      class="text-2xl transition-transform hover:scale-110"
-                      :class="
-                        star <= newReview.rating
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                      "
-                    >
-                      ★
-                    </button>
+             <!-- Form Viết đánh giá -->
+             <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
+                  <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Viết đánh giá của bạn</h3>
+                  <div v-if="userStore.token">
+                      <form @submit.prevent="submitReview">
+                          <div class="mb-4">
+                              <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bạn cảm thấy thế nào?</label>
+                              <div class="flex gap-2">
+                                  <button type="button" v-for="star in 5" :key="star" @click="newReview.rating = star" class="text-2xl transition-transform hover:scale-110" :class="star <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'">★</button>
+                              </div>
+                          </div>
+                          <div class="mb-4">
+                              <textarea v-model="newReview.comment" rows="3" class="w-full p-3 rounded border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white" placeholder="Chia sẻ cảm nhận..." required></textarea>
+                          </div>
+                          <button type="submit" class="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200" :disabled="isSubmitting">{{ isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá' }}</button>
+                      </form>
                   </div>
-                </div>
-                <div class="mb-4">
-                  <label
-                    class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >Nội dung đánh giá</label
-                  >
-                  <textarea
-                    v-model="newReview.comment"
-                    rows="3"
-                    class="w-full p-3 rounded border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
-                    placeholder="Chia sẻ cảm nhận..."
-                    required
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  class="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                  :disabled="isSubmitting"
-                >
-                  {{ isSubmitting ? "Đang gửi..." : "Gửi đánh giá" }}
-                </button>
-              </form>
-            </div>
-            <div v-else class="text-center py-4 text-gray-500">
-              Vui lòng
-              <router-link
-                to="/auth"
-                class="text-blue-600 hover:underline font-medium"
-                >đăng nhập</router-link
-              >
-              để viết đánh giá.
-            </div>
-          </div>
-
-          <div>
-            <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white">
-              Khách hàng nhận xét ({{ reviews.length }})
-            </h3>
-            <div
-              v-if="reviews.length === 0"
-              class="text-center py-10 text-gray-500 border border-dashed rounded-lg"
-            >
-              Chưa có đánh giá nào. Hãy là người đầu tiên!
-            </div>
-            <div v-else class="space-y-6">
-              <div
-                v-for="review in reviews"
-                :key="review.id"
-                class="border-b pb-6 dark:border-gray-700 last:border-0"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex gap-3">
-                    <div
-                      class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600"
-                    >
-                      {{ (review.author || "U").charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                      <h4 class="font-bold text-gray-900 dark:text-white">
-                        {{ review.author || "Người dùng" }}
-                      </h4>
-                      <div class="flex text-yellow-400 text-sm mt-0.5">
-                        <span v-for="i in 5" :key="i">{{
-                          i <= review.rating ? "★" : "☆"
-                        }}</span>
-                      </div>
-                    </div>
+                  <div v-else class="text-center py-4 text-gray-500">
+                      Vui lòng <router-link to="/auth" class="text-blue-600 hover:underline font-medium">đăng nhập</router-link> để viết đánh giá.
                   </div>
-                  <span class="text-xs text-gray-400">{{
-                    formatDate(review.created_at)
-                  }}</span>
-                </div>
-                <p class="text-gray-700 dark:text-gray-300 mt-2 ml-14">
-                  {{ review.comment }}
-                </p>
+             </div>
 
-                <div
-                  v-if="review.admin_reply"
-                  class="ml-14 mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800"
-                >
-                  <div class="flex items-center gap-2 mb-1">
-                    <span
-                      class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
-                      >Shop phản hồi</span
-                    >
-                    <span class="text-xs text-gray-400">{{
-                      formatDate(review.updated_at)
-                    }}</span>
-                  </div>
-                  <p class="text-sm text-gray-800 dark:text-gray-200">
-                    {{ review.admin_reply }}
-                  </p>
-                </div>
-
-                <!-- <div class="ml-14 mt-2" v-if="userStore.profile?.role === 'admin' || userStore.profile?.id === review.user_id">
-                            <button @click="handleDeleteReview(review.id)" class="text-xs text-red-500 hover:text-red-700 hover:underline font-medium transition-colors">Xóa bình luận này</button>
-                        </div> -->
-              </div>
+             <!-- Danh sách đánh giá -->
+             <div>
+                <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white">Khách hàng nhận xét ({{ reviews.length }})</h3>
+                <div v-if="reviews.length === 0" class="text-center py-10 text-gray-500 border border-dashed rounded-lg dark:border-gray-700">Chưa có đánh giá nào. Hãy là người đầu tiên!</div>
+                
+                <div v-else class="space-y-6">
+                    <!-- Từng Review -->
+                   <!-- Từng Review -->
+<div v-for="review in reviews" :key="review.id" class="border-b pb-6 dark:border-gray-700 last:border-0">
+    
+    <!-- 1. HEADER REVIEW CHÍNH -->
+    <div class="flex justify-between items-start mb-2">
+        <div class="flex gap-3">
+            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
+                {{ (review.user_name || 'K').charAt(0).toUpperCase() }}
             </div>
-          </div>
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white">{{ review.user_name || 'Khách hàng' }}</h4>
+                <div class="flex text-yellow-400 text-sm mt-0.5">
+                    <span v-for="i in 5" :key="i">{{ i <= review.rating ? '★' : '☆' }}</span>
+                </div>
+            </div>
+        </div>
+        <span class="text-xs text-gray-400">{{ formatDate(review.created_at) }}</span>
+    </div>
+    
+    <!-- 2. NỘI DUNG REVIEW CHÍNH -->
+    <p class="text-gray-700 dark:text-gray-300 mt-2 ml-14">{{ review.comment }}</p>
+    
+    <!-- 3. DANH SÁCH CÁC CÂU TRẢ LỜI LỒNG NHAU (THREAD) -->
+    <div v-if="review.replies && review.replies.length > 0" class="ml-14 mt-4 space-y-3">
+        <div v-for="(reply, rIdx) in review.replies" :key="rIdx" 
+             class="p-3 rounded-xl border" 
+             :class="['admin', 'staff'].includes(reply.role) ? 'bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-gray-50 border-gray-100 dark:bg-gray-800 dark:border-gray-700'">
+            
+            <div class="flex items-center gap-2 mb-1">
+                <!-- NẾU LÀ SHOP -->
+                <span v-if="['admin', 'staff'].includes(reply.role)" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Shop phản hồi
+                </span>
+                <!-- NẾU LÀ KHÁCH -->
+                <span v-else class="font-bold text-xs text-gray-800 dark:text-gray-200">
+                    ↳ {{ reply.user_name }}
+                </span>
+                
+                <span class="text-[10px] text-gray-400">{{ formatDate(reply.created_at) }}</span>
+            </div>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ reply.content }}</p>
+        </div>
+    </div>
+
+    <!-- 4. CÁC NÚT TƯƠNG TÁC (Đặt ở dưới cùng đoạn chat) -->
+    <div class="ml-14 mt-3 flex gap-4 items-center">
+        <!-- Nút Trả lời (Bất kỳ ai đăng nhập cũng thấy) -->
+        <button v-if="userStore.token" @click="activeReplyId = review.id" class="text-xs font-semibold text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+            Trả lời
+        </button>
+        
+        <!-- Nút Xóa (Chỉ Admin, Staff hoặc Chính chủ bài viết gốc mới thấy) -->
+        <button v-if="['admin', 'staff'].includes(userStore.profile?.role) || userStore.profile?.id === review.user_id" @click="handleDeleteReview(review.id)" class="text-xs text-red-500 hover:text-red-700 font-medium transition">
+            Xóa
+        </button>
+    </div>
+
+    <!-- 5. Ô NHẬP PHẢN HỒI -->
+    <div v-if="activeReplyId === review.id" class="ml-14 mt-3 flex gap-2">
+        <input v-model="replyText" type="text" :placeholder="`Trả lời ${review.user_name}...`" class="flex-1 text-sm px-4 py-2 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" @keyup.enter="submitReply(review.id)" />
+        <button @click="submitReply(review.id)" class="px-5 py-2 bg-gray-900 dark:bg-white dark:text-black text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">Gửi</button>
+        <button @click="activeReplyId = null" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300">Hủy</button>
+    </div>
+</div>
+                </div>
+             </div>
         </div>
 
       </div>
@@ -881,6 +850,8 @@ const selectedColor = ref(null);
 const selectedSize = ref("");
 const imageColorMap = ref({});
 const imageIndexToColor = ref({});
+const activeReplyId = ref(null); // ID của bình luận đang được bấm nút "Phản hồi"
+const replyText = ref('');  
 
 onMounted(async () => {
   const id = route.params.id;
@@ -984,31 +955,47 @@ function handleImageError(e) {
 }
 
 
-
 async function submitReview() {
-  if (!newReview.comment.trim()) return;
-  isSubmitting.value = true;
-  try {
-    const payload = {
-      user_id: userStore.profile?.id || 99,
-      rating: newReview.rating,
-      comment: newReview.comment,
-      title: "Đánh giá",
-    };
-    const res = await api.post(
-      `/products/${product.value.id}/reviews`,
-      payload,
-    );
-    if (res.data.success) {
-      alert("Đánh giá thành công!");
-      newReview.comment = "";
-      fetchReviews(product.value.id);
+    if (!newReview.comment.trim()) return;
+    isSubmitting.value = true;
+    try {
+        const payload = { 
+            user_id: userStore.profile?.id || 99, 
+            // Gửi kèm tên để Backend lưu vào DB thay vì hiện "Khách hàng"
+            user_name: userStore.profile?.full_name || userStore.profile?.username || userStore.profile?.name || 'Khách hàng',
+            rating: newReview.rating, 
+            comment: newReview.comment
+        };
+        const res = await api.post(`/products/${product.value.id}/reviews`, payload);
+        if (res.data.success) { 
+            alert('Đánh giá thành công!'); 
+            newReview.comment = ''; 
+            newReview.rating = 5;
+            fetchReviews(product.value.id); 
+        }
+    } catch (e) { alert(e.message); } finally { isSubmitting.value = false; }
+}
+
+// 3. THÊM HÀM MỚI: Gửi Phản Hồi (Reply)
+async function submitReply(reviewId) {
+    if (!replyText.value.trim()) return;
+    
+    try {
+        const payload = { 
+            reply: replyText.value.trim(),
+            // GỬI KÈM TÊN USER ĐANG ĐĂNG NHẬP
+            user_name: userStore.profile?.full_name || userStore.profile?.username || 'Khách hàng' 
+        };
+        const res = await api.put(`/products/reviews/${reviewId}/reply`, payload);
+        
+        if (res.data.success) {
+            activeReplyId.value = null;
+            replyText.value = '';
+            fetchReviews(product.value.id);
+        }
+    } catch (error) {
+        alert('Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message));
     }
-  } catch (e) {
-    alert(e.message);
-  } finally {
-    isSubmitting.value = false;
-  }
 }
 
 async function handleDeleteReview(reviewId) {

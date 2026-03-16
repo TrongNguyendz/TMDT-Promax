@@ -43,6 +43,7 @@ router.get('/products/:id/download', productServiceProxy);
 router.get('/products/:id/reviews', productServiceProxy); 
 router.get('/products/sku/:sku/primary-image', cacheMiddleware(300), productServiceProxy);
 // --- CAN XAC THUC ---
+router.get('/products/reviews', authMiddleware, productServiceProxy); 
 router.post('/products', authMiddleware, (req, res, next) => {
   clearCache('/api/v1/products'); // Xóa cache cũ
   next();
@@ -89,5 +90,7 @@ router.put('/products/:id/stock', authMiddleware, (req, res, next) => {
 clearCache('/api/v1/products'); // Xóa cache sản phẩm để cập nhật số lượng mới
   next();
 }, productServiceProxy);
+
+
 
 module.exports = router;

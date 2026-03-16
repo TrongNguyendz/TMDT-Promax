@@ -34,8 +34,9 @@
         </h2>
         
         <!-- Trong template của HomePage.vue -->
-        <Chatbot :products="productsStore.products" />
 
+        <Chatbot :products="productsStore.products" />
+        
         <!-- Loading -->
 
         <div v-if="productsStore.loading" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -68,7 +69,7 @@ import { onMounted, ref, computed, watch } from 'vue';
 import ProductCard from '../../components/common/ProductCard.vue';
 import BannerCarousel from '../../components/common/BannerCarousel.vue';
 
-
+import Chat from '../../components/common/Chat.vue';
 import Chatbot from '../../components/common/chatbot.vue';
 import { useCartStore } from '../../stores/cart';
 import { useProductsStore } from '../../stores/products';

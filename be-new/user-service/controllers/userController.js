@@ -235,8 +235,6 @@ exports.updateUser = async (req, res) => {
       full_name: req.body.full_name,
       phone: req.body.phone,
       avatar_url: req.body.avatar_url,
-
-
     };
 
     if (req.body.password) {

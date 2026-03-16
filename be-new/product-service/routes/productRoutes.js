@@ -1,12 +1,14 @@
+// routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
 const reviewController = require('../controllers/reviewController'); 
 const upload = require('../functions/upload'); 
-const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireAdmin, requireStaffOrAdmin } = require('../middleware/authMiddleware');
 
 // --- 1. PUBLIC ---
+router.get('/reviews', verifyToken, requireStaffOrAdmin, reviewController.listAllReviews);
 router.get('/health', productController.healthCheck);
 router.get('/', productController.listProducts);
 router.get('/:id', productController.getProductById);
@@ -21,7 +23,7 @@ if (reviewController) {
     router.get('/:productId/reviews', reviewController.listReviews);
     router.post('/:productId/reviews', verifyToken, reviewController.createReview);
     router.delete('/reviews/:reviewId', verifyToken, reviewController.deleteReview);
-    router.put('/reviews/:reviewId/reply', verifyToken, requireAdmin, reviewController.replyReview);
+    router.put('/reviews/:reviewId/reply', verifyToken, reviewController.replyReview);
 }
 
 // --- 3. ADMIN ONLY ---
