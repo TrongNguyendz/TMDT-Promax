@@ -17,56 +17,14 @@
         <svg class="w-6 h-6 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
         Sản phẩm bán chạy hôm nay
       </h2>
-      <div class="flex flex-col lg:flex-row gap-3 mb-4">
-        <input
-          v-model="productSearch"
-          type="text"
-          placeholder="Tìm sản phẩm..."
-          class="border rounded-lg px-3 py-2 flex-1 dark:bg-gray-800"
-        />
-
-        <select v-model="productStatusFilter" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
-          <option value="">Tất cả trạng thái</option>
-          <option value="Bán chạy">Bán chạy</option>
-          <option value="Tồn thấp">Tồn thấp</option>
-        </select>
-
-        <select v-model="productSort" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
-          <option value="name-asc">Tên A → Z</option>
-          <option value="name-desc">Tên Z → A</option>
-        </select>
-      </div>
       <div class="space-y-4">
-        <ProductItem v-for="product in filteredProducts" :key="product.id" :product="product"/>
+        <ProductItem v-for="product in topProducts" :key="product.id" :product="product" />
       </div>
     </div>
 
     <!-- Đơn hàng gần nhất -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
       <h2 class="text-xl font-bold mb-4">Đơn hàng gần đây</h2>
-      <div class="flex flex-col lg:flex-row gap-3 mb-4">
-        
-        <input
-          v-model="orderSearch"
-          type="text"
-          placeholder="Tìm mã đơn, khách hàng..."
-          class="border rounded-lg px-3 py-2 flex-1 dark:bg-gray-800"
-        />
-
-        <select v-model="orderStatusFilter" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
-          <option value="">Tất cả trạng thái</option>
-          <option value="Đã giao">Đã giao</option>
-          <option value="Chờ đóng gói">Chờ đóng gói</option>
-          <option value="Hủy">Hủy</option>
-        </select>
-
-        <select v-model="orderSort" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
-          <option value="id-asc">Mã đơn A → Z</option>
-          <option value="id-desc">Mã đơn Z → A</option>
-          <option value="customer-asc">Tên khách A → Z</option>
-          <option value="customer-desc">Tên khách Z → A</option>
-        </select>
-      </div>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead>
@@ -78,7 +36,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            <tr v-for="order in filteredOrders" :key="order.id">
+            <tr v-for="order in recentOrders" :key="order.id">
               <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">#{{ order.id }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-sm">{{ order.customer }}</td>
               <td class="px-4 py-4 whitespace-nowrap text-sm">{{ order.items }}</td>
@@ -99,44 +57,6 @@
 import { ref, computed } from 'vue';
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-const productSearch = ref('')
-const productStatusFilter = ref('')
-const productSort = ref('name-asc')
-
-const filteredProducts = computed(() => {
-  let data = [...topProducts.value]
-
-  if (productSearch.value) {
-    const keyword = productSearch.value.toLowerCase()
-    data = data.filter(p =>
-      p.name.toLowerCase().includes(keyword)
-    )
-  }
-
-  if (productStatusFilter.value) {
-    data = data.filter(p =>
-      p.status === productStatusFilter.value
-    )
-  }
-
-  data.sort((a, b) => {
-    if (productSort.value === 'name-asc')
-      return a.name.localeCompare(b.name)
-
-    if (productSort.value === 'name-desc')
-      return b.name.localeCompare(a.name)
-
-    return 0
-  })
-
-  return data
-})
-
-/* ORDER FILTER */
-
-const orderSearch = ref('')
-const orderStatusFilter = ref('')
-const orderSort = ref('id-asc')
 
 const topProducts = ref([
   { id: 1, name: 'Áo thun oversize 2026', sold: 142, totalStock: 800, status: 'Bán chạy' },
@@ -149,45 +69,6 @@ const recentOrders = ref([
   { id: 'ORD-0419', customer: 'Lê Minh C', items: 'Váy maxi x1', status: 'Đã giao' },
   { id: 'ORD-0418', customer: 'Phạm Hồng D', items: 'Áo khoác x3', status: 'Hủy' },
 ]);
-
-const filteredOrders = computed(() => {
-  let data = [...recentOrders.value]
-
-  if (orderSearch.value) {
-    const keyword = orderSearch.value.toLowerCase()
-
-    data = data.filter(o =>
-      o.id.toLowerCase().includes(keyword) ||
-      o.customer.toLowerCase().includes(keyword) ||
-      o.items.toLowerCase().includes(keyword)
-    )
-  }
-
-  if (orderStatusFilter.value) {
-    data = data.filter(o =>
-      o.status === orderStatusFilter.value
-    )
-  }
-
-  data.sort((a, b) => {
-
-    if (orderSort.value === 'id-asc')
-      return a.id.localeCompare(b.id)
-
-    if (orderSort.value === 'id-desc')
-      return b.id.localeCompare(a.id)
-
-    if (orderSort.value === 'customer-asc')
-      return a.customer.localeCompare(b.customer)
-
-    if (orderSort.value === 'customer-desc')
-      return b.customer.localeCompare(a.customer)
-
-    return 0
-  })
-
-  return data
-})
 
 function getStatusClass(status) {
   if (status === 'Đã giao') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
