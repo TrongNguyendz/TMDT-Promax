@@ -1,5 +1,9 @@
 {
   "dependencies": {
+<<<<<<< HEAD
     "express": "^5.2.1"
+=======
+    "mongodb": "^7.1.0"
+>>>>>>> 406bd0b4e49b17da309d3078395a9cb8df6a6198
   }
 }

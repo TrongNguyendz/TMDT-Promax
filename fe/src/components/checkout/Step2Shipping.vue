@@ -63,6 +63,7 @@
 <script setup>
 import { reactive } from 'vue';
 import { useUserStore } from '../../stores/user'
+import { watch } from 'vue';
 const props = defineProps(['shippingInfo', 'paymentMethod']);
 const emit = defineEmits(['next', 'prev', 'update:paymentMethod']);
 const user = useUserStore()
@@ -108,10 +109,11 @@ function validatePhone(phone) {
 
 // HÀM XỬ LÝ KHI NHẤN "TIẾP TỤC"
 const handleSubmit = () => {
+    console.log('Dữ liệu form:', info, 'Payment:', props.paymentMethod);
+    console.log('Errors trước khi check:', { ...errors });
     // 1. Reset lại toàn bộ lỗi trước khi kiểm tra mới
     Object.keys(errors).forEach(key => (errors[key] = ''));
     let isValid = true;
-
     // 2. Kiểm tra Họ tên
     if (!info.fullName || !info.fullName.trim()) {
         errors.fullName = 'Vui lòng nhập họ và tên';
@@ -165,6 +167,13 @@ const handleSubmit = () => {
         errors.paymentMethod = 'Vui lòng chọn phương thức thanh toán';
         isValid = false;
     }
+    
+    if (isValid) {
+        console.log('VALID → emit next');
+        emit('next');
+    } else {
+        console.log('INVALID → không đi tiếp', errors);
+    }
 
     // 10. Nếu tất cả đều hợp lệ, phát sự kiện 'next' để chuyển bước
     if (isValid) {
@@ -174,6 +183,10 @@ const handleSubmit = () => {
         window.scrollTo({ top: 100, behavior: 'smooth' });
     }
 };
+// Thêm tạm vào phần <script setup> của Step2Shipping
+watch(() => props.paymentMethod, (newVal) => {
+  console.log('paymentMethod từ props thay đổi:', newVal);
+});
 </script>
 
 <style scoped>

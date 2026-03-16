@@ -3,7 +3,8 @@ module.exports = {
 	content: ['./index.html', './src/**/*.{vue,js}'],
 	darkMode: 'class',
 	theme: {
-		extend: {}
+		extend: {},
+		
 	},
 	plugins: [require('@tailwindcss/forms')]
 };
