@@ -76,19 +76,19 @@ const router = createRouter({
 	}
 });
 
-router.beforeEach((to) => {
-	const user = useUserStore();
-	if (to.meta?.requiresAuth && !user.isAuthenticated) {
-		return { path: '/auth', query: { redirect: to.fullPath } };
-	}
-	if (to.meta?.publicOnly && user.isAuthenticated) {
-		return { path: '/' };
-	}
-	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
-		return { path: '/' };
-	}
-	return true;
-});
+// router.beforeEach((to) => {
+// 	const user = useUserStore();
+// 	if (to.meta?.requiresAuth && !user.isAuthenticated) {
+// 		return { path: '/auth', query: { redirect: to.fullPath } };
+// 	}
+// 	if (to.meta?.publicOnly && user.isAuthenticated) {
+// 		return { path: '/' };
+// 	}
+// 	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
+// 		return { path: '/' };
+// 	}
+// 	return true;
+// });
 
 export default router;
 
