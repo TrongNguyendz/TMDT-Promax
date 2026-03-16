@@ -38,10 +38,99 @@
       </button>
     </div>
 
+    <!-- FILTER SECTION -->
+    <div class="mt-6 mb-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        
+        <!-- Tìm kiếm chung -->
+        <div class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Tìm kiếm</label>
+          <input 
+            v-model="filters.search"
+            type="text" 
+            placeholder="Tên, email, sđt, username..." 
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          />
+        </div>
+
+        <!-- Chức vụ -->
+        <div class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Chức vụ</label>
+          <select 
+            v-model="filters.position"
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          >
+            <option v-for="opt in positionOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Trạng thái -->
+        <div class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Trạng thái</label>
+          <select 
+            v-model="filters.status"
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          >
+            <option value="all">Tất cả</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngưng hoạt động</option>
+          </select>
+        </div>
+
+        <!-- Chỉ hiển thị ở tab Scheduling -->
+        <div v-if="activeTab === 'scheduling'" class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Có ca trong tuần?</label>
+          <select 
+            v-model="filters.hasShift"
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          >
+            <option value="all">Tất cả</option>
+            <option value="yes">Có ca</option>
+            <option value="no">Không có ca</option>
+          </select>
+        </div>
+
+        <!-- Ghi chú ca -->
+        <div v-if="activeTab === 'scheduling'" class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Ghi chú ca</label>
+          <input 
+            v-model="filters.shiftNote"
+            type="text" 
+            placeholder="Ca sáng, OT, Phụ bếp..." 
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          />
+        </div>
+
+        <!-- Tổng giờ tối thiểu (scheduling) -->
+        <div v-if="activeTab === 'scheduling'" class="space-y-2">
+          <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Tổng giờ ≥</label>
+          <input 
+            v-model.number="filters.minHours"
+            type="number" 
+            min="0" 
+            placeholder="VD: 40" 
+            class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <!-- Nút reset filter -->
+      <div class="mt-5 flex justify-end">
+        <button 
+          @click="resetFilters"
+          class="rounded-xl bg-gray-200 px-6 py-3 text-sm font-bold uppercase tracking-widest text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          XÓA BỘ LỌC
+        </button>
+      </div>
+    </div>
+
     <!-- Management Tab -->
     <div v-if="activeTab === 'management'" class="grid gap-8 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
       <div
-        v-for="staff in staffData"
+        v-for="staff in filteredStaff"
         :key="staff.id"
         class="group relative overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-2 transition-all hover:shadow-2xl hover:shadow-gray-200/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-none"
       >
@@ -119,7 +208,7 @@
           </div>
 
           <!-- Rows -->
-          <template v-for="staff in staffData" :key="staff.id">
+          <template v-for="staff in filteredStaffWithShifts" :key="staff.id">
             <!-- Staff name - sticky -->
             <div class="sticky left-0 z-10 bg-white p-4 font-bold border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800">
               {{ staff.name }}
@@ -180,7 +269,7 @@
         </div>
 
         <form @submit.prevent="saveStaff" class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-          <!-- Name & Position -->
+          <!-- Name & Username -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Họ và Tên *</label>
@@ -191,19 +280,6 @@
               <input v-model="formData.username" type="text" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white" required />
             </div>
           </div>
-
-          <!-- Email & Phone
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Chức vụ *</label>
-              <select v-model="formData.position" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" required>
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="Staff">Staff</option>
-                <option value="Intern">Intern</option>
-              </select>
-            </div>
-          </div> -->
 
           <!-- Email & Phone -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,58 +292,6 @@
               <input v-model="formData.phone" type="tel" placeholder="+84..." class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" />
             </div>
           </div>
-
-          <!-- Avatar Upload -->
-          <!-- <div class="rounded-[2rem] border border-gray-100 bg-gray-50/50 p-8 dark:border-gray-800 dark:bg-gray-900/50">
-            <div class="flex items-center justify-between mb-8 border-b border-gray-100 pb-4 dark:border-gray-800">
-              <label class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white italic">
-                Ảnh Đại Diện
-              </label>
-            </div>
-            <div class="grid gap-10 md:grid-cols-2">
-              <div class="space-y-3">
-                <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                  Tải lên ảnh
-                </label>
-                <div class="relative group aspect-square w-full overflow-hidden rounded-[1.5rem] bg-white dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 transition-all hover:border-black dark:hover:border-white flex items-center justify-center shadow-sm">
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    @change="handleAvatarUpload" 
-                    class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                  />
-                  <div class="text-center transition-transform group-hover:scale-110">
-                    <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-900 text-gray-400 group-hover:text-black dark:group-hover:text-white">
-                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                    </div>
-                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover:text-black dark:group-hover:text-white">TẢI TỪ THIẾT BỊ</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="space-y-3">
-                <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                  Xem trước
-                </label>
-                <div class="relative aspect-square w-full overflow-hidden rounded-[1.5rem] bg-gray-200 dark:bg-black shadow-inner border border-gray-100 dark:border-gray-800">
-                  <img 
-                    v-if="formData.avatar" 
-                    :src="formData.avatar" 
-                    class="h-full w-full object-cover animate-in fade-in zoom-in-95 duration-500" 
-                  />
-                  <div v-else class="flex h-full flex-col items-center justify-center bg-gray-100 dark:bg-gray-800/50">
-                    <div class="h-8 w-8 text-gray-300 mb-2">
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Waiting for avatar...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> -->
-
 
           <!-- Buttons -->
           <div class="flex gap-4 pt-6">
@@ -375,10 +399,6 @@ const ui = useUIStore();
 const user = useUserStore();
 const token = computed(() => user.token);
 
-const avatarPreview = ref('');
-const selectedFile = ref(null);
-const isUpdatingAvatar = ref(false);
-
 const activeTab = ref('management');
 const showModal = ref(false);
 const showDeleteModal = ref(false);
@@ -400,27 +420,18 @@ const API_BASE = "http://localhost:3007";
 
 const getAvatar = (avatar) => {
   if (!avatar) return defaultAvatar;
-
-  // nếu đã là link đầy đủ thì dùng luôn
   if (avatar.startsWith("http")) return avatar;
-
-  // nếu là path từ server
   return API_BASE + avatar;
 };
 
-// Staff Data (sample)
-const staffDatasample = ref([
-  { id: 2000, name: 'Nguyễn Văn A', position: 'Manager', email: 'vana@example.com', phone: '0123456789', avatar: '' },
-  { id: 2001, name: 'Trần Thị B', position: 'Staff', email: 'thib@example.com', phone: '0987654321', avatar: '' },
-  { id: 2002, name: 'Lê Văn C', position: 'Intern', email: 'vanc@example.com', phone: '0112233445', avatar: '' },
-]);
+// Staff Data
 const staffData = ref([]);
 
 const loadStaff = async () => {
   try {
     const res = await getListStaff(token.value);
     console.log("Loaded staff data:", res.data);
-    const staffs = res.data.data;
+    const staffs = res.data.data || [];
 
     staffData.value = staffs.map(s => ({
       id: s.id,
@@ -428,7 +439,8 @@ const loadStaff = async () => {
       name: s.full_name,
       email: s.email,
       phone: s.phone,
-      status: s.status,
+      status: s.status || 'active',
+      position: s.position || 'Staff',      // giả sử có field position
       avatar: s.avatar_url
     }));
   } catch (err) {
@@ -437,39 +449,132 @@ const loadStaff = async () => {
 };
 
 // Shifts Data
-const shifts = ref([]); // { id, staffId, date, start, end, type, color }
+const shifts = ref([]);
 
 async function loadShifts() {
   try {
     const res = await getListShifts(token.value);
-
     if (!res.data.success) return;
 
     shifts.value = res.data.data.map((s) => {
       const date = new Date(s.shift_date).toISOString().split("T")[0];
-
       return {
-        id: s.id ,
+        id: s.id,
         staffId: s.staff_id,
         date: date,
         start: `${date}T${s.start_time}`,
         end: `${date}T${s.end_time}`,
-        type: s.shift_type,
-        status: s.status,
         notes: s.notes,
         color: s.color || '#3b82f6'
       };
     });
-    console.log("Loaded shifts:", shifts.value);
   } catch (err) {
     console.error("Load shifts failed:", err);
   }
 }
 
+// Filters
+const filters = reactive({
+  search: '',
+  position: 'all',
+  status: 'all',
+  hasShift: 'all',
+  shiftNote: '',
+  minHours: null,
+});
+
+const positionOptions = ref([
+  { value: 'all', label: 'Tất cả chức vụ' },
+  { value: 'Admin', label: 'Admin' },
+  { value: 'Manager', label: 'Manager' },
+  { value: 'Staff', label: 'Nhân viên' },
+  { value: 'Intern', label: 'Thực tập sinh' },
+]);
+
+// Filtered Staff for Management Tab
+const filteredStaff = computed(() => {
+  let result = [...staffData.value];
+
+  // Search
+  if (filters.search.trim()) {
+    const term = filters.search.toLowerCase().trim();
+    result = result.filter(s =>
+      (s.name || '').toLowerCase().includes(term) ||
+      (s.email || '').toLowerCase().includes(term) ||
+      (s.phone || '').toLowerCase().includes(term) ||
+      (s.username || '').toLowerCase().includes(term)
+    );
+  }
+
+  // Position
+  if (filters.position !== 'all') {
+    result = result.filter(s => (s.position || 'Staff') === filters.position);
+  }
+
+  // Status
+  if (filters.status !== 'all') {
+    result = result.filter(s => (s.status || 'active') === filters.status);
+  }
+
+  return result;
+});
+
+// Filtered Staff for Scheduling Tab (with shift conditions)
+const filteredStaffWithShifts = computed(() => {
+  let staffList = filteredStaff.value;
+
+  // Has shift this week?
+  if (filters.hasShift !== 'all') {
+    const wantHasShift = filters.hasShift === 'yes';
+    staffList = staffList.filter(staff => {
+      const hasAny = weekDays.value.some(day => getShifts(staff.id, day).length > 0);
+      return wantHasShift ? hasAny : !hasAny;
+    });
+  }
+
+  // Shift note contains
+  if (filters.shiftNote.trim()) {
+    const noteTerm = filters.shiftNote.toLowerCase().trim();
+    staffList = staffList.filter(staff =>
+      weekDays.value.some(day =>
+        getShifts(staff.id, day).some(shift =>
+          (shift.notes || '').toLowerCase().includes(noteTerm)
+        )
+      )
+    );
+  }
+
+  // Min hours this week
+  if (filters.minHours !== null && filters.minHours > 0) {
+    staffList = staffList.filter(staff => {
+      let totalHours = 0;
+      weekDays.value.forEach(day => {
+        getShifts(staff.id, day).forEach(shift => {
+          const start = new Date(shift.start);
+          const end = new Date(shift.end);
+          totalHours += (end - start) / (1000 * 60 * 60);
+        });
+      });
+      return totalHours >= filters.minHours;
+    });
+  }
+
+  return staffList;
+});
+
+function resetFilters() {
+  filters.search = '';
+  filters.position = 'all';
+  filters.status = 'all';
+  filters.hasShift = 'all';
+  filters.shiftNote = '';
+  filters.minHours = null;
+}
+
 // Week Navigation
 const today = new Date();
 const currentWeekStart = ref(new Date(today));
-currentWeekStart.value.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)); // Monday
+currentWeekStart.value.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
 
 const weekDays = computed(() => {
   const days = [];
@@ -514,25 +619,23 @@ const shiftForm = ref({
   date: '',
   startTime: '08:00',
   endTime: '17:00',
-  note: 'Ca làm việc',
+  note: '',
   color: '#3b82f6'
 });
 
-function openShiftModal(staff, date, shiftToEdit = null) {   // ← thêm tham số shiftToEdit
+function openShiftModal(staff, date, shiftToEdit = null) {
   if (shiftToEdit) {
-    // đang sửa
     editingShift.value = shiftToEdit;
     shiftForm.value = {
       id: shiftToEdit.id,
       staffId: shiftToEdit.staffId,
       date: shiftToEdit.date,
       startTime: shiftToEdit.start.split('T')[1]?.slice(0,5) || '08:00',
-      endTime:   shiftToEdit.end.split('T')[1]?.slice(0,5)   || '17:00',
+      endTime: shiftToEdit.end.split('T')[1]?.slice(0,5) || '17:00',
       note: shiftToEdit.notes || '',
       color: shiftToEdit.color || '#3b82f6'
     };
   } else {
-    // thêm mới
     editingShift.value = null;
     shiftForm.value = {
       id: null,
@@ -547,44 +650,6 @@ function openShiftModal(staff, date, shiftToEdit = null) {   // ← thêm tham s
   showShiftModal.value = true;
 }
 
-// function saveShift() {
-//   if (!shiftForm.value.staffId || !shiftForm.value.date || !shiftForm.value.startTime || !shiftForm.value.endTime) {
-//     ui.pushToast({ type: 'error', message: 'Vui lòng điền đầy đủ thông tin ca làm' });
-//     return;
-//   }
-
-//   const start = `${shiftForm.value.date}T${shiftForm.value.startTime}:00`;
-//   const end = `${shiftForm.value.date}T${shiftForm.value.endTime}:00`;
-
-//   if (editingShift.value) {
-//     const idx = shifts.value.findIndex(s => s.id === editingShift.value.id);
-//     if (idx !== -1) {
-//       shifts.value[idx] = {
-//         ...shifts.value[idx],
-//         staffId: shiftForm.value.staffId,
-//         date: shiftForm.value.date,
-//         start,
-//         end,
-//         type: shiftForm.value.type,
-//         color: shiftForm.value.color
-//       };
-//     }
-//   } else {
-//     const newId = shifts.value.length ? Math.max(...shifts.value.map(s => s.id)) + 1 : 1;
-//     shifts.value.push({
-//       id: newId,
-//       staffId: shiftForm.value.staffId,
-//       date: shiftForm.value.date,
-//       start,
-//       end,
-//       type: shiftForm.value.type,
-//       color: shiftForm.value.color
-//     });
-//   }
-//   console.log('Saved shift:', shiftForm.value);
-//   ui.pushToast({ type: 'success', message: 'Đã lưu ca làm việc' });
-//   closeShiftModal();
-// }
 async function saveShift() {
   if (!shiftForm.value.staffId || !shiftForm.value.date || 
       !shiftForm.value.startTime || !shiftForm.value.endTime) {
@@ -592,39 +657,30 @@ async function saveShift() {
     return;
   }
 
-  // Chuẩn bị payload đúng format backend mong đợi
   const payload = {
     staff_id: Number(shiftForm.value.staffId),
     shift_date: shiftForm.value.date,
-    start_time: shiftForm.value.startTime + ':00',   // backend thường mong đợi HH:mm:ss
-    end_time:   shiftForm.value.endTime   + ':00',
-    // shift_type: shiftForm.value.type.trim() || null,
+    start_time: shiftForm.value.startTime + ':00',
+    end_time: shiftForm.value.endTime + ':00',
     notes: shiftForm.value.note.trim() || null,
     color: shiftForm.value.color || null,
-    // status: 'scheduled', // nếu backend yêu cầu
   };
-  console.log("dữ liệu được gửi:", payload); 
+
   try {
     let res;
-
     if (editingShift.value) {
-      // UPDATE
       res = await updateShift(editingShift.value.id, payload, token.value);
       ui.pushToast({ type: 'success', message: 'Đã cập nhật ca làm việc' });
     } else {
-      // CREATE
       res = await createShift(payload, token.value);
       ui.pushToast({ type: 'success', message: 'Đã tạo ca làm việc mới' });
     }
-
-    // Reload lại danh sách ca
     await loadShifts();
-
   } catch (err) {
     console.error("Lỗi lưu ca làm:", err);
     ui.pushToast({ 
       type: 'error', 
-      message: err.response?.data?.message || 'Không thể lưu ca làm việc. Vui lòng thử lại.' 
+      message: err.response?.data?.message || 'Không thể lưu ca làm việc' 
     });
   }
 
@@ -641,36 +697,16 @@ function getShifts(staffId, date) {
   return shifts.value.filter(s => s.staffId === staffId && s.date === dateStr);
 }
 
-// function removeShift(shift) {
-//   if (confirm(`Xóa ca ${shift.type || ''} của ${getStaffName(shift.staffId)} ?`)) {
-//     shifts.value = shifts.value.filter(s => s.id !== shift.id);
-//     ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
-//   }
-// }
-
 async function removeShift(shift) {
-  if (!confirm(`Xác nhận xóa ca "${shift.type || '—'}" của ${getStaffName(shift.staffId)} ?`)) {
-    return;
-  }
+  if (!confirm(`Xác nhận xóa ca của ${getStaffName(shift.staffId)} ?`)) return;
 
   try {
-    // Nếu bạn muốn soft-delete (status = cancelled)
-    // await deleteShift(shift.id, token.value);
-
-    // Nếu bạn muốn xóa cứng hẳn khỏi database
     await hardDeleteShift(shift.id, token.value);
-
     ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
-
-    // Cập nhật lại danh sách
     await loadShifts();
-
   } catch (err) {
     console.error("Lỗi xóa ca:", err);
-    ui.pushToast({ 
-      type: 'error', 
-      message: err.response?.data?.message || 'Không thể xóa ca làm việc' 
-    });
+    ui.pushToast({ type: 'error', message: 'Không thể xóa ca làm việc' });
   }
 }
 
@@ -679,7 +715,7 @@ function getStaffName(id) {
   return staff ? staff.name : 'Unknown';
 }
 
-// Timeline Height Calculation
+// Timeline helpers
 const DAY_START_HOUR = 6;
 const DAY_END_HOUR = 23;
 const PIXELS_PER_HOUR = 60;
@@ -695,96 +731,38 @@ function formatTime(isoString) {
   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-// Stats
+// Stats (dựa trên tất cả shifts, không lọc)
 const totalShifts = computed(() => shifts.value.length);
 
 const totalHours = computed(() => {
   return shifts.value.reduce((sum, shift) => {
     const start = new Date(shift.start);
     const end = new Date(shift.end);
-    const diff = (end - start) / (1000 * 60 * 60);
-    return sum + diff;
+    return sum + (end - start) / (1000 * 60 * 60);
   }, 0).toFixed(1);
 });
 
 // Staff CRUD
 function openCreateModal() {
   editingId.value = null;
-  Object.assign(formData, { name: '', username: '', email: '', phone: '', avatar: '' });
+  Object.assign(formData, { full_name: '', username: '', email: '', phone: '', avatar_url: '' });
   fileToUpload.value = null;
   showModal.value = true;
 }
 
 function editStaff(staff) {
-
   editingId.value = staff.id;
-
   formData.user_id = staff.user_id;
   formData.full_name = staff.name;
   formData.email = staff.email;
   formData.phone = staff.phone;
+  formData.username = staff.username || '';
   formData.avatar_url = staff.avatar;
-  avatarPreview.value = staff.avatar || '/default-avatar.png';
   showModal.value = true;
 }
 
-const onFileChange = async (e) => {
-
-  const file = e.target.files[0];
-  if (!file) return;
-
-  selectedFile.value = file;
-
-  // preview ảnh
-  avatarPreview.value = URL.createObjectURL(file);
-
-  // nếu đang edit thì upload luôn
-  if (editingId.value) {
-
-    try {
-
-      isUpdatingAvatar.value = true;
-
-      await uploadStaffAvatar(editingId.value, file, token.value);
-
-      await loadStaff();
-
-    } catch (err) {
-
-      console.error("Upload avatar failed:", err);
-
-    } finally {
-
-      isUpdatingAvatar.value = false;
-
-    }
-  
-  }
-};
-
-function closeModal() {
-  showModal.value = false;
-  fileToUpload.value = null;
-}
-
-function handleAvatarUpload(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) {
-    ui.pushToast({ type: 'error', message: 'Ảnh tối đa 5MB' });
-    return;
-  }
-  fileToUpload.value = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    formData.avatar = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-const saveStaff = async () => {
+async function saveStaff() {
   try {
-
     const payload = {
       user_id: formData.user_id,
       full_name: formData.full_name,
@@ -792,67 +770,52 @@ const saveStaff = async () => {
       phone: formData.phone,
       username: formData.username
     };
-    console.log("Saving staff with payload:", payload, "Editing ID:", editingId.value);
+
     if (editingId.value) {
-
       await updateStaff(editingId.value, payload, token.value);
-
     } else {
-
       const res = await createStaff(payload, token.value);
-
       if (fileToUpload.value) {
         await uploadStaffAvatar(res.data.data.id, fileToUpload.value, token.value);
       }
-
     }
 
     await loadStaff();
-
     showModal.value = false;
-
   } catch (err) {
     console.error("Save staff error:", err);
+    ui.pushToast({ type: 'error', message: 'Lưu nhân viên thất bại' });
   }
-};
+}
 
 function deleteStaff1(staff) {
   staffToDelete.value = staff;
   showDeleteModal.value = true;
 }
 
-const confirmDelete = async () => {
-  if (staffToDelete.value) {
-    console.log("thông tin nhân viên cần xóa:", staffToDelete.value);
-    try {
-      const res = await hardDeleteStaff(staffToDelete.value.id, user.token);
-      if (res.data.success) {
-        ui.pushToast({ type: 'success', message: 'Xóa nhân viên thành công' });
-        await loadStaff();
-      } else {
-        ui.pushToast({ type: 'error', message: 'Xóa nhân viên thất bại' });
-      }
-    } catch (err) {
-      console.error('Lỗi xóa nhân viên:', err);
-      ui.pushToast({ type: 'error', message: 'Xóa nhân viên thất bại, vui lòng thử lại' });
-    } finally {
-      showDeleteModal.value = false;
-      staffToDelete.value = null;
+async function confirmDelete() {
+  if (!staffToDelete.value) return;
+
+  try {
+    const res = await hardDeleteStaff(staffToDelete.value.id, token.value);
+    if (res.data.success) {
+      ui.pushToast({ type: 'success', message: 'Xóa nhân viên thành công' });
+      await loadStaff();
     }
-  }
-  else {
-    ui.pushToast({ type: 'error', message: 'Không tìm thấy nhân viên để xóa' });
+  } catch (err) {
+    console.error('Lỗi xóa nhân viên:', err);
+    ui.pushToast({ type: 'error', message: 'Xóa nhân viên thất bại' });
+  } finally {
     showDeleteModal.value = false;
     staffToDelete.value = null;
   }
-};
+}
 
 function openBulkAssignModal() {
   ui.pushToast({ type: 'info', message: 'Chức năng phân công hàng loạt đang phát triển' });
 }
 
 onMounted(() => {
-  // Nếu sau này có API thì load dữ liệu ở đây
   loadStaff();
   loadShifts();
 });
@@ -862,7 +825,6 @@ onMounted(() => {
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #e5e7eb;
   border-radius: 10px;

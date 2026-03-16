@@ -7,7 +7,7 @@ import { useUIStore } from './ui';
 
 export const useCheckoutStore = defineStore('checkout', () => {
     // --- STATE ---
-    const currentStep = ref(1); // 1: Review, 2: Shipping, 3: Payment, 4: Success
+    const currentStep = ref(1); 
 
     const shippingInfo = ref({
         fullName: '',
@@ -20,52 +20,48 @@ export const useCheckoutStore = defineStore('checkout', () => {
         note: ''
     });
     
-    const paymentMethod = ref('cod'); // cod | vnpay | momo
+    const paymentMethod = ref('cod'); 
     const processing = ref(false);
+    
     // Voucher state
     const voucherCode = ref('');
-    const appliedVoucher = ref(null); // { code, type, value, minOrder, expiry }
+    const appliedVoucher = ref(null); 
     const discountAmount = ref(0);
 
     // --- ACTIONS ---
 
-    // Chuyển bước
     const nextStep = () => { if (currentStep.value < 3) currentStep.value++; };
     const previousStep = () => { if (currentStep.value > 1) currentStep.value--; };
     const goToStep = (step) => { currentStep.value = step; };
 
-    // Reset form
     const reset = () => {
         currentStep.value = 1;
         paymentMethod.value = 'cod';
         voucherCode.value = '';
         appliedVoucher.value = null;
         discountAmount.value = 0;
-        // Có thể reset shippingInfo nếu muốn, hoặc giữ lại nhờ persist
     };
 
-    // Voucher helpers
-    const applyVoucher = async (code, cartTotal, availableVouchers = []) => {
-        // Normalize and guards
+    const applyVoucher = async (code, cartTotal, availableVouchers =[]) => {
         if (!code) return { success: false, message: 'Vui lòng nhập mã' };
         const found = availableVouchers.find(v => v.code.toLowerCase() === code.toLowerCase());
         if (!found) return { success: false, message: 'Mã không tồn tại' };
-        // Check expiry
+        
         if (found.expiry && new Date(found.expiry) < new Date()) return { success: false, message: 'Mã đã hết hạn' };
-        // Ensure numbers
+        
         const couponValue = Number(found.value ?? found.discountValue ?? 0);
         const total = Number(cartTotal ?? 0);
         if (isNaN(couponValue) || couponValue <= 0) return { success: false, message: 'Giá trị mã không hợp lệ' };
-        // Check min order
+        
         if (found.minOrder && total < Number(found.minOrder)) return { success: false, message: `Đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(found.minOrder)} ₫` };
-        // Calculate discount amount
+        
         let discount = 0;
         if (found.type === 'percentage' || found.type === 'Percentage') {
             discount = Math.round((couponValue / 100) * total);
         } else {
             discount = Math.min(Number(couponValue), total);
         }
-        // Ensure discount is non-negative integer and not larger than total
+        
         discount = Number.isFinite(discount) ? Math.max(0, Math.round(discount)) : 0;
         voucherCode.value = code;
         appliedVoucher.value = found;
@@ -86,19 +82,21 @@ export const useCheckoutStore = defineStore('checkout', () => {
         const orderStore = useOrderStore();
         const uiStore = useUIStore();
         
-        // 1. Kiểm tra đăng nhập (Sử dụng profile.id như đã sửa ở user store)
-        if (!userStore.profile?.id) {
+        // 1. Kiểm tra đăng nhập (Bây giờ code siêu gọn, chỉ cần gọi .id vì Backend đã chuẩn hóa)
+        const userId = userStore.profile?.id;
+        const userEmail = userStore.profile?.email || 'guest@example.com';
+
+        if (!userStore.token || !userId) {
             uiStore.pushToast({ type: 'error', message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' });
             return false;
         }
 
-        // 2. Kiểm tra giỏ hàng
+        // 2. Validate giỏ hàng & địa chỉ
         if (cartStore.items.length === 0) {
             uiStore.pushToast({ type: 'warning', message: 'Giỏ hàng đang trống' });
             return false;
         }
 
-        // 3. Validate thông tin giao hàng
         const info = shippingInfo.value;
         if (!info.fullName || !info.phone || !info.address || !info.province) {
             uiStore.pushToast({ type: 'warning', message: 'Vui lòng điền đầy đủ thông tin giao hàng' });
@@ -108,29 +106,24 @@ export const useCheckoutStore = defineStore('checkout', () => {
         processing.value = true;
 
         try {
-            // 4. Chuẩn bị dữ liệu (Payload) gửi đi
-            // Map từ Cart Item (LocalStorage) sang Order Item (Backend DB)
+            // 3. Đóng gói Items
             const orderItems = cartStore.items.map(item => ({
-                product_id: Number(item.product_id), // Đảm bảo là số
+                product_id: item.product_id || item.id, // Vẫn giữ item.id phòng hờ data cũ trong LocalStorage
                 quantity: Number(item.quantity),
-                
-                // Snapshot dữ liệu (Lưu cứng tên, giá, ảnh lúc mua)
                 product_name: item.product_name || item.name, 
                 product_image: item.product_image || item.image,
                 unit_price: Number(item.price),
-                
-                // Biến thể (nếu có)
                 color: item.color || null,
                 size: item.size || null
             }));
 
-            // Tạo chuỗi địa chỉ đầy đủ
             const fullAddressString = `${info.address}, ${info.ward}, ${info.district}, ${info.province}`;
 
+            // 4. Payload chuẩn gửi Order Service
             const payload = {
-                user_id: userStore.profile.id, 
-                email_user : userStore.profile.email,
-                notification_type : "invoice",
+                user_id: userId, 
+                email_user: userEmail,
+                notification_type: "invoice", // Phục vụ Notification Service
                 
                 items: orderItems,
                 shipping_address: {
@@ -140,27 +133,25 @@ export const useCheckoutStore = defineStore('checkout', () => {
                     city: info.province
                 },
                 payment_method: paymentMethod.value,
-                shipping_fee: 0, // Tính phí ship sau nếu cần
+                shipping_fee: 0, 
                 notes: info.note,
+                
                 voucher: appliedVoucher.value ? appliedVoucher.value.code : null,
                 discount_amount: discountAmount.value || 0,
-                // Backend có thể cần final_amount để tính toán thanh toán
-                // make sure subtotal is a number (cartStore.subtotal may be a computed ref)
-                final_amount: Math.round((Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0)) - (Number(discountAmount.value) || 0))
+                // Tính toán Final Amount ngay tại client
+                final_amount: Math.max(0, Math.round((Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0)) - (Number(discountAmount.value) || 0)))
             };
-            console.log('dữ liệu được truyền đi là ',payload) ;
-            // 5. Gọi Order Store để bắn API
-            console.log('DEBUG submitOrder payload', { payload, discountAmount: discountAmount.value, appliedVoucher: appliedVoucher.value });
+
+            console.log('📦 Payload gửi đi chuẩn:', payload); 
+
+            // 5. Gửi lên Gateway
             const newOrder = await orderStore.createOrder(payload);
-            console.log('DEBUG submitOrder response', newOrder);
 
             if (newOrder) {
-                // Thành công -> Trả về object đơn hàng để CheckoutPage xử lý tiếp (ví dụ: gọi VNPay)
                 return newOrder; 
             }
         } catch (error) {
-            console.error("Lỗi submitOrder:", error);
-            // Lỗi chi tiết đã được axios interceptor hiển thị toast
+            console.error("❌ Lỗi submitOrder:", error);
             return false;
         } finally {
             processing.value = false;
@@ -181,11 +172,10 @@ export const useCheckoutStore = defineStore('checkout', () => {
         reset,
         applyVoucher,
         removeVoucher,
-        submitOrder // 👈 ĐÃ CÓ HÀM NÀY
+        submitOrder 
     };
 }, {
-    // Lưu lại thông tin nhập liệu để F5 không mất
     persist: {
-        paths: ['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount']
+        paths:['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount']
     }
 });
