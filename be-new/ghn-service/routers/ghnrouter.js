@@ -21,12 +21,9 @@ router.post("/order/fee", ghnController.calculateShippingFee);
 // Lấy thông tin đơn hàng (acter khách hàng)
 router.get("/order/infor", ghnController.getOrderInfo);
 
-// Lấy danh sách tỉnh thành
-router.get("/province", ghnController.getProvince);
-// Lấy danh sách quận huyện theo tỉnh thành
-router.get("/district/:provinceId", ghnController.getDistrict);
-// Lấy danh sách phường xã theo quận huyện
-router.post("/ward/:districtId", ghnController.getWard);
-
+// GHN Master data endpoints
+router.get("/province", ghnController.getProvinces);
+router.get("/district/:provinceId", ghnController.getDistricts);
+router.get("/ward/:districtId", ghnController.getWards);
 
 module.exports = router;

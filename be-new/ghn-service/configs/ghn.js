@@ -26,14 +26,6 @@ class GHNConfig {
         "Content-Type": "application/json",
       },
     });
-
-    this.ghnAxiosProvince = axios.create({
-      baseURL: process.env.GHN_BASE_URL_PROVINCE,
-      headers: {
-        Token: process.env.GHN_TOKEN,
-        "Content-Type": "application/json",
-      },
-    });
   }
 }
 

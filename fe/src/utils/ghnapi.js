@@ -74,44 +74,8 @@ const getOrderInfov2 = async (order_code) => {
 };
 
 // API lấy danh sách tỉnh thành
-const getProvinces = async () => {
-  try {
-    const res = await axios.get("http://localhost:3008/api/ghn/province");
-    return res.data;
-  } catch (error) {
-    console.error("🔥 GHN ERROR:", error.response?.data || error.message);
-    throw error;
-  }
-};
-// API lấy danh sách quận huyện theo tỉnh thành
-const getDistricts = async (provinceId) => {
-  try {
-    const res = await axios.get(
-      `http://localhost:3008/api/ghn/district/${provinceId}`,
-    );
-    return res.data;
-  } catch (error) {
-    console.error("🔥 GHN ERROR:", error.response?.data || error.message);
-    throw error;
-  }
-};
-// API lấy danh sách phường xã theo quận huyện
-const getWards = async (districtId) => {
-  try {
-    const res = await axios.get(
-      `http://localhost:3008/api/ghn/ward/${districtId}`,
-    );
-    return res.data;
-  } catch (error) {
-    console.error("🔥 GHN ERROR:", error.response?.data || error.message);
-    throw error;
-  }
-};
 
-module.exports = {
-  getProvinces,
-  getDistricts,
-  getWards,
+export {
   createOrder,
   getPreview,
   getDeliveryTime,

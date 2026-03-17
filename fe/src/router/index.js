@@ -20,6 +20,7 @@ const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
 const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
 const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
 const Invoice = () => import('../pages/customer/Invoice.vue');
+const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
@@ -52,6 +53,7 @@ const StaffComment = () => import('../pages/Staff/Comment.vue')
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
+	{ path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage },
 	{ path: '/checkout', component: CheckoutPage },
