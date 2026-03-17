@@ -467,6 +467,11 @@ const confirmDelete = async () => {
       bannerToDelete.value = null;
     }
   }
+  else {
+    ui.pushToast({ type: 'error', message: 'Không tìm thấy banner để xóa' });
+    showDeleteModal.value = false;
+    bannerToDelete.value = null;
+  }
 };
 
 </script>

@@ -1,0 +1,16 @@
+{
+    "name": "admin-service",
+    "version": "1.0.0",
+    "description": "Notification Service for E-commerce",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.22.1",
+        "multer": "^2.0.2",
+        "sqlite3": "^5.1.7"
+    }
+}
