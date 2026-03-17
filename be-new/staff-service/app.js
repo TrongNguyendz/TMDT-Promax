@@ -6,7 +6,6 @@ require('dotenv').config();
 require('./config/connectdata');
 
 const staffRoutes = require('./routes/staffRoutes');
-const shiftRoutes = require('./routes/shiftRoutes');
 
 const app = express();
 
@@ -18,6 +17,5 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'upload')));
 
 app.use('/api/staff', staffRoutes);
-app.use('/api/shifts', shiftRoutes);
 
 module.exports = app;

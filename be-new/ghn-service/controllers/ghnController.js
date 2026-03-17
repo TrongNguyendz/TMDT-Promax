@@ -129,45 +129,38 @@ const ghnController = {
     }
   },
 
-  // GHN master-data: lấy danh sách tỉnh
-  getProvinces: async (req, res) => {
-    try {
-      const result = await GHNService.getProvinces();
-      res.json(result);
-    } catch (error) {
-      console.error("🔥 Error in getProvinces:", error.response?.data || error.message);
-      res.status(500).json({ error: error.response?.data || error.message });
-    }
-  },
-
-  // GHN master-data: lấy danh sách quận theo province_id
-  getDistricts: async (req, res) => {
-    try {
-      const { provinceId } = req.params;
-      const result = await GHNService.getDistricts(provinceId);
-      res.json(result);
-    } catch (error) {
-      console.error("🔥 Error in getDistricts:", error.response?.data || error.message);
-      res.status(500).json({ error: error.response?.data || error.message });
-    }
-  },
-
-  // GHN master-data: lấy danh sách xã theo district_id
-  getWards: async (req, res) => {
-    try {
-      const { districtId } = req.params;
-      const result = await GHNService.getWards(districtId);
-      res.json(result);
-    } catch (error) {
-      console.error("🔥 Error in getWards:", error.response?.data || error.message);
-      res.status(500).json({ error: error.response?.data || error.message });
-    }
-  },
-
   //lấy thông tin đơn hàng (acter khách hàng)
   getOrderInfo: async (req, res) => {
     try {
       const result = await GHNService.getOrderInfo(req.params.orderId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  //lấy danh sách tỉnh thành
+  getProvince: async (req, res) => {
+    try {
+      const result = await GHNService.getProvince();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+  //lấy danh sách quận huyện theo tỉnh thành
+  getDistrict: async (req, res) => {
+    try {
+      const result = await GHNService.getDistrict(req.params.provinceId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+  //lấy danh sách phường xã theo quận huyện
+  getWard: async (req, res) => {
+    try {
+      const result = await GHNService.getWard(req.params.districtId);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
