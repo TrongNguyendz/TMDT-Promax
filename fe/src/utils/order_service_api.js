@@ -65,7 +65,7 @@ export default {
     return orderApi.delete(`/orders/${id}`);
   },
 
-  getWishlist() {
+  getWishlist(userId) {
     return orderApi.get('/wishlists', { params: { user_id: userId } });
   },
 

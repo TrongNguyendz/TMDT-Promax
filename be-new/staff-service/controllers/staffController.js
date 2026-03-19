@@ -70,6 +70,15 @@ exports.getStaffById = async (req, res) => {
   }
 };
 
+// lấy thông tin nhân viên theo user_id (number) - dùng cho auth middleware
+exports.getStaffByUserId = async (user_id) => {
+  if (isNaN(user_id)) {
+    throw new Error('User ID không hợp lệ');
+  }
+  return await Staff.findOne({ user_id });
+};
+
+
 /**
  * Tạo nhân viên mới
  * POST /api/staff

@@ -3,7 +3,7 @@ const generateOrderNumber = require('../functions/orderNumber');
 
 // Định nghĩa Schema cho Item 
 const OrderItemSchema = new mongoose.Schema({
-    product_id: { type: Number, required: true },
+    product_id: { type: String, required: true },
     product_name: String,
     product_image: String,
     unit_price: Number,
@@ -16,7 +16,7 @@ const OrderItemSchema = new mongoose.Schema({
 //  Định nghĩa Schema cho Order
 const OrderSchema = new mongoose.Schema({
     order_number: { type: String, unique: true },
-    user_id: { type: Number, required: true },
+    user_id: { type: String, required: true },
     
     // Snapshot Address
     shipping_fullname: String,

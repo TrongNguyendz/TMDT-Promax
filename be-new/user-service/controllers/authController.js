@@ -118,9 +118,7 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-
     return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email và mật khẩu' });
-
   }
 
   try {
@@ -139,45 +137,48 @@ exports.login = async (req, res) => {
 
       if (now < expires && password === user.temp_password) {
         isValid = true;
-        // Xóa mật khẩu phụ sau khi dùng thành công
-        await UserModel.clearTempPassword(user.id);
+        await UserModel.clearTempPassword(user.id || user._id);
 
-        // Có thể trả về flag để frontend biết là dùng mật khẩu phụ → bắt buộc đổi mật khẩu
         const sanitized = UserModel.sanitizeUser(user);
-        const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+        const userId = user.id || user._id; // Lấy ID an toàn
+
+        const token = signToken({ id: userId, email: sanitized.email, role: sanitized.role });
 
         return res.status(200).json({
           success: true,
           message: 'Đăng nhập thành công bằng mật khẩu phụ. Vui lòng đổi mật khẩu mới ngay!',
           data: { 
-            user: sanitized, 
+            user: { ...sanitized, id: userId }, // Ép ID vào để chắc chắn có
             token,
-            require_password_change: true  // flag quan trọng
+            require_password_change: true  
           }
         });
       }
     }
 
-
     if (!isValid) {
       return res.status(401).json({ success: false, message: 'Thông tin đăng nhập không hợp lệ' });
     }
 
-
     // Đăng nhập thành công bình thường
-    await UserModel.clearTempPassword(user.id); // xóa temp nếu có
-
+    await UserModel.clearTempPassword(user.id || user._id); 
 
     const sanitized = UserModel.sanitizeUser(user);
-    const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+    const userId = user.id || user._id; // Lấy ID an toàn
+
+    const token = signToken({ id: userId, email: sanitized.email, role: sanitized.role });
 
     res.status(200).json({
       success: true,
       message: 'Đăng nhập thành công',
-      data: { user: sanitized, token }
+      data: { 
+        user: { ...sanitized, id: userId }, // 👇 Ép ID vào object user trả về Frontend
+        token 
+      }
     });
 
   } catch (error) {
+    console.error("Login Error:", error);
     res.status(500).json({
       success: false,
       message: 'Không thể đăng nhập',

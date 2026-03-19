@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   id: { 
-    type: Number, 
+    type: String, 
     unique: true,
     // Không cần required: true vì pre-save hook sẽ gán giá trị
   },
@@ -21,6 +21,16 @@ const UserSchema = new mongoose.Schema({
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
+
+// 👇[CHANGE] THÊM ĐOẠN NÀY VÀO ĐỂ LÀM SẠCH DỮ LIỆU TRẢ VỀ 👇
+UserSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false, // Ẩn trường __v
+  transform: function (doc, ret) {
+    delete ret._id;  // Ẩn trường _id gốc của Mongo, chỉ giữ lại 'id' số của bạn
+  }
+});
+// 👆 HẾT PHẦN THÊM 👆
 
 // Index
 UserSchema.index({ id: 1 });
@@ -52,11 +62,11 @@ const User = mongoose.model('User', UserSchema);
 // Helper functions
 const sanitizeUser = (user) => {
   if (!user) return null;
-  const obj = user.toObject ? user.toObject() : user;
-  const { _id, password_hash, temp_password, temp_password_expires, ...safe } = obj;
+  // Dùng toJSON() thay vì toObject() để áp dụng cái Transform ở trên
+  const obj = typeof user.toJSON === 'function' ? user.toJSON() : user;
+  const { password_hash, temp_password, temp_password_expires, ...safe } = obj;
   return safe;
 };
-
 exports.sanitizeUser = sanitizeUser;
 
 exports.findById = async (id) => {
@@ -79,7 +89,7 @@ exports.listUsers = async (filters = {}) => {
   if (filters.role) query.role = filters.role;
   if (filters.status) query.status = filters.status;
   if (filters.search) {
-    query.$or = [
+    query.$or =[
       { full_name: { $regex: filters.search, $options: 'i' } },
       { email: { $regex: filters.search, $options: 'i' } },
     ];

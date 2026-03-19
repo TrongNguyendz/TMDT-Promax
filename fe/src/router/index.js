@@ -20,6 +20,7 @@ const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
 const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
 const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
 const Invoice = () => import('../pages/customer/Invoice.vue');
+// const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
@@ -52,6 +53,7 @@ const StaffComment = () => import('../pages/Staff/Comment.vue')
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
+	// { path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage },
 	{ path: '/checkout', component: CheckoutPage },
@@ -62,6 +64,8 @@ const routes = [
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
 	{ path: '/try-on/:id', component: TryOnClothesWithAI },
+	// { path: '/total-amount', component: TotalAmountSpent },
+	// { path: '/support', component: SupportPage },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },

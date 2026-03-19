@@ -154,7 +154,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { getTopProducts } from '@/utils/product_service_api';
+import orderApi from '@/utils/order_service_api';
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
 const productSearch = ref('')
@@ -196,17 +198,56 @@ const orderSearch = ref('')
 const orderStatusFilter = ref('')
 const orderSort = ref('id-asc')
 
-const topProducts = ref([
-  { id: 1, name: 'Áo thun oversize 2026', sold: 142, totalStock: 800, status: 'Bán chạy' },
-  { id: 2, name: 'Quần jeans slim fit', sold: 45, totalStock: 120, status: 'Tồn thấp' },
-]);
+const topProducts = ref([]);
 
-const recentOrders = ref([
-  { id: 'ORD-0421', customer: 'Nguyễn Văn A', items: 'Áo thun x2', status: 'Đã giao' },
-  { id: 'ORD-0420', customer: 'Trần Thị B', items: 'Quần jeans x4', status: 'Chờ đóng gói' },
-  { id: 'ORD-0419', customer: 'Lê Minh C', items: 'Váy maxi x1', status: 'Đã giao' },
-  { id: 'ORD-0418', customer: 'Phạm Hồng D', items: 'Áo khoác x3', status: 'Hủy' },
-]);
+const loadTopProducts = async () => {
+  try {
+    const res = await orderApi.getReportStats()
+
+    const data = res.data.data.topProducts || []
+
+    topProducts.value = data.map(p => ({
+      id: p._id || p.product_id,
+      name: p.name,
+      sold: p.sold || p.totalSold || 0,
+      totalStock: p.stock || 0,
+      status: p.sold > 50 ? 'Bán chạy' : 'Tồn thấp'
+    }))
+
+  } catch (err) {
+    console.error('❌ Load top products lỗi:', err)
+  }
+}
+
+const recentOrders = ref([]);
+
+const loadRecentOrders = async () => {
+  try {
+    const res = await orderApi.getOrders()
+
+    const data = res.data.data || []
+
+    recentOrders.value = data.slice(0, 10).map(o => ({
+      id: o._id || o.id,
+      customer: o.customer_name,
+      items: o.items?.length + ' sản phẩm',
+      status: mapStatus(o.status)
+    }))
+
+  } catch (err) {
+    console.error('❌ Load orders lỗi:', err)
+  }
+}
+
+const mapStatus = (status) => {
+  switch (status) {
+    case 'delivered': return 'Đã giao'
+    case 'processing': return 'Chờ đóng gói'
+    case 'pending': return 'Chờ đóng gói'
+    case 'cancelled': return 'Hủy'
+    default: return status
+  }
+}
 
 const filteredOrders = computed(() => {
   let data = [...recentOrders.value]
@@ -279,4 +320,10 @@ function getStatusClass(status) {
   if (status === 'Hủy') return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
   return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 }
+
+onMounted(() => {
+  loadTopProducts()
+  loadRecentOrders()
+})
+
 </script>
