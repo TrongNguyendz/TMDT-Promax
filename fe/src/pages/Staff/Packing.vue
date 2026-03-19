@@ -92,12 +92,10 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import orderApi from '@/utils/order_service_api';
 
 const orderCode = ref('');
-const recentPacks = ref([
-  { id: 1, customer: 'Nguyễn Văn A', order: 'ORD-987654', time: '10:15' },
-  { id: 2, customer: 'Trần Thị B', order: 'ORD-123456', time: '10:12' },
-]);
+const recentPacks = ref([]);
 const message = ref(null);
 
 const packSearch = ref('')
@@ -121,11 +119,11 @@ const filteredPacks = computed(() => {
 
   // sort time
   if (timeSort.value === 'asc') {
-    data.sort((a, b) => a.id - b.id)
-  }
+  data.sort((a, b) => a.timestamp - b.timestamp)
+}
 
   if (timeSort.value === 'desc') {
-    data.sort((a, b) => b.id - a.id)
+    data.sort((a, b) => b.timestamp - a.timestamp)
   }
 
   return data
@@ -146,23 +144,46 @@ function changePage(page) {
   }
 }
 
-function packOrder() {
+const packOrder = async () => {
   if (!orderCode.value.trim()) {
     message.value = { type: 'error', text: 'Vui lòng nhập mã đơn!' };
     return;
   }
 
-  // Mock xử lý thành công
-  recentPacks.value.unshift({
+ try {
+    // 1. Tìm order theo mã
+    const res = await orderApi.getOrders({ keyword: orderCode.value })
+
+    const order = res.data.data?.[0]
+
+    if (!order) {
+      message.value = { type: 'error', text: 'Không tìm thấy đơn hàng!' }
+      return
+    }
+
+    // 2. Update trạng thái → đóng gói
+    await orderApi.updateOrderStatus(order._id, 'processing')
+
+    // 3. UI update
+    recentPacks.value.unshift({
     id: Date.now(),
-    customer: 'Khách hàng mẫu',
+    customer: order.customer_name,
     order: orderCode.value.toUpperCase(),
     time: new Date().toLocaleTimeString('vi-VN'),
-  });
+    timestamp: Date.now()
+  })
 
-  message.value = { type: 'success', text: `Đơn hàng ${orderCode.value.toUpperCase()} đã được xử lý thành công!` };
-  orderCode.value = '';
+    message.value = {
+      type: 'success',
+      text: `Đơn hàng ${orderCode.value.toUpperCase()} đã được đóng gói!`
+    }
 
-  setTimeout(() => { message.value = null; }, 5000);
+    orderCode.value = ''
+
+  } catch (err) {
+    console.error(err)
+  }
+
+  setTimeout(() => { message.value = null }, 5000)
 }
 </script>

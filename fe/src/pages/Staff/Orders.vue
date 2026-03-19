@@ -199,6 +199,11 @@ function changePage(page) {
 function getStatusClass(status) {
   if (status === 'Đã thanh toán') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
   if (status === 'Chờ xác nhận') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+  if (status === 'Đã đóng gói') return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
   return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
 }
+
+onMounted(() => {
+  loadOrders()
+})
 </script>
