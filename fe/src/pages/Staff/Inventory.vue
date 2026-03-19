@@ -52,13 +52,13 @@
 
           <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
             <div
-              :style="{ width: `${(item.sold / item.totalStock) * 100}%` }"
+              :style="{ width: `${(item.totalStock ? (item.sold / item.totalStock) * 100 : 0)}%` }"
               class="bg-teal-500 h-3 rounded-full"
             ></div>
           </div>
 
           <p class="text-sm text-right text-gray-500">
-            {{ Math.round((item.sold / item.totalStock) * 100) }}% đã bán
+            {{ Math.round((item.totalStock ? (item.sold / item.totalStock) * 100 : 0)) }}% đã bán
           </p>
         </div>
       </div>
@@ -96,7 +96,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { getListProducts } from "@/utils/product_service_api";
 
 const searchKeyword = ref("");
 const sortBy = ref("");
@@ -104,27 +105,39 @@ const sortBy = ref("");
 const currentPage = ref(1);
 const itemsPerPage = 6;
 
-const inventory = ref([
-  { id: 1, name: "Áo thun oversize 2026", code: "AT-001", size: "M/L/XL", sold: 187, totalStock: 1200 },
-  { id: 2, name: "Quần jeans slim fit", code: "QJ-002", size: "28-34", sold: 320, totalStock: 850 },
-  { id: 3, name: "Váy maxi dài", code: "VM-003", size: "S/M/L", sold: 68, totalStock: 200 },
-  { id: 4, name: "Áo hoodie basic", code: "AH-004", size: "M/L/XL", sold: 210, totalStock: 500 },
-  { id: 5, name: "Áo sơ mi form rộng", code: "SM-005", size: "M/L", sold: 95, totalStock: 300 },
-  { id: 6, name: "Quần short thể thao", code: "QS-006", size: "M/L/XL", sold: 140, totalStock: 400 },
-  { id: 7, name: "Áo khoác bomber", code: "AK-007", size: "M/L", sold: 60, totalStock: 150 },
-  { id: 8, name: "Váy công sở", code: "VC-008", size: "S/M/L", sold: 120, totalStock: 350 }
-]);
+const inventory = ref([]);
+
+const loadInventory = async () => {
+  try {
+    const res = await getListProducts();
+    const data = res.data.data || [];
+
+    inventory.value = data.map(p => ({
+      id: p._id || p.id,
+      name: p.name,
+      code: p.sku || p.code,
+      size: p.sizes?.join('/') || '---',
+
+      // ⚠️ cần backend trả
+      sold: p.sold || 0,
+      totalStock: p.stock || 0
+    }));
+
+  } catch (err) {
+    console.error('❌ Load inventory lỗi:', err);
+  }
+};
 
 // SEARCH + SORT
 const filteredInventory = computed(() => {
   let data = [...inventory.value];
 
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
+    const keyword = String(searchKeyword.value).toLowerCase();
     data = data.filter(
       item =>
-        item.name.toLowerCase().includes(keyword) ||
-        item.code.toLowerCase().includes(keyword)
+        (item.name || '').toLowerCase().includes(keyword) ||
+        (item.code || '').toLowerCase().includes(keyword)
     );
   }
 
@@ -152,4 +165,8 @@ const changePage = (page) => {
     currentPage.value = page;
   }
 };
+
+onMounted(() => {
+  loadInventory();
+});
 </script>

@@ -52,9 +52,9 @@ productApi.interceptors.response.use(
   }
 );
 
-export const getlistproduct = async () => {
+export const getListProducts = async () => {
     // if (!token) throw new Error('Token is required');
-    return await productApi.get('http://localhost:3000/api/v1/products');
+    return productApi.get('/products');
 }
 
 export const getmainimagebySKU = async (sku) => {
