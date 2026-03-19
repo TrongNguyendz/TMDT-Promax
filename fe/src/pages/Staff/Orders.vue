@@ -107,7 +107,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import orderApi from '@/utils/order_service_api';
 
 const searchKeyword = ref('')
 const statusFilter = ref('')
@@ -117,11 +118,36 @@ const priceFilter = ref('')
 const currentPage = ref(1)
 const perPage = 10
 
-const orders = ref([
-  { id: 'ORD-0421', customer: 'Nguyễn Văn A', product: 'Áo thun oversize', quantity: 2, total: 1200000, status: 'Đã thanh toán' },
-  { id: 'ORD-0420', customer: 'Trần Thị B', product: 'Quần jeans slim', quantity: 1, total: 450000, status: 'Chờ xác nhận' },
-  { id: 'ORD-0419', customer: 'Lê Minh C', product: 'Váy maxi dài', quantity: 4, total: 2400000, status: 'Đã đóng gói' },
-])
+const orders = ref([])
+
+const mapStatus = (status) => {
+  switch (status) {
+    case 'paid': return 'Đã thanh toán'
+    case 'pending': return 'Chờ xác nhận'
+    case 'processing': return 'Đã đóng gói'
+    default: return status
+  }
+}
+
+const loadOrders = async () => {
+  try {
+    const res = await orderApi.getOrders()
+
+    const data = res.data.data || []
+
+    orders.value = data.map(o => ({
+      id: o._id || o.id,
+      customer: o.customer_name,
+      product: o.items?.map(i => i.name).join(', ') || '---',
+      quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,
+      total: o.total_amount || 0,
+      status: mapStatus(o.status)
+    }))
+
+  } catch (err) {
+    console.error('❌ Load orders lỗi:', err)
+  }
+}
 
 const filteredOrders = computed(() => {
   let data = [...orders.value]
