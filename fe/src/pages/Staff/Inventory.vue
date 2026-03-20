@@ -120,7 +120,7 @@ const loadInventory = async () => {
 
       // ⚠️ cần backend trả
       sold: p.sold || 0,
-      totalStock: p.stock || 0
+      totalStock: p.stock_quantity || 0
     }));
 
   } catch (err) {

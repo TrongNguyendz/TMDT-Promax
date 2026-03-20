@@ -122,9 +122,10 @@ const orders = ref([])
 
 const mapStatus = (status) => {
   switch (status) {
-    case 'paid': return 'Đã thanh toán'
-    case 'pending': return 'Chờ xác nhận'
-    case 'processing': return 'Đã đóng gói'
+    case 'delivered': return 'Đã giao'
+    case 'processing': return 'Chờ đóng gói'
+    case 'pending': return 'Chờ đóng gói'
+    case 'cancelled': return 'Hủy'
     default: return status
   }
 }
@@ -137,8 +138,8 @@ const loadOrders = async () => {
 
     orders.value = data.map(o => ({
       id: o._id || o.id,
-      customer: o.customer_name,
-      product: o.items?.map(i => i.name).join(', ') || '---',
+      customer: o.shipping_fullname,
+      product: o.items?.map(i => i.product_name).join(', ') || '---',
       quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,
       total: o.total_amount || 0,
       status: mapStatus(o.status)
@@ -197,10 +198,10 @@ function changePage(page) {
 }
 
 function getStatusClass(status) {
-  if (status === 'Đã thanh toán') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
-  if (status === 'Chờ xác nhận') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-  if (status === 'Đã đóng gói') return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+  if (status === 'Đã giao') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
+  if (status === 'Chờ đóng gói') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+  if (status === 'Hủy') return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 }
 
 onMounted(() => {

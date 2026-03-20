@@ -27,7 +27,7 @@
             <NavItem 
               to="/staff/schedule" 
               label="
-              lịch làm việc" 
+              Lịch làm việc" 
               :active="$route.path === '/staff/schedule'"
             >
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

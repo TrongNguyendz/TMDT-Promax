@@ -206,10 +206,10 @@ const loadTopProducts = async () => {
     const data = res.data.data.topProducts || []
 
     topProducts.value = data.map(p => ({
-      id: p._id || p.product_id,
-      name: p.name,
+      id: p._id || p.id,
+      name: p.name || '---',
       sold: p.sold || p.totalSold || 0,
-      totalStock: p.stock || 0,
+      totalStock: p.stock_quantity || 0,
       status: p.sold > 50 ? 'Bán chạy' : 'Tồn thấp'
     }))
 
@@ -228,7 +228,7 @@ const loadRecentOrders = async () => {
 
     recentOrders.value = data.slice(0, 10).map(o => ({
       id: o._id || o.id,
-      customer: o.customer_name,
+      customer: o.shipping_fullname,
       items: o.items?.length + ' sản phẩm',
       status: mapStatus(o.status)
     }))
