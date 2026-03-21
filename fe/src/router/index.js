@@ -53,10 +53,10 @@ const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
 	{ path: '/product/:id', component: ProductDetail },
-	{ path: '/cart', component: CartPage },
-	{ path: '/checkout', component: CheckoutPage },
+	{ path: '/cart', component: CartPage, meta: { requiresAuth: true } },
+	{ path: '/checkout', component: CheckoutPage, meta: { requiresAuth: true } },
 	{ path: '/auth', component: AuthPage, meta: { publicOnly: true } },
-	{ path: '/wishlist', component: WishlistPage },
+	{ path: '/wishlist', component: WishlistPage, meta: { requiresAuth: true } },
 	{ path: '/search', component: SearchResults },
 	{ path: '/about', component: AboutPage },
 	{ path: '/contact', component: ContactPage },
@@ -111,19 +111,29 @@ const router = createRouter({
 	}
 });
 
-// router.beforeEach((to) => {
-// 	const user = useUserStore();
-// 	if (to.meta?.requiresAuth && !user.isAuthenticated) {
-// 		return { path: '/auth', query: { redirect: to.fullPath } };
-// 	}
-// 	if (to.meta?.publicOnly && user.isAuthenticated) {
-// 		return { path: '/' };
-// 	}
-// 	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
-// 		return { path: '/' };
-// 	}
-// 	return true;
-// });
+
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    const isAuth = userStore.token && userStore.token !== 'null' && userStore.token !== 'undefined';
+    const role = userStore.profile?.role || 'guest';
+
+    // 1. Chặn người dùng chưa đăng nhập vào trang cá nhân
+    if (to.meta?.requiresAuth && !isAuth) {
+        return next({ path: '/auth', query: { redirect: to.fullPath } });
+    }
+
+    // 2. Chặn người dùng đã đăng nhập vào lại trang Login/Register
+    if (to.meta?.publicOnly && isAuth) {
+        return next({ path: '/' });
+    }
+
+    // 3. Chặn người dùng thường vào trang Admin
+    if (to.meta?.requiresAdmin && (!isAuth || role !== 'admin')) {
+        return next({ path: '/' });
+    }
+
+    next();
+});
 
 export default router;
 

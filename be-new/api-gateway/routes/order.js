@@ -9,10 +9,10 @@ const schemas = require('../middlewares/validate').schemas;
 // Helper: Xử lý lại Body khi dùng Proxy (Fix lỗi gửi body rỗng sang Service)
 const proxyHelper = {
   onProxyReq: (proxyReq, req, res) => {
-    // 1. THÊM ĐOẠN NÀY TỪ FILE PRODUCT SANG
-    const contentType = req.headers['content-type'];
-    if (contentType && contentType.includes('multipart/form-data')) return;
-    
+    if (req.user){
+      proxyReq.setHeader('x-user-id', req.user.id);
+      proxyReq.setHeader('x-user-role', req.user.role);
+    }
     // 2. Xử lý JSON body
     if (req.body && Object.keys(req.body).length > 0) {
       const bodyData = JSON.stringify(req.body);
@@ -57,8 +57,8 @@ router.delete('/orders/:id', orderServiceProxy);
 router.put('/orders/:id/cancel', orderServiceProxy);
 
 // 2. WISHLIST ROUTES
-router.get('/wishlists/:userId', orderServiceProxy);
-router.post('/wishlists/:userId', orderServiceProxy);
-router.delete('/wishlists/:userId/:productId', orderServiceProxy);
+router.get('/wishlists', orderServiceProxy);
+router.post('/wishlists', orderServiceProxy);
+router.delete('/wishlists', orderServiceProxy);
 
 module.exports = router;

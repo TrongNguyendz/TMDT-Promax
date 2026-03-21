@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
 
-router.get('/stats', orderController.getReportStats);//CHANGE
+router.get('/stats', orderController.getReportStats);
 router.post('/', orderController.createOrder);
 router.get('/', orderController.listOrders);
 router.get('/:id', orderController.getDetail);
