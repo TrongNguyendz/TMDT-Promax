@@ -15,7 +15,7 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
         <svg class="w-6 h-6 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
-        Sản phẩm bán chạy hôm nay
+        Sản phẩm bán chạy
       </h2>
       <div class="flex flex-col lg:flex-row gap-3 mb-4">
         <input
@@ -70,7 +70,7 @@
       </div>
     </div>
 
-    <!-- Đơn hàng gần nhất -->
+    <!-- Đơn hàng gần đây -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
       <h2 class="text-xl font-bold mb-4">Đơn hàng gần đây</h2>
       <div class="flex flex-col lg:flex-row gap-3 mb-4">
@@ -156,6 +156,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import orderApi from '@/utils/order_service_api';
+import { getTopProducts } from '@/utils/product_service_api';
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
 const productSearch = ref('')
@@ -201,16 +202,16 @@ const topProducts = ref([]);
 
 const loadTopProducts = async () => {
   try {
-    const res = await orderApi.getReportStats()
+    const res = await getTopProducts()
 
-    const data = res.data.data.topProducts || []
+    const data = res.data.data || []
 
     topProducts.value = data.map(p => ({
-      id: p._id || p.id,
-      name: p.name || '---',
-      sold: p.sold || p.totalSold || 0,
-      totalStock: p.stock_quantity || 0,
-      status: p.sold > 50 ? 'Bán chạy' : 'Tồn thấp'
+      id: p.id,
+      name: p.name,
+      sold: p.sold,
+      totalStock: p.stock_quantity,
+      status: p.sold > 20 ? 'Bán chạy' : 'Tồn thấp'
     }))
 
   } catch (err) {
@@ -227,7 +228,7 @@ const loadRecentOrders = async () => {
     const data = res.data.data || []
 
     recentOrders.value = data.slice(0, 10).map(o => ({
-      id: o._id || o.id,
+      id: o.order_number,
       customer: o.shipping_fullname,
       items: o.items?.length + ' sản phẩm',
       status: mapStatus(o.status)

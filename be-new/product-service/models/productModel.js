@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
   description: { type: String },
   price: { type: Number, required: true },
   stock_quantity: { type: Number, default: 0 },
+  sold: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   review_count: { type: Number, default: 0 },
   
@@ -143,6 +144,7 @@ exports.createProduct = async (payload, files = []) => {
       description: payload.description,
       price: payload.price,
       stock_quantity: payload.stock_quantity,
+      sold: payload.sold || 0,
       category_id: payload.category_id,
       images: images,       // Lưu thẳng mảng ảnh
       attributes: attributes // Lưu thẳng mảng thuộc tính
@@ -160,6 +162,7 @@ exports.updateProduct = async (id, payload, files = []) => {
   if (payload.name) product.name = payload.name;
   if (payload.price) product.price = payload.price;
   if (payload.stock_quantity) product.stock_quantity = payload.stock_quantity;
+  if (payload.sold) product.sold = payload.sold;
   if (payload.description) product.description = payload.description;
   if (payload.category_id) product.category_id = payload.category_id;
   if (payload.sku) product.sku = payload.sku;
@@ -234,4 +237,35 @@ exports.deleteProduct = async (id) => {
 exports.updateStock = async (id, qty) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   return await Product.findByIdAndUpdate(id, { stock_quantity: qty }, { new: true });
+};
+
+exports.bulkUpdateSold = async (items = []) => {
+  // items = [{ productId, quantity }]
+
+  const bulkOps = items.map(item => ({
+    updateOne: {
+      filter: { _id: item.productId },
+      update: {
+        $inc: {
+          sold: item.quantity,
+          stock_quantity: -item.quantity
+        }
+      }
+    }
+  }));
+
+  return await Product.bulkWrite(bulkOps);
+};
+
+exports.getTopProducts = async (limit = 10) => {
+  const products = await Product.find()
+    .sort({ sold: -1 }) // sắp xếp theo sold
+    .limit(limit);
+
+  return products.map(p => {
+    const doc = p.toObject();
+    doc.id = doc._id;
+    delete doc._id;
+    return doc;
+  });
 };

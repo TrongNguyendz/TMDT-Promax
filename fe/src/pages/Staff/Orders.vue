@@ -137,7 +137,7 @@ const loadOrders = async () => {
     const data = res.data.data || []
 
     orders.value = data.map(o => ({
-      id: o._id || o.id,
+      id: o.order_number,
       customer: o.shipping_fullname,
       product: o.items?.map(i => i.product_name).join(', ') || '---',
       quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,

@@ -11,6 +11,8 @@ router.get('/health', productController.healthCheck);
 router.get('/', productController.listProducts);
 router.get('/:id', productController.getProductById);
 router.get('/:id/download', productController.downloadProductImage);
+router.get('/top', productController.getTopProducts);
+
 // Thêm dòng mới: lấy ảnh đại diện theo SKU
 router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);
 // --- 2. AUTHENTICATED (Cần đăng nhập) ---

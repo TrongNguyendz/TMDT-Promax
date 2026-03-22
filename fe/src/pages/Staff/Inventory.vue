@@ -116,7 +116,10 @@ const loadInventory = async () => {
       id: p._id || p.id,
       name: p.name,
       code: p.sku || p.code,
-      size: p.sizes?.join('/') || '---',
+      size: p.attributes
+      ?.filter(a => a.attribute_name === "Size")
+      .map(a => a.attribute_value)
+      .join('/') || '---',
 
       // ⚠️ cần backend trả
       sold: p.sold || 0,

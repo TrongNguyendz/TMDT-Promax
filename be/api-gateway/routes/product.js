@@ -41,6 +41,7 @@ router.get('/products/:id', cacheMiddleware(300), productServiceProxy);
 router.get('/categories', cacheMiddleware(300), productServiceProxy);
 router.get('/products/:id/download', productServiceProxy); 
 router.get('/products/:id/reviews', productServiceProxy); 
+router.get('/products/top', cacheMiddleware(300), productServiceProxy);
 router.get('/products/sku/:sku/primary-image', cacheMiddleware(300), productServiceProxy);
 // --- CAN XAC THUC ---
 router.post('/products', authMiddleware, (req, res, next) => {

@@ -46,6 +46,20 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+exports.getTopProducts = async (req, res) => {
+  try {
+    const data = await ProductModel.getTopProducts();
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
 exports.createProduct = async (req, res) => {
   let payload;
   try {
