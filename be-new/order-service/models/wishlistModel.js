@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 // Định nghĩa Schema
 const WishlistSchema = new mongoose.Schema({
-    user_id: { type: Number, required: true }, 
-    product_id: { type: Number, required: true },
+    user_id: { type: String, required: true }, 
+    product_id: { type: String, required: true },
     created_at: { type: Date, default: Date.now }
 });
 

@@ -204,54 +204,27 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import axios from 'axios';
 
-// ── Data ────────────────────────────────────────────────
+const API_BASE = 'http://localhost:3007/api/support';
+
 const searchQuery = ref('');
 const priorityFilter = ref('');
 const selectedConversation = ref(null);
 const newMessage = ref('');
-const isTyping = ref(false);
-const chatContainer = ref(null);
+const loading = ref(false);
 
-const conversations = ref([
-  {
-    id: 1,
-    customer: 'Nguyễn Văn A',
-    role: 'VIP',
-    priority: 'high',
-    orderId: 'DH58291',
-    lastMessage: 'Áo size M còn không ạ? Gấp lắm shop ơi',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 3),
-    lastActive: new Date(),
-    messages: [
-      // ... giống phiên bản staff nhưng có thể thêm tag hoặc note nội bộ
-    ]
-  },
-  // Thêm các cuộc hội thoại khác với role, priority, orderId...
-  // Ví dụ:
-  {
-    id: 2,
-    customer: 'Trần Thị B',
-    role: 'Khách thường',
-    priority: 'medium',
-    lastMessage: 'Ship COD được không shop?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 25),
-    messages: []
-  },
-  // ...
-]);
+const conversations = ref([]);
 
-// ── Computed & Methods ─────────────────────────────────
 const filteredConversations = computed(() => {
   let list = conversations.value;
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
-    list = list.filter(c => 
-      c.customer.toLowerCase().includes(q) ||
-      c.lastMessage.toLowerCase().includes(q) ||
-      (c.orderId && c.orderId.includes(q)) ||
-      c.messages.some(m => m.text.toLowerCase().includes(q))
+    list = list.filter(c =>
+      (c.customer?.toLowerCase().includes(q) || false) ||
+      (c.lastMessage?.toLowerCase().includes(q) || false) ||
+      (c.orderId && String(c.orderId).includes(q))
     );
   }
 
@@ -262,62 +235,119 @@ const filteredConversations = computed(() => {
   return list;
 });
 
-function getUnreadCount(conv) {
-  return conv.messages.filter(m => !m.isAdmin && !m.isRead).length;
+async function fetchTickets() {
+  loading.value = true;
+  try {
+    const res = await axios.get(`${API_BASE}/tickets`, {
+      params: {
+        status: 'open',       // chỉ lấy ticket đang mở
+        limit: 100,
+        // staffId: currentStaffId,  // nếu muốn lọc ticket được assign cho mình
+      }
+    });
+
+    conversations.value = res.data.data.map(t => ({
+      id: t._id,
+      customer: t.guest_name || t.user_name || `Khách ${t.user_id || t._id.slice(-6)}`,
+      role: t.user_id ? 'Đăng ký' : 'Khách vãng lai',   // có thể cải thiện sau
+      priority: t.priority,
+      orderId: t.order_id,
+      lastMessage: t.last_message_content || t.subject || '(chưa có tin nhắn)',
+      lastMessageTime: t.last_message_at,
+      lastActive: t.updated_at,
+      unread_count_staff: t.unread_count_staff || 0,
+      messages: []   // load sau khi chọn
+    }));
+  } catch (err) {
+    console.error('Load tickets lỗi:', err);
+  } finally {
+    loading.value = false;
+  }
 }
 
-function selectConversation(conv) {
+async function selectConversation(conv) {
   selectedConversation.value = conv;
-  conv.messages.forEach(msg => {
-    if (!msg.isAdmin) msg.isRead = true;
-  });
-  nextTick(() => scrollToBottom());
+
+  try {
+    const res = await axios.get(`${API_BASE}/tickets/${conv.id}`);
+    const { ticket, messages: apiMsgs } = res.data.data;
+
+    // Cập nhật thông tin
+    conv.customer = ticket.guest_name || ticket.user_name || conv.customer;
+    conv.priority = ticket.priority;
+    conv.orderId = ticket.order_id;
+    conv.lastMessageTime = ticket.last_message_at;
+
+    conv.messages = apiMsgs.map(m => ({
+      text: m.content,
+      time: m.created_at,
+      isAdmin: m.sender_type === 'staff',   // hoặc isStaff
+      isRead: m.is_read
+    }));
+
+    // Đánh dấu đã đọc
+    await axios.put(`${API_BASE}/tickets/${conv.id}/mark-read`);
+
+    nextTick(scrollToBottom);
+  } catch (err) {
+    console.error('Load chat lỗi:', err);
+  }
 }
 
-function sendMessage() {
+async function sendMessage() {
   if (!newMessage.value.trim() || !selectedConversation.value) return;
 
-  const msg = {
-    text: newMessage.value.trim(),
-    time: new Date(),
+  const msgText = newMessage.value.trim();
+
+  // Optimistic
+  const optimisticMsg = {
+    text: msgText,
+    time: new Date().toISOString(),
     isAdmin: true,
     isRead: true
   };
-
-  selectedConversation.value.messages.push(msg);
-  selectedConversation.value.lastMessage = msg.text;
+  selectedConversation.value.messages.push(optimisticMsg);
+  selectedConversation.value.lastMessage = msgText;
   selectedConversation.value.lastMessageTime = new Date();
+  scrollToBottom();
 
   newMessage.value = '';
-  nextTick(() => {
-    scrollToBottom();
-    // simulateCustomerReply(); // có thể giữ hoặc bỏ tùy nhu cầu
-  });
+
+  try {
+    await axios.post(`${API_BASE}/tickets/${selectedConversation.value.id}/messages`, {
+      sender_type: 'staff',
+      sender_id: 2001,          // ← thay bằng staff id thật từ auth store
+      content: msgText,
+      message_type: 'text'
+    });
+  } catch (err) {
+    console.error('Gửi tin lỗi:', err);
+    // Có thể xóa optimistic message hoặc hiện thông báo
+  }
 }
 
-// Các hàm formatTime, scrollToBottom giống phiên bản staff
-function formatTime(date) {
+function getUnreadCount(conv) {
+  return conv.unread_count_staff || 0;
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
   const now = new Date();
-  const diff = now - date;
+  const diff = now - d;
   if (diff < 60000) return 'Vừa xong';
   if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 }
 
 function scrollToBottom() {
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-  }
+  // giả sử bạn thêm ref="chatContainer" vào div messages
+  // code giống các file trước
 }
 
-watch(selectedConversation, () => nextTick(scrollToBottom));
-watch(() => selectedConversation.value?.messages, () => nextTick(scrollToBottom), { deep: true });
-
 onMounted(() => {
-  if (conversations.value.length > 0) {
-    selectConversation(conversations.value[0]);
-  }
+  fetchTickets();
 });
 </script>
 
