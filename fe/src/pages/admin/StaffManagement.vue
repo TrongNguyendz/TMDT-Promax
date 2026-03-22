@@ -278,8 +278,24 @@
             <div class="space-y-2">
               <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Tên Đăng Nhập *</label>
               <input v-model="formData.username" type="text" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm font-bold focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white" required />
+<<<<<<< HEAD
+=======
             </div>
           </div>
+
+          <!-- Email & Phone
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Chức vụ *</label>
+              <select v-model="formData.position" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-5 py-3.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white" required>
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Staff">Staff</option>
+                <option value="Intern">Intern</option>
+              </select>
+>>>>>>> ivan
+            </div>
+          </div> -->
 
           <!-- Email & Phone -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -571,6 +587,33 @@ function resetFilters() {
   filters.minHours = null;
 }
 
+async function loadShifts() {
+  try {
+    const res = await getListShifts(token.value);
+
+    if (!res.data.success) return;
+
+    shifts.value = res.data.data.map((s) => {
+      const date = new Date(s.shift_date).toISOString().split("T")[0];
+
+      return {
+        id: s.id ,
+        staffId: s.staff_id,
+        date: date,
+        start: `${date}T${s.start_time}`,
+        end: `${date}T${s.end_time}`,
+        type: s.shift_type,
+        status: s.status,
+        notes: s.notes,
+        color: s.color || '#3b82f6'
+      };
+    });
+    console.log("Loaded shifts:", shifts.value);
+  } catch (err) {
+    console.error("Load shifts failed:", err);
+  }
+}
+
 // Week Navigation
 const today = new Date();
 const currentWeekStart = ref(new Date(today));
@@ -619,23 +662,41 @@ const shiftForm = ref({
   date: '',
   startTime: '08:00',
   endTime: '17:00',
+<<<<<<< HEAD
   note: '',
   color: '#3b82f6'
 });
 
 function openShiftModal(staff, date, shiftToEdit = null) {
   if (shiftToEdit) {
+=======
+  note: 'Ca làm việc',
+  color: '#3b82f6'
+});
+
+function openShiftModal(staff, date, shiftToEdit = null) {   // ← thêm tham số shiftToEdit
+  if (shiftToEdit) {
+    // đang sửa
+>>>>>>> ivan
     editingShift.value = shiftToEdit;
     shiftForm.value = {
       id: shiftToEdit.id,
       staffId: shiftToEdit.staffId,
       date: shiftToEdit.date,
       startTime: shiftToEdit.start.split('T')[1]?.slice(0,5) || '08:00',
+<<<<<<< HEAD
       endTime: shiftToEdit.end.split('T')[1]?.slice(0,5) || '17:00',
+=======
+      endTime:   shiftToEdit.end.split('T')[1]?.slice(0,5)   || '17:00',
+>>>>>>> ivan
       note: shiftToEdit.notes || '',
       color: shiftToEdit.color || '#3b82f6'
     };
   } else {
+<<<<<<< HEAD
+=======
+    // thêm mới
+>>>>>>> ivan
     editingShift.value = null;
     shiftForm.value = {
       id: null,
@@ -650,6 +711,47 @@ function openShiftModal(staff, date, shiftToEdit = null) {
   showShiftModal.value = true;
 }
 
+<<<<<<< HEAD
+=======
+// function saveShift() {
+//   if (!shiftForm.value.staffId || !shiftForm.value.date || !shiftForm.value.startTime || !shiftForm.value.endTime) {
+//     ui.pushToast({ type: 'error', message: 'Vui lòng điền đầy đủ thông tin ca làm' });
+//     return;
+//   }
+
+//   const start = `${shiftForm.value.date}T${shiftForm.value.startTime}:00`;
+//   const end = `${shiftForm.value.date}T${shiftForm.value.endTime}:00`;
+
+//   if (editingShift.value) {
+//     const idx = shifts.value.findIndex(s => s.id === editingShift.value.id);
+//     if (idx !== -1) {
+//       shifts.value[idx] = {
+//         ...shifts.value[idx],
+//         staffId: shiftForm.value.staffId,
+//         date: shiftForm.value.date,
+//         start,
+//         end,
+//         type: shiftForm.value.type,
+//         color: shiftForm.value.color
+//       };
+//     }
+//   } else {
+//     const newId = shifts.value.length ? Math.max(...shifts.value.map(s => s.id)) + 1 : 1;
+//     shifts.value.push({
+//       id: newId,
+//       staffId: shiftForm.value.staffId,
+//       date: shiftForm.value.date,
+//       start,
+//       end,
+//       type: shiftForm.value.type,
+//       color: shiftForm.value.color
+//     });
+//   }
+//   console.log('Saved shift:', shiftForm.value);
+//   ui.pushToast({ type: 'success', message: 'Đã lưu ca làm việc' });
+//   closeShiftModal();
+// }
+>>>>>>> ivan
 async function saveShift() {
   if (!shiftForm.value.staffId || !shiftForm.value.date || 
       !shiftForm.value.startTime || !shiftForm.value.endTime) {
@@ -657,6 +759,7 @@ async function saveShift() {
     return;
   }
 
+<<<<<<< HEAD
   const payload = {
     staff_id: Number(shiftForm.value.staffId),
     shift_date: shiftForm.value.date,
@@ -676,11 +779,45 @@ async function saveShift() {
       ui.pushToast({ type: 'success', message: 'Đã tạo ca làm việc mới' });
     }
     await loadShifts();
+=======
+  // Chuẩn bị payload đúng format backend mong đợi
+  const payload = {
+    staff_id: Number(shiftForm.value.staffId),
+    shift_date: shiftForm.value.date,
+    start_time: shiftForm.value.startTime + ':00',   // backend thường mong đợi HH:mm:ss
+    end_time:   shiftForm.value.endTime   + ':00',
+    // shift_type: shiftForm.value.type.trim() || null,
+    notes: shiftForm.value.note.trim() || null,
+    color: shiftForm.value.color || null,
+    // status: 'scheduled', // nếu backend yêu cầu
+  };
+  console.log("dữ liệu được gửi:", payload); 
+  try {
+    let res;
+
+    if (editingShift.value) {
+      // UPDATE
+      res = await updateShift(editingShift.value.id, payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Đã cập nhật ca làm việc' });
+    } else {
+      // CREATE
+      res = await createShift(payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Đã tạo ca làm việc mới' });
+    }
+
+    // Reload lại danh sách ca
+    await loadShifts();
+
+>>>>>>> ivan
   } catch (err) {
     console.error("Lỗi lưu ca làm:", err);
     ui.pushToast({ 
       type: 'error', 
+<<<<<<< HEAD
       message: err.response?.data?.message || 'Không thể lưu ca làm việc' 
+=======
+      message: err.response?.data?.message || 'Không thể lưu ca làm việc. Vui lòng thử lại.' 
+>>>>>>> ivan
     });
   }
 
@@ -697,6 +834,7 @@ function getShifts(staffId, date) {
   return shifts.value.filter(s => s.staffId === staffId && s.date === dateStr);
 }
 
+<<<<<<< HEAD
 async function removeShift(shift) {
   if (!confirm(`Xác nhận xóa ca của ${getStaffName(shift.staffId)} ?`)) return;
 
@@ -707,6 +845,38 @@ async function removeShift(shift) {
   } catch (err) {
     console.error("Lỗi xóa ca:", err);
     ui.pushToast({ type: 'error', message: 'Không thể xóa ca làm việc' });
+=======
+// function removeShift(shift) {
+//   if (confirm(`Xóa ca ${shift.type || ''} của ${getStaffName(shift.staffId)} ?`)) {
+//     shifts.value = shifts.value.filter(s => s.id !== shift.id);
+//     ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
+//   }
+// }
+
+async function removeShift(shift) {
+  if (!confirm(`Xác nhận xóa ca "${shift.type || '—'}" của ${getStaffName(shift.staffId)} ?`)) {
+    return;
+  }
+
+  try {
+    // Nếu bạn muốn soft-delete (status = cancelled)
+    // await deleteShift(shift.id, token.value);
+
+    // Nếu bạn muốn xóa cứng hẳn khỏi database
+    await hardDeleteShift(shift.id, token.value);
+
+    ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
+
+    // Cập nhật lại danh sách
+    await loadShifts();
+
+  } catch (err) {
+    console.error("Lỗi xóa ca:", err);
+    ui.pushToast({ 
+      type: 'error', 
+      message: err.response?.data?.message || 'Không thể xóa ca làm việc' 
+    });
+>>>>>>> ivan
   }
 }
 
@@ -745,7 +915,11 @@ const totalHours = computed(() => {
 // Staff CRUD
 function openCreateModal() {
   editingId.value = null;
+<<<<<<< HEAD
   Object.assign(formData, { full_name: '', username: '', email: '', phone: '', avatar_url: '' });
+=======
+  Object.assign(formData, { name: '', username: '', email: '', phone: '', avatar: '' });
+>>>>>>> ivan
   fileToUpload.value = null;
   showModal.value = true;
 }
@@ -791,6 +965,7 @@ async function saveStaff() {
 function deleteStaff1(staff) {
   staffToDelete.value = staff;
   showDeleteModal.value = true;
+<<<<<<< HEAD
 }
 
 async function confirmDelete() {
@@ -809,7 +984,35 @@ async function confirmDelete() {
     showDeleteModal.value = false;
     staffToDelete.value = null;
   }
+=======
+>>>>>>> ivan
 }
+
+const confirmDelete = async () => {
+  if (staffToDelete.value) {
+    console.log("thông tin nhân viên cần xóa:", staffToDelete.value);
+    try {
+      const res = await hardDeleteStaff(staffToDelete.value.id, user.token);
+      if (res.data.success) {
+        ui.pushToast({ type: 'success', message: 'Xóa nhân viên thành công' });
+        await loadStaff();
+      } else {
+        ui.pushToast({ type: 'error', message: 'Xóa nhân viên thất bại' });
+      }
+    } catch (err) {
+      console.error('Lỗi xóa nhân viên:', err);
+      ui.pushToast({ type: 'error', message: 'Xóa nhân viên thất bại, vui lòng thử lại' });
+    } finally {
+      showDeleteModal.value = false;
+      staffToDelete.value = null;
+    }
+  }
+  else {
+    ui.pushToast({ type: 'error', message: 'Không tìm thấy nhân viên để xóa' });
+    showDeleteModal.value = false;
+    staffToDelete.value = null;
+  }
+};
 
 function openBulkAssignModal() {
   ui.pushToast({ type: 'info', message: 'Chức năng phân công hàng loạt đang phát triển' });

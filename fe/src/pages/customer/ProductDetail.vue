@@ -274,12 +274,17 @@
         </div>
 
         <!-- Try On Button -->
-        <RouterLink
+        <div class="flex gap-2">
+          <RouterLink
           :to="`/try-on/${product.id}`"
           class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
         >
           THỬ ĐỒ VỚI AI
         </RouterLink>
+        <RouterLink
+        :to="`/compare`"
+        class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center">So sánh</RouterLink>
+        </div>
       </div>
     </div>
 
