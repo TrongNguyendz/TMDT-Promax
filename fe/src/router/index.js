@@ -20,12 +20,9 @@ const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
 const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
 const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
 const Invoice = () => import('../pages/customer/Invoice.vue');
-
 const TotalAmountSpent = () => import('../pages/customer/TotalAmount.vue');
 const SupportPage = () => import('../pages/customer/Support.vue');
-
-// const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
-
+const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
@@ -43,7 +40,6 @@ const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
 const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
 const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
-
 
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
