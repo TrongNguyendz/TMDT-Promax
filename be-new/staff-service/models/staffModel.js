@@ -9,7 +9,7 @@ const StaffSchema = new mongoose.Schema({
 
   // Liên kết user (bây giờ là number)
   user_id: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },

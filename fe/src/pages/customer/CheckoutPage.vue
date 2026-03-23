@@ -93,7 +93,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (socket) {
     socket.disconnect();
-    console.log("🔌 Socket disconnected cleanup");
+    console.log(" Socket disconnected cleanup");
   }
 });
 

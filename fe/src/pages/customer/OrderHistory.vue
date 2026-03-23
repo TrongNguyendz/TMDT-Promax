@@ -196,10 +196,7 @@ const reorderItems = (order) => {
 		count++;
 	});
 
-	uiStore.pushToast({
-		type: 'success',
-		message: `Đã thêm ${count} sản phẩm vào giỏ hàng`
-	});
+	
 };
 
 // Helper: Badge màu sắc

@@ -2,12 +2,13 @@
 const authorize = (req, res, next) => {
   const userIdFromToken = req.user.id;        // từ authMiddleware decode ra
   const userIdFromParams = req.params.id;
+  const userIdFromBody = req.body.user_id;
 
 const isOwner = Number(userIdFromToken) === Number(userIdFromParams);
-
+const isOwnerByBody = Number(userIdFromToken) === Number(userIdFromBody);
   const isAdmin = req.user.role === 'admin';  // hoặc array các role được phép
 
-  if (isOwner || isAdmin) {
+  if (isOwner || isOwnerByBody || isAdmin) {
     next();
   } else {
     return res.status(403).json({
