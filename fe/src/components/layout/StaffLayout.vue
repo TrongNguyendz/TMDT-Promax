@@ -180,7 +180,7 @@
     <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <main class="flex-1 relative z-0 overflow-y-auto p-5 lg:p-8">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-screen-2xl mx-auto">
           <slot />
         </div>
       </main>

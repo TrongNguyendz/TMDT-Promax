@@ -690,6 +690,21 @@ function openShiftModal(staff, date, shiftToEdit = null) {
   showShiftModal.value = true;
 }
 
+function closeModal() {
+  showModal.value = false;
+  editingId.value = null;
+  // Optional: reset form nếu cần
+  Object.assign(formData, {
+    user_id: '',
+    full_name: '',
+    email: '',
+    phone: '',
+    username: '',
+    avatar_url: ''
+  });
+  fileToUpload.value = null;
+}
+
 async function saveShift() {
   if (!shiftForm.value.staffId || !shiftForm.value.date || 
       !shiftForm.value.startTime || !shiftForm.value.endTime) {
@@ -804,27 +819,34 @@ function editStaff(staff) {
 async function saveStaff() {
   try {
     const payload = {
-      user_id: formData.user_id,
-      full_name: formData.full_name,
-      email: formData.email,
-      phone: formData.phone,
-      username: formData.username
+      user_id: formData.user_id || undefined,
+      full_name: formData.full_name?.trim(),
+      email: formData.email?.trim(),
+      phone: formData.phone?.trim() || null,
+      username: formData.username?.trim()
     };
 
+    let res;
     if (editingId.value) {
-      await updateStaff(editingId.value, payload, token.value);
+      res = await updateStaff(editingId.value, payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Cập nhật nhân viên thành công' });
     } else {
-      const res = await createStaff(payload, token.value);
-      if (fileToUpload.value) {
+      res = await createStaff(payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Thêm nhân viên thành công' });
+
+      // Upload avatar nếu có (sau khi tạo thành công)
+      if (fileToUpload.value && res?.data?.data?.id) {
         await uploadStaffAvatar(res.data.data.id, fileToUpload.value, token.value);
       }
     }
 
     await loadStaff();
-    showModal.value = false;
+    showModal.value = false;          // ← quan trọng: đóng modal
+    editingId.value = null;
   } catch (err) {
-    console.error("Save staff error:", err);
-    ui.pushToast({ type: 'error', message: 'Lưu nhân viên thất bại' });
+    console.error("Lỗi khi lưu nhân viên:", err);
+    const msg = err.response?.data?.message || 'Không thể lưu nhân viên. Vui lòng kiểm tra lại.';
+    ui.pushToast({ type: 'error', message: msg });
   }
 }
 
@@ -834,7 +856,6 @@ function deleteStaff1(staff) {
 }
 
   
-
 const confirmDelete = async () => {
   if (staffToDelete.value) {
     console.log("thông tin nhân viên cần xóa:", staffToDelete.value);
