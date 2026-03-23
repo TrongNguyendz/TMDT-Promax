@@ -123,7 +123,7 @@
             </div>
             <div class="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Phí vận chuyển</span>
-              <span class="font-medium text-green-600">Miễn phí</span>
+              <span class="font-medium text-green-600">Chưa tính phí</span>
             </div>
           </div>
 

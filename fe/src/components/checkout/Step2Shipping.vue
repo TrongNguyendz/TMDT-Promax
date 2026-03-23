@@ -1,13 +1,20 @@
 <script setup>
-import { reactive, ref, onMounted, watch } from 'vue';
+import { reactive, ref, onMounted, watch, computed } from 'vue';
 import { useUserStore } from '../../stores/user';
-// Import 3 hàm từ file service bạn vừa sửa
+import { useCartStore } from '../../stores/cart';
+import { useCheckoutStore } from '../../stores/checkout';
+import { formatCurrency } from '../../utils/helpers';
+import { calculateShippingFee as ghnCalculateShippingFee } from '../../utils/ghnapi';
 import { getProvinces, getDistricts, getWards } from '../../utils/province';
+// Import EventBus nếu cần (hiện chưa dùng)
+// import { EventBus } from '../../pages/customer/CheckoutPage.vue';
 
 const props = defineProps(['shippingInfo', 'paymentMethod']);
 const emit = defineEmits(['next', 'prev', 'update:paymentMethod']);
 
 const user = useUserStore();
+const cartStore = useCartStore();
+const checkoutStore = useCheckoutStore();
 const info = props.shippingInfo;
 
 // Danh sách đổ vào Select
@@ -19,6 +26,7 @@ const wards = ref([]);
 const selectedProvinceCode = ref('');
 const selectedDistrictCode = ref('');
 const selectedWardCode = ref('');
+const shippingFee = ref(checkoutStore.shippingFee || 0);
 
 const paymentMethods = [
   {
@@ -71,6 +79,7 @@ const handleProvinceChange = async () => {
     
     // Gọi API lấy huyện
     districts.value = await getDistricts(selectedProvinceCode.value);
+    await updateShippingFee();
   } catch (error) {
     console.error('Lỗi tải huyện:', error);
   }
@@ -95,20 +104,87 @@ const handleDistrictChange = async () => {
 
     // Gọi API lấy xã
     wards.value = await getWards(selectedDistrictCode.value);
+    await updateShippingFee();
   } catch (error) {
     console.error('Lỗi tải xã:', error);
   }
 };
 
 // 4. Khi chọn Xã
-const handleWardChange = () => {
+const handleWardChange = async () => {
   if (!selectedWardCode.value) {
     info.ward = '';
+    updateShippingFee(0);
     return;
   }
   const w = wards.value.find(item => item.code == selectedWardCode.value);
   info.ward = w ? w.name : '';
+
+  await updateShippingFee();
 };
+
+const computeLocalShippingFee = () => {
+  const provinceName = (info.province || '').toLowerCase();
+  let base = 30000;
+  if (/hồ chí minh|tp\. hồ chí minh|sài gòn/.test(provinceName)) base = 17000;
+  else if (/hà nội/.test(provinceName)) base = 16000;
+  else if (/đà nẵng/.test(provinceName)) base = 19000;
+  else if (/hải phòng/.test(provinceName)) base = 20000;
+
+  const qty = Number(cartStore.itemCount || 1);
+  const extra = (qty > 1) ? (qty - 1) * 5000 : 0;
+  return Math.max(0, base + extra);
+};
+
+const updateShippingFee = async () => {
+  if (!info.province || !info.district || !info.ward) {
+    updateShippingFeeValue(0);
+    return;
+  }
+
+  // Nếu GHN API có chạy, thử gọi
+  try {
+    const payload = {
+      // Giá trị mẫu tạm, nếu GHN không có data map đúng, sẽ dùng local fallback
+      from_district_id: 1451,
+      to_district_id: Number(selectedDistrictCode.value) || 0,
+      to_ward_code: selectedWardCode.value || '',
+      height: 10,
+      length: 20,
+      weight: Math.max(1000, cartStore.subtotal ? Math.round(cartStore.subtotal / 1000) * 1000 : 1000),
+      width: 10,
+      service_id: 53320,
+      insurance_value: 0,
+      coupon: null
+    };
+
+    const resp = await ghnCalculateShippingFee(payload);
+    const feeFromApi = Number(resp?.data?.total || resp?.data?.fee || 0);
+    if (Number.isFinite(feeFromApi) && feeFromApi > 0) {
+      updateShippingFeeValue(feeFromApi);
+      return;
+    }
+  } catch (err) {
+    console.warn('Không lấy được phí GHN, dùng giá trị nội bộ', err);
+  }
+
+  updateShippingFeeValue(computeLocalShippingFee());
+};
+
+const updateShippingFeeValue = (value) => {
+  shippingFee.value = Number(value || 0);
+  checkoutStore.shippingFee = shippingFee.value;
+};
+
+watch(
+  () => [info.province, info.district, info.ward],
+  () => {
+    if (info.province && info.district && info.ward) {
+      updateShippingFee();
+    }
+  },
+  { immediate: true }
+);
 
 // --- VALIDATION & SUBMIT ---
 
@@ -120,7 +196,11 @@ function validatePhone(phone) {
   return /^[0-9]{10,11}$/.test(phone.toString().replace(/\s/g, ''));
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
+  if (!shippingFee.value && info.province && info.district && info.ward) {
+    await updateShippingFee();
+  }
+
   Object.keys(errors).forEach(key => (errors[key] = ''));
   let isValid = true;
 
@@ -200,6 +280,14 @@ onMounted(() => {
           <input v-model="info.address" type="text" class="input-field" placeholder="Số nhà, đường..." />
           <p v-if="errors.address" class="error-msg">{{ errors.address }}</p>
         </div>
+      </div>
+
+      <div class="mt-3 rounded-lg border border-gray-200 p-3 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+          <span>Phí vận chuyển ước tính</span>
+          <span class="font-semibold text-green-600">{{ formatCurrency(shippingFee) }}</span>
+        </div>
+        <p class="text-xs text-gray-500">Phí tự động cập nhật khi chọn tỉnh/huyện/xã. Có thể thay đổi khi tạo đơn với GHN.</p>
       </div>
 
       <div class="space-y-3 pt-4">
