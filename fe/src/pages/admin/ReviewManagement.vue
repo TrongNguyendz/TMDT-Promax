@@ -225,7 +225,7 @@
 
     <!-- Nút xem thêm / thu gọn -->
     <button
-      v-if="review.replies.length > 3"
+      v-if="review.replies.length > 1"
       @click="toggleReplies(review.id)"
       class="mt-3 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center gap-1 transition"
     >

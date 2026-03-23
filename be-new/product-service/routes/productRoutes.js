@@ -7,14 +7,16 @@ const reviewController = require('../controllers/reviewController');
 const upload = require('../functions/upload'); 
 const { verifyToken, requireAdmin, requireStaffOrAdmin } = require('../middleware/authMiddleware');
 
+
+// Thêm dòng mới: lấy ảnh đại diện theo SKU
+router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);
 // --- 1. PUBLIC ---
 router.get('/reviews', verifyToken, requireStaffOrAdmin, reviewController.listAllReviews);
 router.get('/health', productController.healthCheck);
 router.get('/', productController.listProducts);
 router.get('/:id', productController.getProductById);
 router.get('/:id/download', productController.downloadProductImage);
-// Thêm dòng mới: lấy ảnh đại diện theo SKU
-router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);
+
 // --- 2. AUTHENTICATED (Cần đăng nhập) ---
 router.put('/:id/stock',  productController.updateStock);
 

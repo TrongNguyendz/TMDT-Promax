@@ -232,7 +232,7 @@ function finishSteps() {
 async function handleBackStep() {
     // Nếu đang ở bước QR Code và đã có đơn hàng Pending
     if (checkout.currentStep === 3 && successOrder.value) {
-        // Hỏi ý kiến người dùng
+        // Hỏi ý ki ến người dùng
         if (!confirm('Đơn hàng chờ thanh toán hiện tại sẽ bị hủy để bạn chọn phương thức mới. Bạn chắc chắn chứ?')) {
             return;
         }

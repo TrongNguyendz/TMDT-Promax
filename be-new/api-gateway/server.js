@@ -14,6 +14,8 @@ const notificationRoutes = require('./routes/notification');
 const adminRoutes = require('./routes/admin');
 const couponRoutes = require('./routes/coupon');
 const staffRoutes = require('./routes/staff');
+const shiftRoutes = require('./routes/shift');
+
 dotenv.config();
 
 const app = express();
@@ -59,6 +61,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/shifts', shiftRoutes);
 
 
 app.use('/api/v1', productRoutes);

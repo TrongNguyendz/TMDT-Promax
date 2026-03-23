@@ -13,7 +13,7 @@
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Vận chuyển:</span>
-        <span class="font-medium text-green-600">Miễn phí</span>
+        <span class="font-medium text-green-600">{{ formatCurrency(shippingFeeValue) }}</span>
       </div>
     </div>
 
@@ -69,7 +69,8 @@ const lastMessage = ref('');
 const applied = computed(() => checkout.appliedVoucher);
 // Ensure subtotal is a number (cart.subtotal may be a computed ref)
 const subtotalValue = computed(() => Number(cart.value?.subtotal?.value ?? cart.value?.subtotal ?? 0));
-const finalTotal = computed(() => Math.max(0, Math.round(subtotalValue.value - (Number(checkout.discountAmount) || 0))));
+const shippingFeeValue = computed(() => Number(checkout.shippingFee || 0));
+const finalTotal = computed(() => Math.max(0, Math.round(subtotalValue.value + shippingFeeValue.value - (Number(checkout.discountAmount) || 0))));
 
 function formatDiscountText(v) {
   if (!v) return '';

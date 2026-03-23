@@ -1,8 +1,9 @@
 // staffController.js
 const { Staff } = require('../models/staffModel');
 const { deleteOldAvatar } = require('../functions/upload');
-
-
+const { hashPassword } = require('../functions/password');
+// const  UserModel  = require('../../user-service/models/userModel');
+const axios = require('axios');
 exports.healthCheck = (_req, res) => {
   res.json({
     status: 'UP',
@@ -69,6 +70,15 @@ exports.getStaffById = async (req, res) => {
   }
 };
 
+// lấy thông tin nhân viên theo user_id (number) - dùng cho auth middleware
+exports.getStaffByUserId = async (user_id) => {
+  if (isNaN(user_id)) {
+    throw new Error('User ID không hợp lệ');
+  }
+  return await Staff.findOne({ user_id });
+};
+
+
 /**
  * Tạo nhân viên mới
  * POST /api/staff
@@ -81,66 +91,226 @@ exports.getStaffById = async (req, res) => {
  *   notes?: string
  * }
  */
+// exports.createStaff = async (req, res) => {
+//   try {
+//     const { username, full_name, email, phone, hire_date, notes } = req.body;
+
+//     if (!username || !full_name || !email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'username, full_name và email là bắt buộc'
+//       });
+//     }
+
+//     // const userIdNumber = Number(user_id);
+//     // const cleanEmail = email ? String(email).toLowerCase().trim() : null;
+
+//     // // ===== kiểm tra user_id đã tồn tại chưa =====
+//     // const existUserId = await Staff.findOne({ user_id: userIdNumber });
+
+//     // if (existUserId) {
+//     //   return res.status(400).json({
+//     //     success: false,
+//     //     message: 'user_id đã tồn tại'
+//     //   });
+//     // }
+
+//     // // ===== kiểm tra email đã tồn tại chưa =====
+//     // if (cleanEmail) {
+//     //   const existEmail = await Staff.findOne({ email: cleanEmail });
+
+//     //   if (existEmail) {
+//     //     return res.status(400).json({
+//     //       success: false,
+//     //       message: 'email đã tồn tại'
+//     //     });
+//     //   }
+//     // }
+
+//     const staffData = {
+//       user_id: userIdNumber,
+//       full_name: String(full_name).trim(),
+//       email: cleanEmail || undefined,
+//       phone: phone ? String(phone).trim() : undefined,
+//       hire_date: hire_date ? new Date(hire_date) : undefined,
+//       notes: notes ? String(notes).trim() : undefined
+//     };
+
+//     const newStaff = await Staff.createStaff(staffData);
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Tạo nhân viên mới thành công',
+//       data: newStaff
+//     });
+
+//   } catch (error) {
+//     console.error('Create staff error:', error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: 'Không thể tạo nhân viên',
+//       error: error.message
+//     });
+//   }
+// };
+
+
+/**
+ * Tạo nhân viên mới (tạo User trước → rồi tạo Staff)
+ * POST /api/staff
+ * body: {
+ *   username: string (bắt buộc, unique),
+ *   email: string (bắt buộc, unique),
+ *   password: string (bắt buộc, sẽ được hash),
+ *   full_name: string (bắt buộc),
+ *   phone?: string,
+ *   hire_date?: string | Date,
+ *   notes?: string,
+ *   avatar_url?: string   // nếu có sẵn từ trước (ít dùng)
+ * }
+ */
 exports.createStaff = async (req, res) => {
   try {
-    const { user_id, full_name, email, phone, hire_date, notes } = req.body;
+    const {
+      username,
+      email,
+      full_name,
+      phone,
+      hire_date,
+      notes,
+      avatar_url,
+    } = req.body;
 
-    if (!user_id || !full_name) {
+    // 1. Validate bắt buộc
+    if (!username || !email || !full_name || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'user_id và full_name là bắt buộc'
+        message: 'thiếu thông tin bắt buộc',
       });
     }
 
-    const userIdNumber = Number(user_id);
-    const cleanEmail = email ? String(email).toLowerCase().trim() : null;
+    // // 2. Kiểm tra trùng username / email trước khi tạo (tăng trải nghiệm người dùng)
+    // const existingEmail = await UserModel.findByEmail(req.body.email);
+    // if (existingEmail) {
+    //   return res.status(400).json({ success: false, message: 'Email đã tồn tại' });
+    // }
 
-    // ===== kiểm tra user_id đã tồn tại chưa =====
-    const existUserId = await Staff.findOne({ user_id: userIdNumber });
+    // const existingUsername = await UserModel.findByUsername(req.body.username);
+    // if (existingUsername) {
+    //   return res.status(400).json({ success: false, message: 'Username đã tồn tại' });
+    // }
+    
+    // 3. Hash password
+    // const password = "asdz123456"; // Mật khẩu mặc định cho nhân viên mới (có thể thay đổi sau)
+    // const password_hash = await hashPassword(password);
 
-    if (existUserId) {
-      return res.status(400).json({
-        success: false,
-        message: 'user_id đã tồn tại'
+    // 4. Tạo User với role = 'staff'
+    // const user = await UserModel.createUser({
+    //   username: req.body.username,
+    //   email: req.body.email,
+    //   password_hash,
+    //   full_name: req.body.full_name,
+    //   phone: req.body.phone,
+    //   avatar_url: req.body.avatar_url,
+    //   role: 'staff',
+    //   status: 'active'
+    // });
+    let data = {} ;
+    try {
+      const response = await axios.post('http://localhost:3001/api/auth/staff', {
+        username,
+        email,
+        phone,
+        full_name,
+        phone,
+        avatar_url,
       });
-    }
-
-    // ===== kiểm tra email đã tồn tại chưa =====
-    if (cleanEmail) {
-      const existEmail = await Staff.findOne({ email: cleanEmail });
-
-      if (existEmail) {
+      console.log('Response from user-service:', response.data);
+      if (!response.data.success) {
         return res.status(400).json({
           success: false,
-          message: 'email đã tồn tại'
+          message: 'Không thể tạo tài khoản nhân viên',
+          error: response.data.message || 'Unknown error from user-service'
         });
       }
+      data = response.data.data; // chứa user vừa tạo từ user-service
+    } catch (error) {
+      console.error('Error calling user-service:', error.response ? error.response.data : error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi tạo tài khoản nhân viên',
+        error: error.response ? error.response.data : error.message
+      });
     }
+    
 
+    // 5. Tạo bản ghi Staff, liên kết với user.id vừa tạo
     const staffData = {
-      user_id: userIdNumber,
-      full_name: String(full_name).trim(),
-      email: cleanEmail || undefined,
-      phone: phone ? String(phone).trim() : undefined,
+      user_id: data.id,     // ← lấy từ user vừa tạo
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      avatar_url: data.avatar_url,
       hire_date: hire_date ? new Date(hire_date) : undefined,
-      notes: notes ? String(notes).trim() : undefined
+      notes: notes ? String(notes).trim() : undefined,
     };
 
     const newStaff = await Staff.createStaff(staffData);
 
+    // 6. Trả về thông tin (không trả password_hash)
+    // Gửi notification
+    // try {
+    //   console.log('[DEBUG] Gọi notification-service để gửi email...');
+
+    //   const notifyRes = await axios.post(
+    //     'http://localhost:3005/api/notifications',
+    //     {
+    //       user_id: user.id,
+    //       notification_type: 'create_staff_account',
+    //       email_user: user.email,
+    //       data: {
+    //         password: tempPassword
+    //       }
+    //     }
+    //   );
+
+    //   console.log(
+    //     '[DEBUG] Notification gửi THÀNH CÔNG',
+    //     'Status:',
+    //     notifyRes.status
+    //   );
+
+    // } catch (notifyError) {
+    //   console.error('[LỖI] Gửi notification THẤT BẠI:', {
+    //     message: notifyError.message,
+    //     status: notifyError.response?.status,
+    //     data: notifyError.response?.data
+    //   });
+    //   // Không làm fail request
+    // }
     res.status(201).json({
       success: true,
-      message: 'Tạo nhân viên mới thành công',
-      data: newStaff
+      message: 'Tạo tài khoản nhân viên thành công',
+      data: newStaff,
     });
 
   } catch (error) {
-    console.error('Create staff error:', error);
+    console.error('Create staff (with user) error:', error);
+
+    // Xử lý lỗi trùng lặp từ MongoDB (nếu pre-save không bắt được)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(409).json({
+        success: false,
+        message: `${field} đã tồn tại`,
+      });
+    }
 
     res.status(500).json({
       success: false,
       message: 'Không thể tạo nhân viên',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -160,7 +330,7 @@ exports.updateStaff = async (req, res) => {
     }
 
     const updateData = {};
-    const allowedFields = ['full_name', 'email', 'phone', 'avatar_url', 'hire_date', 'status', 'notes'];
+    const allowedFields = ['full_name', 'email', 'phone', 'hire_date', 'status', 'notes'];
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {

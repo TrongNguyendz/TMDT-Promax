@@ -1,4 +1,5 @@
 <template>
+
     <!-- Header Section: Tinh tế và thoáng đãng -->
     <div class="mb-8 flex items-end justify-between border-b border-gray-100 pb-6 dark:border-gray-800">
         <div>
@@ -24,6 +25,7 @@
     <!-- Filter Bar: Đã sửa lỗi lệch hàng bằng items-end -->
     <div
         class="mb-8 flex flex-wrap items-end gap-4 rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+
         <!-- Search Field -->
         <div class="flex-1 min-w-[280px]">
             <label class="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Tìm
@@ -92,6 +94,7 @@
                     </th>
                 </tr>
             </thead>
+
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 <tr v-for="p in items" :key="p.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                     <td class="p-4">
@@ -108,6 +111,7 @@
                             </div>
                         </div>
                     </td>
+                    
                     <td class="p-4 text-gray-600 dark:text-gray-300">
                         {{ p.category_name }}
                     </td>
@@ -116,24 +120,14 @@
                     </td>
                     <td class="p-4">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="p.quantity > 0
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                             ">
                             {{ p.quantity > 0 ? `Còn ${p.quantity}` : "Hết hàng" }}
                         </span>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex items-center justify-end gap-2">
-                            <!-- Nút Review -->
-                            <button @click="openReviews(p)"
-                                class="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
-                                title="Xem đánh giá">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                </svg>
-                            </button>
                             <!-- Nút Sửa -->
                             <button @click="edit(p)"
                                 class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -314,7 +308,7 @@
                                             class="hidden peer" />
                                         <span
                                             class="block px-3 py-1 rounded border bg-white dark:bg-gray-600 text-xs font-medium peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600">{{
-                                            size }}</span>
+                                                size }}</span>
                                     </label>
                                 </div>
                             </div>

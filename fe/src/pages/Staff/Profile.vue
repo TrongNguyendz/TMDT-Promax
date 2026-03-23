@@ -52,9 +52,9 @@ import { useUserStore } from '../../stores/user';
 
 const userStore = useUserStore();
 const user = ref({
-  username: userStore.profile?.username || 'staff001',
-  fullName: 'Nguyễn Văn Staff',
-  email: 'staff@goghevent.vn',
-  phone: '0987 654 321',
+  username: userStore.profile?.username || 'ko có dữ liệu bro ơi',
+  fullName: userStore.profile?.fullName || 'ko có dữ liệu bro ơi',
+  email: userStore.profile?.email || 'ko có dữ liệu bro ơi',
+  phone: userStore.profile?.phone || 'ko có dữ liệu bro ơi',
 });
 </script>

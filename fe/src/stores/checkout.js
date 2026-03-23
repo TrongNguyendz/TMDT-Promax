@@ -27,6 +27,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
     const voucherCode = ref('');
     const appliedVoucher = ref(null); 
     const discountAmount = ref(0);
+    const shippingFee = ref(0);
 
     // --- ACTIONS ---
 
@@ -40,6 +41,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
         voucherCode.value = '';
         appliedVoucher.value = null;
         discountAmount.value = 0;
+        shippingFee.value = 0;
     };
 
     const applyVoucher = async (code, cartTotal, availableVouchers =[]) => {
@@ -133,13 +135,13 @@ export const useCheckoutStore = defineStore('checkout', () => {
                     city: info.province
                 },
                 payment_method: paymentMethod.value,
-                shipping_fee: 0, 
+                shipping_fee: Number(shippingFee.value || 0), 
                 notes: info.note,
                 
                 voucher: appliedVoucher.value ? appliedVoucher.value.code : null,
                 discount_amount: discountAmount.value || 0,
-                // Tính toán Final Amount ngay tại client
-                final_amount: Math.max(0, Math.round((Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0)) - (Number(discountAmount.value) || 0)))
+                // Tính toán Final Amount ngay tại client (subtotal + ship - giảm)
+                final_amount: Math.max(0, Math.round((Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0)) + Number(shippingFee.value || 0) - (Number(discountAmount.value) || 0)))
             };
 
             console.log('📦 Payload gửi đi chuẩn:', payload); 
@@ -166,6 +168,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
         voucherCode,
         appliedVoucher,
         discountAmount,
+        shippingFee,
         nextStep,
         previousStep,
         goToStep,
@@ -176,6 +179,6 @@ export const useCheckoutStore = defineStore('checkout', () => {
     };
 }, {
     persist: {
-        paths:['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount']
+        paths:['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount', 'shippingFee']
     }
 });
