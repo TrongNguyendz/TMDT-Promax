@@ -9,9 +9,9 @@ const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
 // --- 1. PUBLIC ---
 router.get('/health', productController.healthCheck);
 router.get('/', productController.listProducts);
+router.get('/top', productController.getTopProducts);
 router.get('/:id', productController.getProductById);
 router.get('/:id/download', productController.downloadProductImage);
-router.get('/top', productController.getTopProducts);
 
 // Thêm dòng mới: lấy ảnh đại diện theo SKU
 router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);

@@ -3,14 +3,6 @@
   <div class="space-y-8">
     <h1 class="text-2xl lg:text-3xl font-black text-gray-900 dark:text-white">Tổng quan ca làm - {{ today }}</h1>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard title="Sản phẩm bán ra" value="187" total="450" color="teal" icon="shopping-cart" />
-      <StatCard title="Đơn hàng mới" value="42" trend="+18%" color="blue" icon="shopping-bag" />
-      <StatCard title="Khách chờ hỗ trợ" value="9" trend="+3" color="amber" icon="headphones" />
-      <StatCard title="Thời gian còn lại ca" value="3h 14m" color="purple" icon="clock" />
-    </div>
-
     <!-- Sản phẩm bán chạy / hàng tồn thấp -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
@@ -36,8 +28,34 @@
           <option value="name-desc">Tên Z → A</option>
         </select>
       </div>
-      <div class="space-y-4">
-        <ProductItem v-for="product in paginatedProducts" :key="product.id" :product="product"/>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+          <thead>
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đã bán</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tồn kho</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+            <tr v-for="product in paginatedProducts" :key="product.id">
+              <td class="px-4 py-4 text-sm font-medium">{{ product.name }}</td>
+              <td class="px-4 py-4 text-sm">{{ product.sold }}</td>
+              <td class="px-4 py-4 text-sm">{{ product.totalStock }}</td>
+              <td class="px-4 py-4">
+                <span
+                  :class="product.status === 'Bán chạy'
+                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'"
+                  class="px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ product.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="flex justify-center items-center gap-2 mt-6">
         <button
@@ -157,6 +175,7 @@
 import { ref, computed, onMounted } from 'vue';
 import orderApi from '@/utils/order_service_api';
 import { getTopProducts } from '@/utils/product_service_api';
+import ProductCard from '../../components/common/ProductCard.vue';
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
 const productSearch = ref('')
@@ -207,7 +226,7 @@ const loadTopProducts = async () => {
     const data = res.data.data || []
 
     topProducts.value = data.map(p => ({
-      id: p.id,
+      id: p.id || p._id,
       name: p.name,
       sold: p.sold,
       totalStock: p.stock_quantity,
@@ -298,7 +317,7 @@ const paginatedProducts = computed(() => {
 })
 
 const totalProductPages = computed(() =>
-  Math.ceil(filteredProducts.value.length / productPerPage)
+  Math.max(1, Math.ceil(filteredProducts.value.length / productPerPage))
 )
 
 const orderPage = ref(1)
