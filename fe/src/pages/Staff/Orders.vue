@@ -66,8 +66,40 @@
                   {{ order.status }}
                 </span>
               </td>
-              <td class="px-6 py-5 text-right">
-                <button class="text-teal-600 hover:text-teal-800 font-medium">Chi tiết</button>
+              <td class="px-6 py-5 text-right relative">
+                <div
+                  class="inline-block relative"
+                  @mouseenter="startPreview(order)"
+                  @mouseleave="stopPreview"
+                >
+                  <button class="text-teal-600 hover:text-teal-800 font-medium">
+                    Xem sản phẩm
+                  </button>
+
+                  <!-- Tooltip ảnh -->
+                  <div
+                    v-if="hoveredOrder?.id === order.id"
+                    class="absolute bottom-full right-0 mb-2 w-40 h-40 
+                          bg-white dark:bg-gray-900 
+                          border border-gray-200 dark:border-gray-700 
+                          rounded-xl shadow-xl 
+                          z-[9999] p-2 flex items-center justify-center"
+                  >
+                    <img
+                      v-if="imagesMap[order.id]?.length"
+                      :src="imagesMap[order.id][currentImageIndex]"
+                      class="w-full h-full object-cover rounded transition-opacity duration-500"
+                    />
+
+                    <!-- fallback -->
+                    <div
+                      v-else
+                      class="w-full h-full flex items-center justify-center text-gray-400 text-sm"
+                    >
+                      No Image
+                    </div>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -118,7 +150,12 @@ const priceFilter = ref('')
 const currentPage = ref(1)
 const perPage = 10
 
+const hoveredOrder = ref(null)
+const currentImageIndex = ref(0)
+let interval = null
+
 const orders = ref([])
+const imagesMap = ref({})
 
 const mapStatus = (status) => {
   switch (status) {
@@ -133,19 +170,27 @@ const mapStatus = (status) => {
 const loadOrders = async () => {
   try {
     const res = await orderApi.getOrders()
-
     const data = res.data.data || []
 
-    orders.value = data.map(o => ({
+    imagesMap.value = {}
+
+    orders.value = data.map(o => {
+    const images = (o.items || [])
+    .map(i => i.image)
+    .filter(Boolean)
+
+    imagesMap.value[o.order_number] = images
+
+    return {
       id: o.order_number,
       customer: o.shipping_fullname,
       product: o.items?.map(i => i.product_name).join(', ') || '---',
       quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,
       total: o.total_amount || 0,
       status: mapStatus(o.status)
-    }))
-
-  } catch (err) {
+    }
+  })
+} catch (err) {
     console.error('❌ Load orders lỗi:', err)
   }
 }
@@ -194,6 +239,30 @@ const paginatedOrders = computed(() => {
 function changePage(page) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
+  }
+}
+
+const startPreview = (order) => {
+  hoveredOrder.value = order
+  currentImageIndex.value = 0
+
+  const images = imagesMap.value[order.id] || []
+
+  if (images.length <= 1) return
+
+  interval = setInterval(() => {
+    currentImageIndex.value =
+      (currentImageIndex.value + 1) % images.length
+  }, 1500) // đổi mỗi 1.5s
+}
+
+const stopPreview = () => {
+  hoveredOrder.value = null
+  currentImageIndex.value = 0
+
+  if (interval) {
+    clearInterval(interval)
+    interval = null
   }
 }
 
