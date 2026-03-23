@@ -115,12 +115,12 @@
 
 					<!-- Cancel Button -->
 					<button 
-						v-if="['pending', 'unpaid'].includes(order.status)"
-						@click="handleCancel"
-						class="w-full py-3 rounded-lg border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
-					>
-						Hủy đơn hàng
-					</button>
+  v-if="order.status === 'pending'"
+  @click="handleCancel"
+  class="w-full py-3 rounded-lg border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
+>
+  Hủy đơn hàng
+</button>
 				</div>
 
 				<!-- Support -->

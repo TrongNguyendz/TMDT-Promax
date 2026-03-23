@@ -240,3 +240,24 @@ exports.updateStock = async (id, qty) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   return await Product.findByIdAndUpdate(id, { stock_quantity: qty }, { new: true });
 };
+exports.getPrimaryImageBySku = async (sku) => {
+  // Tìm sản phẩm dựa trên SKU
+  const product = await Product.findOne({ sku });
+
+  if (!product || !product.images || product.images.length === 0) {
+    return null;
+  }
+
+  // Vì trong logic update/create bạn đã gán sort_order và is_primary,
+  // chúng ta có thể tìm ảnh có is_primary: true hoặc đơn giản là lấy ảnh đầu tiên
+  const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+
+  return {
+    image_url: primaryImage.image_url,
+    public_id: primaryImage.public_id,
+    color: primaryImage.color,
+    alt_text: primaryImage.alt_text, // Lưu ý: Schema của bạn chưa có field này, hãy thêm nếu cần
+    is_primary: primaryImage.is_primary,
+    sort_order: primaryImage.sort_order
+  };
+};
