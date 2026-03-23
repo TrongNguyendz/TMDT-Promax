@@ -33,10 +33,24 @@
           class="border rounded-lg px-3 py-2 flex-1 dark:bg-gray-800"
         />
 
-        <!-- filter time -->
+        <!-- từ ngày -->
+        <input
+          type="date"
+          v-model="startDate"
+          class="border rounded-lg px-3 py-2 dark:bg-gray-800"
+        />
+
+        <!-- đến ngày -->
+        <input
+          type="date"
+          v-model="endDate"
+          class="border rounded-lg px-3 py-2 dark:bg-gray-800"
+        />
+
+        <!-- sort -->
         <select
           v-model="timeSort"
-          class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800"
+          class="border rounded-lg px-3 py-2 w-full lg:w-40 dark:bg-gray-800"
         >
           <option value="">Tất cả</option>
           <option value="desc">Mới nhất</option>
@@ -91,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import orderApi from '@/utils/order_service_api';
 
 const orderCode = ref('');
@@ -100,6 +114,8 @@ const message = ref(null);
 
 const packSearch = ref('')
 const timeSort = ref('')
+const startDate = ref('')
+const endDate = ref('')
 
 const currentPage = ref(1)
 const perPage = 5
@@ -112,9 +128,19 @@ const filteredPacks = computed(() => {
     const keyword = packSearch.value.toLowerCase()
 
     data = data.filter(p =>
-      p.customer.toLowerCase().includes(keyword) ||
-      p.order.toLowerCase().includes(keyword)
+      (p.customer || '').toLowerCase().includes(keyword) ||
+      (p.order || '').toLowerCase().includes(keyword)
     )
+  }
+
+  // sort date
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value).getTime()
+    const end = new Date(endDate.value).getTime()
+
+    data = data.filter(p => {
+      return p.timestamp >= start && p.timestamp <= end + 86400000 // +1 ngày
+    })
   }
 
   // sort time
@@ -145,15 +171,22 @@ function changePage(page) {
 }
 
 const packOrder = async () => {
-  if (!orderCode.value.trim()) {
-    message.value = { type: 'error', text: 'Vui lòng nhập mã đơn!' };
-    return;
+  const code = orderCode.value.trim().toUpperCase()
+
+  // ❌ Rỗng
+  if (!code) {
+    message.value = { type: 'error', text: 'Vui lòng nhập mã đơn!' }
+    return
   }
 
- try {
-    // 1. Tìm order theo mã
-    const res = await orderApi.getOrders({ keyword: orderCode.value })
+  // ❌ Sai format ORD-
+  if (!/^ORD-\w+$/i.test(code)) {
+    message.value = { type: 'error', text: 'Mã đơn phải có dạng ORD-xxxxx!' }
+    return
+  }
 
+  try {
+    const res = await orderApi.getOrders({ keyword: code })
     const order = res.data.data?.[0]
 
     if (!order) {
@@ -161,29 +194,76 @@ const packOrder = async () => {
       return
     }
 
-    // 2. Update trạng thái → đóng gói
-    await orderApi.updateOrderStatus(order._id, 'processing')
+    const orderId = order._id || order.id
 
-    // 3. UI update
+    if (!orderId) {
+      message.value = { type: 'error', text: 'Lỗi ID đơn hàng!' }
+      return
+    }
+
+    await orderApi.updateOrderStatus(orderId, 'processing')
+
     recentPacks.value.unshift({
-    id: Date.now(),
-    customer: order.customer_name,
-    order: orderCode.value.toUpperCase(),
-    time: new Date().toLocaleTimeString('vi-VN'),
-    timestamp: Date.now()
-  })
+      id: Date.now(),
+      customer: order.shipping_fullname || 'Unknown',
+      order: code,
+      time: new Date().toLocaleTimeString('vi-VN'),
+      timestamp: Date.now()
+    })
 
     message.value = {
       type: 'success',
-      text: `Đơn hàng ${orderCode.value.toUpperCase()} đã được đóng gói!`
+      text: `Đơn hàng ${code} đã được đóng gói!`
     }
 
     orderCode.value = ''
 
   } catch (err) {
     console.error(err)
+    message.value = { type: 'error', text: 'Có lỗi xảy ra!' }
   }
 
   setTimeout(() => { message.value = null }, 5000)
 }
+
+const initCurrentMonth = () => {
+  const now = new Date()
+
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  startDate.value = firstDay.toISOString().split('T')[0]
+  endDate.value = lastDay.toISOString().split('T')[0]
+}
+
+const loadRecentOrders = async () => {
+  try {
+    const res = await orderApi.getOrders({ limit: 10, sort: 'desc' })
+
+    const data = res.data.data || []
+
+    // 🔥 Sắp xếp mới nhất trước (nếu có created_at)
+    data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    // 🔥 Lấy 10 đơn gần nhất
+    const latestOrders = data.slice(0, 10)
+
+    // 🔥 Map sang UI
+    recentPacks.value = latestOrders.map(o => ({
+      id: o._id || o.id,
+      customer: o.shipping_fullname || 'Unknown',
+      order: o.order_number,
+      time: new Date(o.created_at).toLocaleTimeString('vi-VN'),
+      timestamp: o.created_at ? new Date(o.created_at).getTime() : Date.now()
+    }))
+
+  } catch (err) {
+    console.error('❌ Load recent orders lỗi:', err)
+  }
+}
+
+onMounted(() => {
+  initCurrentMonth()
+  loadRecentOrders();
+})
 </script>
