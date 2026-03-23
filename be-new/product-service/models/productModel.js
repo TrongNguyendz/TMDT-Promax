@@ -109,6 +109,8 @@ exports.getProductById = async (id) => {
   const doc = product.toObject();
   doc.id = doc._id;
   doc.category_name = doc.category_id?.name;
+  
+  doc.category_id = doc.category_id?._id ? doc.category_id._id.toString() : doc.category_id;
   delete doc._id;
   return doc;
 };
@@ -226,7 +228,10 @@ exports.deleteProduct = async (id) => {
   // Xóa ảnh trên cloud
   const publicIds = product.images.map(img => img.public_id).filter(Boolean);
   if (publicIds.length) await deleteCloudinaryImages(publicIds);
-
+  // Xóa review liên quan
+  const Review = mongoose.model('Review');
+  await Review.deleteMany({ product_id: id });
+  // Xóa sản phẩm
   await Product.findByIdAndDelete(id);
   return true;
 };

@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-// Đảm bảo import đúng file api của product service
 import api from '../utils/product_service_api'; 
 
 export const useProductsStore = defineStore('products', {
