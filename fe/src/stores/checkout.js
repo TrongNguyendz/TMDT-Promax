@@ -84,9 +84,9 @@ export const useCheckoutStore = defineStore('checkout', () => {
         const orderStore = useOrderStore();
         const uiStore = useUIStore();
         
-        // 1. Kiểm tra đăng nhập (Bây giờ code siêu gọn, chỉ cần gọi .id vì Backend đã chuẩn hóa)
+        // 1. Kiểm tra đăng nhập 
         const userId = userStore.profile?.id;
-        const userEmail = userStore.profile?.email || 'guest@example.com';
+        const userEmail = userStore.profile?.email 
 
         if (!userStore.token || !userId) {
             uiStore.pushToast({ type: 'error', message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' });
