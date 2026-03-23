@@ -20,12 +20,12 @@ const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
 const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
 const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
 const Invoice = () => import('../pages/customer/Invoice.vue');
-<<<<<<< HEAD
+
 const TotalAmountSpent = () => import('../pages/customer/TotalAmount.vue');
 const SupportPage = () => import('../pages/customer/Support.vue');
-=======
-const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
->>>>>>> ivan
+
+// const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
+
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
@@ -42,11 +42,9 @@ const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPag
 const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
 const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
-<<<<<<< HEAD
 const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 
-=======
->>>>>>> ivan
+
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
 const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
@@ -63,7 +61,7 @@ const StaffComment = () => import('../pages/Staff/Comment.vue')
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
-	{ path: '/compare', component: CompareProductPage },
+	// { path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage },
 	{ path: '/checkout', component: CheckoutPage },
@@ -97,10 +95,7 @@ const routes = [
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
     { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
     { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },
-<<<<<<< HEAD
     { path: '/admin/support', component: AdminSupport, meta: { requiresAdmin: true } },
-=======
->>>>>>> ivan
 
 	// Staff routes (can be added similarly to admin routes if needed)
 	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },

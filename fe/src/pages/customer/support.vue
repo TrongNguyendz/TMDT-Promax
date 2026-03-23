@@ -186,7 +186,7 @@ const initChat = async () => {
   }
 
   // 3. Không có ticket hợp lệ → tạo mới
-  ticketId = await createNewTicket();
+  ticketId = await fetchUserTicket();
   if (ticketId) {
     currentTicketId.value = ticketId;
     localStorage.setItem('support_ticket_id', ticketId);
