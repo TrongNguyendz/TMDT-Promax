@@ -148,147 +148,143 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:3007/api/support'; // hoặc import từ env nếu cần
 
 const searchQuery = ref('');
 const selectedConversation = ref(null);
 const newMessage = ref('');
 const isTyping = ref(false);
 const chatContainer = ref(null);
+const loading = ref(false);
+const error = ref(null);
 
-const conversations = ref([
-  {
-    id: 1,
-    customer: 'Nguyễn Văn A',
-    lastMessage: 'Áo size M còn không ạ?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5),
-    messages: [
-      { text: 'Chào shop, áo thun oversize size M còn hàng không?', time: new Date(Date.now() - 1000 * 60 * 15), isStaff: false, isRead: true },
-      { text: 'Chào bạn! Size M còn 3 chiếc ạ.', time: new Date(Date.now() - 1000 * 60 * 10), isStaff: true, isRead: true },
-      { text: 'Ok bạn cho mình đặt 1 cái nhé', time: new Date(Date.now() - 1000 * 60 * 5), isStaff: false, isRead: false }
-    ]
-  },
-  {
-    id: 2,
-    customer: 'Trần Thị B',
-    lastMessage: 'Ship COD được không shop?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 30),
-    messages: [
-      { text: 'Shop ơi ship COD được không?', time: new Date(Date.now() - 1000 * 60 * 40), isStaff: false, isRead: true },
-      { text: 'Dạ được ạ, bạn đặt hàng mình sẽ ship COD nhé!', time: new Date(Date.now() - 1000 * 60 * 35), isStaff: true, isRead: true },
-      { text: 'Cảm ơn shop nhiều!', time: new Date(Date.now() - 1000 * 60 * 20), isStaff: false, isRead: false }
-    ]
-  },
-  {
-    id: 3,
-    customer: 'Lê Minh C',
-    lastMessage: 'Đổi size được không ạ?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 120),
-    messages: [
-      { text: 'Mình nhận hàng rồi nhưng size hơi rộng, đổi size L được không?', time: new Date(Date.now() - 1000 * 60 * 130), isStaff: false, isRead: true },
-      { text: 'Dạ được ạ, bạn gửi lại hàng mình hỗ trợ đổi size L miễn phí nhé.', time: new Date(Date.now() - 1000 * 60 * 125), isStaff: true, isRead: true }
-    ]
-  },
-  {
-    id: 4,
-    customer: 'Phạm Hồng D',
-    lastMessage: 'Hàng về màu đen chưa shop?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 300),
-    messages: [
-      { text: 'Hàng màu đen dự kiến về tuần sau ạ.', time: new Date(Date.now() - 1000 * 60 * 310), isStaff: true, isRead: true }
-    ]
-  }
-]);
+// Danh sách ticket từ backend
+const conversations = ref([]);
 
-// Tìm kiếm
+// Tìm kiếm client-side
 const filteredConversations = computed(() => {
   if (!searchQuery.value.trim()) return conversations.value;
   const q = searchQuery.value.toLowerCase();
   return conversations.value.filter(c => 
-    c.customer.toLowerCase().includes(q) || 
-    c.lastMessage.toLowerCase().includes(q) ||
-    c.messages.some(m => m.text.toLowerCase().includes(q))
+    (c.user_name?.toLowerCase().includes(q) || '') ||
+    (c.subject?.toLowerCase().includes(q)) ||
+    (c.last_message_content?.toLowerCase().includes(q))
   );
 });
 
-// Unread count cho mỗi conversation
+// Lấy unread count từ trường unread_count_staff (hoặc tính từ messages)
 function getUnreadCount(conv) {
-  return conv.messages.filter(m => !m.isStaff && !m.isRead).length;
+  return conv.unread_count_staff || 0;
+  // Nếu muốn tính thủ công: conv.messages?.filter(m => m.sender_type === 'customer' && !m.is_read).length || 0
 }
 
-// Chọn conversation → đánh dấu đã đọc + scroll
-function selectConversation(conv) {
-  selectedConversation.value = conv;
-  // Đánh dấu tất cả tin nhắn chưa đọc của khách là đã đọc
-  conv.messages.forEach(msg => {
-    if (!msg.isStaff) msg.isRead = true;
-  });
-  nextTick(() => scrollToBottom());
+// Format tên khách + avatar
+function getCustomerName(ticket) {
+  return ticket.user_name || ticket.guest_name || `Khách ${ticket.user_id || ticket._id.slice(-6)}`;
 }
 
-// Gửi tin nhắn
-function sendMessage() {
-  if (!newMessage.value.trim() || !selectedConversation.value) return;
-
-  const msg = {
-    text: newMessage.value.trim(),
-    time: new Date(),
-    isStaff: true,
-    isRead: true // tin nhắn của staff luôn đã đọc
-  };
-
-  selectedConversation.value.messages.push(msg);
-  selectedConversation.value.lastMessage = msg.text;
-  selectedConversation.value.lastMessageTime = new Date();
-
-  newMessage.value = '';
-  nextTick(() => {
-    scrollToBottom();
-    simulateCustomerReply();
-  });
-}
-
-// Giả lập khách trả lời
-function simulateCustomerReply() {
-  if (!selectedConversation.value) return;
-  
-  isTyping.value = true;
-  setTimeout(() => {
-    isTyping.value = false;
-    
-    const replies = [
-      'Cảm ơn shop nhé!',
-      'Mình sẽ chuyển khoản ngay đây ạ.',
-      'Size L còn không shop ơi?',
-      'Ship nhanh giúp mình nhé, cần gấp.',
-      'Hàng đẹp lắm, 5 sao cho shop!',
-      'Shop có chương trình giảm giá không ạ?',
-      'Mình muốn đổi màu sang trắng được không?'
-    ];
-    const randomReply = replies[Math.floor(Math.random() * replies.length)];
-
-    const replyMsg = {
-      text: randomReply,
-      time: new Date(),
-      isStaff: false,
-      isRead: false
-    };
-
-    selectedConversation.value.messages.push(replyMsg);
-    selectedConversation.value.lastMessage = replyMsg.text;
-    selectedConversation.value.lastMessageTime = new Date();
-
-    nextTick(() => scrollToBottom());
-  }, Math.random() * 2000 + 2000); // 2-4 giây
-}
-
-// Format thời gian
-function formatTime(date) {
+function formatTime(dateStr) {
+  if (!dateStr) return '—';
+  const date = new Date(dateStr);
   const now = new Date();
   const diff = now - date;
   if (diff < 60000) return 'Vừa xong';
   if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+}
+
+// Lấy danh sách ticket
+async function fetchTickets() {
+  try {
+    loading.value = true;
+    const res = await axios.get(`${API_BASE}/tickets`, {
+      params: {
+        page: 1,
+        limit: 50,          // có thể tăng lên nếu cần
+        status: 'open',     // chỉ lấy ticket đang mở (tùy bạn)
+      }
+    });
+    
+    // Chuẩn hóa dữ liệu giống cấu trúc cũ một chút
+    conversations.value = res.data.data.map(ticket => ({
+      id: ticket._id,
+      customer: getCustomerName(ticket),
+      lastMessage: ticket.last_message_content || ticket.subject || '',
+      lastMessageTime: ticket.last_message_at,
+      unread_count_staff: ticket.unread_count_staff || 0,
+      // sẽ load messages sau khi chọn
+      messages: []
+    }));
+  } catch (err) {
+    console.error('Lỗi load tickets:', err);
+    error.value = 'Không tải được danh sách hội thoại';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Chọn ticket → load messages
+async function selectConversation(conv) {
+  selectedConversation.value = conv;
+  
+  try {
+    const res = await axios.get(`${API_BASE}/tickets/${conv.id}`);
+    const { ticket, messages } = res.data.data;
+
+    // Cập nhật thông tin ticket nếu cần
+    conv.customer = getCustomerName(ticket);
+    conv.lastMessageTime = ticket.last_message_at;
+
+    // Chuẩn hóa messages cho frontend
+    conv.messages = messages.map(msg => ({
+      text: msg.content,
+      time: msg.created_at,
+      isStaff: msg.sender_type === 'staff',
+      isRead: msg.is_read
+    }));
+
+    // Đánh dấu đã đọc
+    await axios.put(`${API_BASE}/tickets/${conv.id}/mark-read`);
+
+    nextTick(() => scrollToBottom());
+  } catch (err) {
+    console.error('Lỗi load messages:', err);
+  }
+}
+
+// Gửi tin nhắn thật
+async function sendMessage() {
+  if (!newMessage.value.trim() || !selectedConversation.value) return;
+
+  const tempMsg = {
+    text: newMessage.value.trim(),
+    time: new Date(),
+    isStaff: true,
+    isRead: true
+  };
+
+  // Hiển thị tạm trước (optimistic UI)
+  selectedConversation.value.messages.push(tempMsg);
+  selectedConversation.value.lastMessage = tempMsg.text;
+  selectedConversation.value.lastMessageTime = new Date();
+  nextTick(scrollToBottom);
+
+  try {
+    await axios.post(`${API_BASE}/tickets/${selectedConversation.value.id}/messages`, {
+      sender_type: 'staff',
+      sender_id: 2001,           // ← thay bằng staff id thật (từ store/auth)
+      content: newMessage.value.trim(),
+      message_type: 'text'
+    });
+
+    newMessage.value = '';
+  } catch (err) {
+    console.error('Lỗi gửi tin nhắn:', err);
+    // Có thể rollback hoặc thông báo lỗi
+  }
 }
 
 // Scroll xuống dưới
@@ -298,26 +294,14 @@ function scrollToBottom() {
   }
 }
 
-// Watch để scroll khi thay đổi
-watch(selectedConversation, () => nextTick(scrollToBottom));
-watch(() => selectedConversation.value?.messages, () => nextTick(scrollToBottom), { deep: true });
-
 // Khởi tạo
 onMounted(() => {
-  // Tự động chọn conversation đầu tiên nếu có
-  if (conversations.value.length > 0) {
-    selectConversation(conversations.value[0]);
-  }
+  fetchTickets();
+  // Tự động chọn ticket đầu tiên nếu có
+  watch(conversations, () => {
+    if (conversations.value.length > 0 && !selectedConversation.value) {
+      selectConversation(conversations.value[0]);
+    }
+  }, { immediate: true });
 });
 </script>
-
-<style scoped>
-/* Tùy chỉnh thêm nếu cần */
-.animate-bounce {
-  animation: bounce 1.2s infinite;
-}
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-</style>

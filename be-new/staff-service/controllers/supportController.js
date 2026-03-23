@@ -183,3 +183,63 @@ exports.markAsRead = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+/**
+ * Lấy danh sách ticket theo user_id
+ * GET /api/support/tickets/user/:userId
+ * Query params hỗ trợ: status, page, limit, sort (tùy chọn)
+ */
+exports.getTicketsByUserId = async (req, res) => {
+    try {
+        const userId = Number(req.params.userId);
+        if (!userId || isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'userId phải là số hợp lệ'
+            });
+        }
+
+        const { status, page = 1, limit = 10, sort = 'last_message_at' } = req.query;
+
+        const query = { user_id: userId };
+        if (status) query.status = status;
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const limitNum = Number(limit);
+
+        // Xác định hướng sort (-1 = mới nhất trước)
+        let sortOption = { last_message_at: -1 };
+        if (sort === 'created_at') {
+            sortOption = { created_at: -1 };
+        } else if (sort === 'created_at_asc') {
+            sortOption = { created_at: 1 };
+        }
+
+        const [tickets, total] = await Promise.all([
+            SupportTicket.find(query)
+                .sort(sortOption)
+                .skip(skip)
+                .limit(limitNum)
+                .lean(),
+
+            SupportTicket.countDocuments(query)
+        ]);
+
+        res.json({
+            success: true,
+            data: tickets,
+            pagination: {
+                total,
+                page: Number(page),
+                limit: limitNum,
+                pages: Math.ceil(total / limitNum)
+            }
+        });
+    } catch (error) {
+        console.error('Lỗi getTicketsByUserId:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Lỗi server khi lấy ticket của user'
+        });
+    }
+};

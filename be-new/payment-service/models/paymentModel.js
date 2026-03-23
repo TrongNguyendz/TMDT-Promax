@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const { generateTransactionId } = require('../functions/id');
 
 const paymentSchema = new mongoose.Schema({
-  order_id: { type: Number, required: true, index: true },
-  user_id: { type: Number, required: true, index: true },
+  order_id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
   amount: { type: Number, required: true },
   currency: { type: String, default: 'VND' },
   payment_method: { type: String, required: true },

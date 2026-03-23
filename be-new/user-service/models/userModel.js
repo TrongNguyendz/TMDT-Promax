@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   id: { 
-    type: String, 
+    type: Number, 
     unique: true,
     // Không cần required: true vì pre-save hook sẽ gán giá trị
   },
