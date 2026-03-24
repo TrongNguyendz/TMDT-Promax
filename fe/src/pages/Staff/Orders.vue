@@ -56,7 +56,7 @@
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
             <tr v-for="order in paginatedOrders" :key="order.id">
-              <td class="px-6 py-5 whitespace-nowrap text-sm font-medium">#{{ order.id }}</td>
+              <td class="px-6 py-5 whitespace-nowrap text-sm font-medium">{{ order.id }}</td>
               <td class="px-6 py-5 whitespace-nowrap">{{ order.customer }}</td>
               <td class="px-6 py-5">{{ order.product }}</td>
               <td class="px-6 py-5 text-center">{{ order.quantity }}</td>

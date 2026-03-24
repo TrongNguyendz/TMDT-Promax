@@ -100,90 +100,194 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue';
-
+import { ref, onMounted, nextTick } from 'vue';
+import axios from 'axios';
+import { useUserStore } from '../../stores/user';
+const API_BASE = 'http://localhost:3007/api/support';
+const user = useUserStore();
 const chatContainer = ref(null);
 const newMessage = ref('');
 const isTyping = ref(false);
+const messages = ref([]);
+const currentTicketId = ref(null);     // Lưu _id của ticket đang chat tạm thời đã tạo hoặc lấy được từ API
+const guestInfo = ref({                // Thông tin guest tạm thời
+  name: user.username || '',
+  email: user.email || ''
+});
 
-// Dữ liệu tin nhắn mặc định (Chào mừng)
-const messages = ref([
-  { 
-    text: 'Xin chào! Cảm ơn bạn đã liên hệ với chúng tôi. Mình có thể giúp gì cho bạn hôm nay?', 
-    time: new Date(Date.now() - 60000), 
-    isStaff: true 
-  }
-]);
-
-// Hàm cuộn xuống tin nhắn mới nhất
 const scrollToBottom = () => {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
   }
 };
 
-// Khách hàng gửi tin nhắn
-const sendMessage = () => {
-  if (!newMessage.value.trim()) return;
-
-  // Thêm tin nhắn của User
-  messages.value.push({
-    text: newMessage.value.trim(),
-    time: new Date(),
-    isStaff: false // false = User (Khách)
-  });
-
-  newMessage.value = '';
-  nextTick(() => {
-    scrollToBottom();
-    simulateStaffReply(); // Gọi bot trả lời
-  });
+const formatTime = (dateStr) => {
+  if (!dateStr) return '--:--';
+  return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 };
 
-// Giả lập nhân viên (Staff) trả lời
-const simulateStaffReply = () => {
-  isTyping.value = true;
-  nextTick(() => scrollToBottom());
-  
-  // Fake thời gian delay 2 - 4s
-  setTimeout(() => {
-    isTyping.value = false;
-    
-    // Random các câu trả lời tự động để test UI
-    const replies = [
-      'Dạ mình đã ghi nhận thông tin. Bạn chờ một lát để mình kiểm tra nhé.',
-      'Sản phẩm này hiện đang còn hàng bạn nhé. Bạn muốn đặt size nào ạ?',
-      'Bạn vui lòng cung cấp thêm mã đơn hàng (ví dụ: ORD-1001) để mình hỗ trợ nhanh hơn.',
-      'Bên mình hỗ trợ ship COD toàn quốc, nhận hàng kiểm tra rồi mới thanh toán ạ.',
-      'Chương trình khuyến mãi sẽ kết thúc vào cuối tuần này, bạn tranh thủ đặt sớm nhé!',
-      'Cảm ơn bạn đã phản hồi, shop sẽ xử lý ngay lập tức.'
-    ];
-    const randomReply = replies[Math.floor(Math.random() * replies.length)];
+// Tìm ticket đang mở (ưu tiên) hoặc ticket mới nhất của user
+const fetchUserTicket = async () => {
+  if (!user.profile?.id) return null; // chưa login → xử lý guest riêng
 
-    messages.value.push({
-      text: randomReply,
-      time: new Date(),
-      isStaff: true
+  try {
+    const res = await axios.get(`${API_BASE}/tickets/user/${user.profile.id}`, {
+      params: {
+        status: 'open',     // ưu tiên ticket đang mở
+        page: 1,
+        limit: 1            // chỉ cần 1 ticket là đủ (mới nhất theo last_message_at)
+      }
     });
 
-    nextTick(() => scrollToBottom());
-  }, Math.random() * 2000 + 2000); 
+    if (res.data.success && res.data.data?.length > 0) {
+      const ticket = res.data.data[0];
+      console.log('Tìm thấy ticket đang mở:', ticket._id);
+      return ticket._id;
+    }
+
+    console.log('Không tìm thấy ticket open nào');
+    return null;
+  } catch (err) {
+    console.error('Lỗi khi gọi API lấy ticket của user:', err);
+    return null;
+  }
 };
 
-// Format hiển thị thời gian
-const formatTime = (date) => {
-  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-};
+// Khởi tạo: kiểm tra ticket mở của guest hoặc tạo mới
+const initChat = async () => {
+  let ticketId = localStorage.getItem('support_ticket_id');
 
-onMounted(() => {
+  // 1. Kiểm tra ticket cũ còn hợp lệ không
+  if (ticketId) {
+    try {
+      const res = await axios.get(`${API_BASE}/tickets/${ticketId}`);
+      if (res.data.success && res.data.data.ticket.status === 'open') {
+        currentTicketId.value = ticketId;
+        await loadMessages(ticketId);
+        scrollToBottom();
+        return;
+      }
+    } catch (e) {
+      console.warn('Ticket cũ không còn tồn tại hoặc đã đóng');
+      localStorage.removeItem('support_ticket_id');
+    }
+  }
+
+  // 2. Nếu user đã login → tìm ticket đang mở
+  if (user.profile?.id) {
+    ticketId = await fetchUserTicket();
+    if (ticketId) {
+      currentTicketId.value = ticketId;
+      localStorage.setItem('support_ticket_id', ticketId);
+      await loadMessages(ticketId);
+      scrollToBottom();
+      return;
+    }
+  }
+
+  // 3. Không có ticket hợp lệ → tạo mới
+  ticketId = await createNewTicket();
+  if (ticketId) {
+    currentTicketId.value = ticketId;
+    localStorage.setItem('support_ticket_id', ticketId);
+
+    // Tin nhắn hệ thống chào mừng
+    messages.value = [{
+      text: 'Xin chào! Cảm ơn bạn đã liên hệ. Mình có thể giúp gì cho bạn hôm nay?',
+      time: new Date().toISOString(),
+      isStaff: true
+    }];
+  } else {
+    messages.value = [{
+      text: 'Hiện tại hệ thống đang bận, bạn vui lòng thử lại sau vài phút nhé.',
+      time: new Date().toISOString(),
+      isStaff: true
+    }];
+  }
+
   scrollToBottom();
+};
+
+async function loadMessages(ticketId) {
+  try {
+    const res = await axios.get(`${API_BASE}/tickets/${ticketId}`);
+    const { messages: apiMessages } = res.data.data;
+
+    messages.value = apiMessages.map(m => ({
+      text: m.content,
+      time: m.created_at,
+      isStaff: m.sender_type !== 'customer'
+    }));
+
+    // Thêm tin chào nếu ticket mới tạo
+    if (messages.value.length === 0) {
+      messages.value.push({
+        text: 'Xin chào! Mình có thể hỗ trợ gì cho bạn ạ?',
+        time: new Date().toISOString(),
+        isStaff: true
+      });
+    }
+  } catch (err) {
+    console.error('Load messages lỗi:', err);
+  }
+}
+
+async function sendMessage() {
+  if (!newMessage.value.trim() || !currentTicketId.value) return;
+
+  const msgText = newMessage.value.trim();
+
+  // Optimistic UI - hiển thị ngay
+  messages.value.push({
+    text: msgText,
+    time: new Date().toISOString(),
+    isStaff: false
+  });
+  scrollToBottom();
+
+  newMessage.value = '';
+
+  try {
+    await axios.post(`${API_BASE}/tickets/${currentTicketId.value}/messages`, {
+      sender_type: 'customer',
+      sender_id: user.id || 0,                   // guest → sender_id = 0 hoặc bỏ qua
+      content: msgText,
+      message_type: 'text'
+    });
+
+    // Optional: lưu tên/email nếu khách nhập lần đầu
+    if (guestInfo.value.name && !localStorage.getItem('guest_name')) {
+      localStorage.setItem('guest_name', guestInfo.value.name);
+    }
+    if (guestInfo.value.email && !localStorage.getItem('guest_email')) {
+      localStorage.setItem('guest_email', guestInfo.value.email);
+    }
+
+  } catch (err) {
+    console.error('Gửi tin nhắn lỗi:', err);
+    messages.value.push({
+      text: 'Có lỗi xảy ra khi gửi tin nhắn. Bạn thử lại nhé!',
+      time: new Date().toISOString(),
+      isStaff: true
+    });
+  } finally {
+    scrollToBottom();
+  }
+}
+
+onMounted(async () => {
+  await initChat();
+  scrollToBottom();   // optional, để chắc chắn
 });
 </script>
+
+
+
 
 <style scoped>
 /* Hiệu ứng nhấp nháy 3 dấu chấm */
 .animate-bounce {
-  animation: bounce 1.2s infinite;
+  animation: bounce 1.1s infinite;
 }
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }

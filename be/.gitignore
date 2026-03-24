@@ -5,4 +5,8 @@ logs/
 .DS_Store
 .vscode/
 .idea/
+# Ignore SQLite databases
+*.db
+*.sqlite
+*.sqlite3
 

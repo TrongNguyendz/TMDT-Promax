@@ -57,8 +57,8 @@ router.delete('/orders/:id', orderServiceProxy);
 router.put('/orders/:id/cancel', orderServiceProxy);
 
 // 2. WISHLIST ROUTES
-router.get('/wishlists/:userId', orderServiceProxy);
-router.post('/wishlists/:userId', orderServiceProxy);
-router.delete('/wishlists/:userId/:productId', orderServiceProxy);
+router.get('/wishlists', orderServiceProxy);
+router.post('/wishlists', orderServiceProxy);
+router.delete('/wishlists', orderServiceProxy);
 
 module.exports = router;
