@@ -102,6 +102,7 @@ exports.getShiftById = async (req, res) => {
 
     // Nếu truyền user_id thay vì staff_id → thử map sang staff_id
     const staffByUser = await Staff.findOne({ user_id: paramId }).lean().select('id');
+    console.log(`Looking for staff with user_id ${paramId} → found:`, staffByUser);
     if (staffByUser) {
       staffId = staffByUser.id; // ưu tiên dùng user_id nếu tìm thấy
       console.log(`Mapped user_id ${paramId} → staff_id ${staffId}`);
@@ -110,6 +111,8 @@ exports.getShiftById = async (req, res) => {
     const shifts = await Shift.find({ staff_id: staffId })
       .sort({ shift_date: -1, start_time: 1 })
       .lean();
+
+    console.log(`Found ${shifts.length} shifts for staff_id ${staffId}`);
 
     if (shifts.length === 0) {
       return res.status(404).json({
