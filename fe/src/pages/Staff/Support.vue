@@ -1,307 +1,182 @@
-<!-- views/staff/Support.vue -->
 <template>
-  <div class="space-y-6">
-    <h1 class="text-2xl lg:text-3xl font-black text-gray-900 dark:text-white">Hỗ trợ khách hàng</h1>
-
-    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden h-[calc(100vh-180px)] flex flex-col lg:flex-row">
-      
-      <!-- Left Sidebar: Danh sách cuộc hội thoại -->
-      <div class="w-full lg:w-80 lg:border-r dark:border-gray-800 flex flex-col">
-        <!-- Header + Search -->
-        <div class="p-4 border-b dark:border-gray-800 space-y-3">
-          <h2 class="text-lg font-bold">Cuộc hội thoại</h2>
-          <input 
-            v-model="searchQuery"
-            placeholder="Tìm kiếm khách hàng hoặc tin nhắn..." 
-            class="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
-
-        <!-- Danh sách -->
-        <div class="flex-1 overflow-y-auto">
-          <div 
-            v-for="conversation in filteredConversations" 
-            :key="conversation.id"
-            @click="selectConversation(conversation)"
-            class="relative p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition flex items-start gap-3"
-            :class="{ 'bg-teal-50 dark:bg-teal-900/20': selectedConversation?.id === conversation.id }"
-          >
-            <div class="flex-shrink-0 relative">
-              <div class="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white font-bold text-lg">
-                {{ conversation.customer.charAt(0).toUpperCase() }}
-              </div>
-              <!-- Unread badge -->
-              <span 
-                v-if="getUnreadCount(conversation) > 0"
-                class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white ring-2 ring-white dark:ring-gray-900"
-              >
-                {{ getUnreadCount(conversation) }}
-              </span>
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between items-baseline">
-                <p class="font-semibold truncate">{{ conversation.customer }}</p>
-                <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  {{ formatTime(conversation.lastMessageTime) }}
-                </span>
-              </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 truncate mt-0.5">
-                {{ conversation.lastMessage }}
-              </p>
-            </div>
-          </div>
-
-          <!-- No results -->
-          <div v-if="filteredConversations.length === 0" class="p-6 text-center text-gray-500 dark:text-gray-400">
-            Không tìm thấy cuộc hội thoại nào
-          </div>
+  <div class="flex h-[calc(100vh-100px)] overflow-hidden bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm">
+    
+    <div class="w-80 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-800">
+        <h2 class="text-xl font-black text-gray-900 dark:text-white">Hỗ trợ khách hàng</h2>
+        <div class="mt-4 relative">
+          <input type="text" placeholder="Tìm kiếm khách hàng..." class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20" />
+          <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
       </div>
 
-      <!-- Right Panel: Chat Area -->
-      <div class="flex-1 flex flex-col">
-        <div v-if="selectedConversation" class="flex flex-col h-full">
-          <!-- Chat Header -->
-          <div class="p-4 border-b dark:border-gray-800 flex items-center gap-3 bg-gray-50 dark:bg-gray-800">
-            <div class="h-10 w-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold">
-              {{ selectedConversation.customer.charAt(0).toUpperCase() }}
-            </div>
+      <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <div 
+          v-for="ticket in tickets" :key="ticket._id"
+          @click="selectTicket(ticket._id)"
+          :class="['p-4 cursor-pointer border-b border-gray-100 dark:border-gray-800 transition-all hover:bg-white dark:hover:bg-gray-800', 
+                   currentTicketId === ticket._id ? 'bg-white dark:bg-gray-800 border-l-4 border-l-blue-600' : '']"
+        >
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-bold text-gray-900 dark:text-white">Khách hàng #{{ ticket.user_id || 'Guest' }}</span>
+            <span class="text-[10px] text-gray-400">{{ formatTime(ticket.last_message_at) }}</span>
+          </div>
+          <p class="text-xs text-gray-500 truncate">{{ ticket.subject || 'Cần hỗ trợ tư vấn...' }}</p>
+          <div v-if="ticket.unread_count_staff > 0" class="mt-2 inline-block px-2 py-0.5 bg-blue-600 text-white text-[10px] rounded-full font-bold">
+            {{ ticket.unread_count_staff }} tin mới
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col bg-white dark:bg-gray-900">
+      <template v-if="currentTicketId">
+        <div class="p-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between shadow-sm z-10">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">C</div>
             <div>
-              <p class="font-semibold">{{ selectedConversation.customer }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Đang hoạt động</p>
-            </div>
-          </div>
-
-          <!-- Messages -->
-          <div 
-            ref="chatContainer"
-            class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-gray-50/50 dark:bg-gray-950/50"
-          >
-            <div 
-              v-for="(msg, index) in selectedConversation.messages" 
-              :key="index"
-              :class="msg.isStaff ? 'justify-end' : 'justify-start'"
-              class="flex"
-            >
-              <div 
-                :class="[
-                  msg.isStaff 
-                    ? 'bg-teal-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-tr-2xl rounded-tl-2xl rounded-br-2xl'
-                ]"
-                class="max-w-[80%] sm:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm"
-              >
-                <p class="break-words leading-relaxed">{{ msg.text }}</p>
-                <p class="text-xs mt-1 opacity-70 text-right">
-                  {{ formatTime(msg.time) }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Typing indicator -->
-            <div v-if="isTyping" class="flex justify-start">
-              <div class="bg-gray-200 dark:bg-gray-700 px-5 py-3 rounded-2xl shadow-sm">
-                <div class="flex gap-1.5">
-                  <div class="h-2.5 w-2.5 animate-bounce rounded-full bg-gray-500" style="animation-delay: 0s"></div>
-                  <div class="h-2.5 w-2.5 animate-bounce rounded-full bg-gray-500" style="animation-delay: 0.2s"></div>
-                  <div class="h-2.5 w-2.5 animate-bounce rounded-full bg-gray-500" style="animation-delay: 0.4s"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Input area -->
-          <div class="p-4 border-t dark:border-gray-800 bg-white dark:bg-gray-900">
-            <div class="flex gap-3">
-              <input 
-                v-model="newMessage"
-                @keyup.enter="sendMessage"
-                placeholder="Nhập tin nhắn..." 
-                class="flex-1 px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-              <button 
-                @click="sendMessage"
-                :disabled="!newMessage.trim()"
-                class="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Gửi
-              </button>
+              <h3 class="font-bold text-gray-900 dark:text-white text-sm">Đang chat với: Khách hàng #{{ currentTicketId.slice(-5) }}</h3>
+              <p class="text-xs text-green-500 font-medium">Trực tuyến</p>
             </div>
           </div>
         </div>
 
-        <!-- Placeholder khi chưa chọn -->
-        <div v-else class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-950/50">
-          <div class="text-center p-6">
-            <svg class="w-20 h-20 mx-auto mb-6 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <p class="text-xl font-medium">Chọn một cuộc hội thoại để bắt đầu trò chuyện</p>
-            <p class="mt-2 text-sm">Tất cả tin nhắn sẽ được lưu và đồng bộ</p>
+        <div ref="chatContainer" class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 dark:bg-gray-900 custom-scrollbar">
+          <div v-for="(msg, index) in messages" :key="index" :class="['flex', msg.isStaff ? 'justify-end' : 'justify-start']">
+            <div :class="['max-w-[70%] px-5 py-3 rounded-2xl shadow-sm text-sm', 
+                          msg.isStaff ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-100 dark:border-gray-700 rounded-bl-none']">
+              <p class="leading-relaxed whitespace-pre-wrap">{{ msg.text }}</p>
+              <span :class="['text-[9px] mt-1 block font-medium', msg.isStaff ? 'text-blue-200 text-right' : 'text-gray-400']">{{ formatTime(msg.time) }}</span>
+            </div>
           </div>
         </div>
+
+        <div class="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+          <form @submit.prevent="handleSend" class="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2">
+            <input v-model="newMessage" placeholder="Nhập câu trả lời..." class="flex-1 bg-transparent border-none outline-none text-sm py-2 dark:text-white" autocomplete="off" />
+            <button type="submit" :disabled="!newMessage.trim()" class="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <svg class="h-5 w-5 -rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+            </button>
+          </form>
+        </div>
+      </template>
+
+      <div v-else class="flex-1 flex flex-col justify-center items-center text-gray-400 bg-gray-50/30 dark:bg-gray-900/50">
+        <svg class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        <p class="font-medium text-gray-500">Chọn một khách hàng để bắt đầu tư vấn</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { chatService } from '@/utils/chatService';
+import { socketService } from '@/utils/socketService';
+import { useUserStore } from '@/stores/user';
 
-const API_BASE = 'http://localhost:3007/api/support'; // hoặc import từ env nếu cần
-
-const searchQuery = ref('');
-const selectedConversation = ref(null);
+const userStore = useUserStore();
+const tickets = ref([]);
+const messages = ref([]);
+const currentTicketId = ref(null);
 const newMessage = ref('');
-const isTyping = ref(false);
 const chatContainer = ref(null);
-const loading = ref(false);
-const error = ref(null);
 
-// Danh sách ticket từ backend
-const conversations = ref([]);
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+  });
+};
 
-// Tìm kiếm client-side
-const filteredConversations = computed(() => {
-  if (!searchQuery.value.trim()) return conversations.value;
-  const q = searchQuery.value.toLowerCase();
-  return conversations.value.filter(c => 
-    (c.user_name?.toLowerCase().includes(q) || '') ||
-    (c.subject?.toLowerCase().includes(q)) ||
-    (c.last_message_content?.toLowerCase().includes(q))
-  );
-});
+const formatTime = (t) => t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
 
-// Lấy unread count từ trường unread_count_staff (hoặc tính từ messages)
-function getUnreadCount(conv) {
-  return conv.unread_count_staff || 0;
-  // Nếu muốn tính thủ công: conv.messages?.filter(m => m.sender_type === 'customer' && !m.is_read).length || 0
-}
-
-// Format tên khách + avatar
-function getCustomerName(ticket) {
-  return ticket.user_name || ticket.guest_name || `Khách ${ticket.user_id || ticket._id.slice(-6)}`;
-}
-
-function formatTime(dateStr) {
-  if (!dateStr) return '—';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now - date;
-  if (diff < 60000) return 'Vừa xong';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-}
-
-// Lấy danh sách ticket
-async function fetchTickets() {
+// 1. Tải danh sách khách hàng đang chờ
+const loadTickets = async () => {
   try {
-    loading.value = true;
-    const res = await axios.get(`${API_BASE}/tickets`, {
-      params: {
-        page: 1,
-        limit: 50,          // có thể tăng lên nếu cần
-        status: 'open',     // chỉ lấy ticket đang mở (tùy bạn)
-      }
-    });
-    
-    // Chuẩn hóa dữ liệu giống cấu trúc cũ một chút
-    conversations.value = res.data.data.map(ticket => ({
-      id: ticket._id,
-      customer: getCustomerName(ticket),
-      lastMessage: ticket.last_message_content || ticket.subject || '',
-      lastMessageTime: ticket.last_message_at,
-      unread_count_staff: ticket.unread_count_staff || 0,
-      // sẽ load messages sau khi chọn
-      messages: []
-    }));
-  } catch (err) {
-    console.error('Lỗi load tickets:', err);
-    error.value = 'Không tải được danh sách hội thoại';
-  } finally {
-    loading.value = false;
+    const res = await chatService.getTickets({ status: 'open' });
+    tickets.value = res.data.data || [];
+  } catch (err) { 
+    console.error("Lỗi tải danh sách Ticket:", err); 
   }
-}
+};
 
-// Chọn ticket → load messages
-async function selectConversation(conv) {
-  selectedConversation.value = conv;
-  
+// 2. Chọn một khách hàng để chat
+const selectTicket = async (id) => {
+  currentTicketId.value = id;
   try {
-    const res = await axios.get(`${API_BASE}/tickets/${conv.id}`);
-    const { ticket, messages } = res.data.data;
-
-    // Cập nhật thông tin ticket nếu cần
-    conv.customer = getCustomerName(ticket);
-    conv.lastMessageTime = ticket.last_message_at;
-
-    // Chuẩn hóa messages cho frontend
-    conv.messages = messages.map(msg => ({
-      text: msg.content,
-      time: msg.created_at,
-      isStaff: msg.sender_type === 'staff',
-      isRead: msg.is_read
+    const res = await chatService.getTicketDetail(id);
+    
+    // Map dữ liệu chuẩn cho Frontend Vue hiểu (có text, isStaff)
+    messages.value = res.data.data.messages.map(m => ({
+      text: m.content,
+      time: m.created_at,
+      isStaff: m.sender_type !== 'customer'
     }));
 
     // Đánh dấu đã đọc
-    await axios.put(`${API_BASE}/tickets/${conv.id}/mark-read`);
+    await chatService.markAsRead(id, 'staff');
+    
+    // Tắt thông báo unread trên UI
+    const ticket = tickets.value.find(t => t._id === id);
+    if(ticket) ticket.unread_count_staff = 0;
 
-    nextTick(() => scrollToBottom());
-  } catch (err) {
-    console.error('Lỗi load messages:', err);
+    // Vào phòng socket CỦA KHÁCH HÀNG ĐÓ
+    socketService.joinRoom(id);
+    scrollToBottom();
+  } catch (err) { 
+    console.error("Lỗi lấy chi tiết Ticket:", err); 
   }
-}
+};
 
-// Gửi tin nhắn thật
-async function sendMessage() {
-  if (!newMessage.value.trim() || !selectedConversation.value) return;
-
-  const tempMsg = {
-    text: newMessage.value.trim(),
-    time: new Date(),
-    isStaff: true,
-    isRead: true
-  };
-
-  // Hiển thị tạm trước (optimistic UI)
-  selectedConversation.value.messages.push(tempMsg);
-  selectedConversation.value.lastMessage = tempMsg.text;
-  selectedConversation.value.lastMessageTime = new Date();
-  nextTick(scrollToBottom);
+// 3. Gửi tin nhắn trả lời
+const handleSend = async () => {
+  if (!newMessage.value.trim() || !currentTicketId.value) return;
+  const content = newMessage.value;
+  newMessage.value = '';
 
   try {
-    await axios.post(`${API_BASE}/tickets/${selectedConversation.value.id}/messages`, {
+    // API Lưu tin nhắn. Khi lưu xong Backend sẽ tự emit Socket lại
+    await chatService.sendMessage(currentTicketId.value, {
+      content,
       sender_type: 'staff',
-      sender_id: 2001,           // ← thay bằng staff id thật (từ store/auth)
-      content: newMessage.value.trim(),
-      message_type: 'text'
+      sender_id: userStore.profile?.id || 999
     });
-
-    newMessage.value = '';
-  } catch (err) {
-    console.error('Lỗi gửi tin nhắn:', err);
-    // Có thể rollback hoặc thông báo lỗi
+  } catch (err) { 
+    console.error("Lỗi gửi tin nhắn:", err); 
   }
-}
+};
 
-// Scroll xuống dưới
-function scrollToBottom() {
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-  }
-}
-
-// Khởi tạo
+// 4. Khởi tạo & Lắng nghe Real-time
 onMounted(() => {
-  fetchTickets();
-  // Tự động chọn ticket đầu tiên nếu có
-  watch(conversations, () => {
-    if (conversations.value.length > 0 && !selectedConversation.value) {
-      selectConversation(conversations.value[0]);
+  loadTickets();
+  socketService.connect();
+  
+  // Hứng tin nhắn mới từ Socket
+  socketService.onMessageReceived((newMsg) => {
+    console.log("📩 Admin nhận được tin nhắn Socket:", newMsg);
+
+    // Nếu tin nhắn thuộc về khách hàng đang mở trên màn hình -> Hiện chữ lên ngay
+    if (newMsg.ticket_id === currentTicketId.value) {
+      messages.value.push({
+        text: newMsg.content,  // Ép kiểu `content` thành `text` (CHÌA KHÓA SỬA LỖI TRỐNG BOX)
+        time: newMsg.created_at || new Date(),
+        isStaff: newMsg.sender_type !== 'customer' // Staff thì màu xanh bên phải
+      });
+      scrollToBottom();
+    } else {
+      // Nếu tin nhắn của khách khác -> Gọi lại API để cập nhật cái chấm đỏ (unread) bên sidebar
+      loadTickets();
     }
-  }, { immediate: true });
+  });
+});
+
+onUnmounted(() => {
+  socketService.disconnect();
 });
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+</style>
