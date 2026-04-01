@@ -77,7 +77,7 @@ export const UpdateUserAvatar = async (userId, file, token) => {
     formData.append("avatar", file);
 
     return await axios.put(
-        `http://localhost:3000/api/v1/users/${userId}/avatar`,
+        `http://localhost:3001/api/v1/users/${userId}/avatar`,
         formData,
         {
             headers: {

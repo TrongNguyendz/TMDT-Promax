@@ -12,6 +12,7 @@
 		<RouterView />
 		</DefaultLayout>
 		<Toast />
+		<CompareFloatingBox />
 	</div>
 	<!-- Dark mode class applied to html element for Tailwind -->
 </template>
@@ -25,6 +26,7 @@ import DefaultLayout from './components/layout/DefaultLayout.vue';
 import AdminLayout from './components/layout/AdminLayout.vue';
 import StaffLayout from './components/layout/StaffLayout.vue';
 import Toast from './components/common/Toast.vue';
+import CompareFloatingBox from './pages/customer/CompareFloatingBox.vue';
 
 const ui = useUIStore();
 const user = useUserStore();
