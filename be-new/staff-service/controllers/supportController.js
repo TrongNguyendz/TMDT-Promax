@@ -148,10 +148,17 @@ exports.createTicket = async (req, res) => {
 // ====================== SEND MESSAGE ======================
 exports.sendMessage = async (req, res) => {
     try {
+        console.log("Dữ liệu nhận được:", req.body); // Kiểm tra xem data gửi lên là gì
+        
         const { sender_type, sender_id, content, message_type = 'text' } = req.body;
         const ticket_id = req.params.id;
+
+        // Kiểm tra xem ticket_id có đúng định dạng ObjectId không
         const ticket = await SupportTicket.findById(ticket_id);
-        if (!ticket) return res.status(404).json({ success: false, message: 'Ticket không tồn tại' });
+        if (!ticket) {
+            return res.status(404).json({ success: false, message: 'Ticket không tồn tại' });
+        }
+
         const message = new SupportMessage({
             ticket_id,
             sender_type,
@@ -161,9 +168,34 @@ exports.sendMessage = async (req, res) => {
         });
 
         await message.save();
+        console.log("Đã lưu tin nhắn thành công");
+
+        // Gửi Socket (Bọc trong khối if để tránh crash nếu socket chưa sẵn sàng)
+        const io = req.app.get('socketio');
+        if (io) {
+            // Gửi cho phòng chat
+            io.to(ticket_id).emit('receive_message', {
+                ticket_id,
+                text: content,
+                time: message.created_at,
+                sender_id,
+                sender_type,
+                isStaff: sender_type === 'staff'
+            });
+
+            // Gửi cập nhật sidebar
+            io.emit('ticket_list_updated', {
+                ticket_id,
+                last_message: content,
+                last_message_at: message.created_at,
+                sender_id,
+                sender_type
+            });
+        }
 
         res.status(201).json({ success: true, data: message });
     } catch (error) {
+        console.error("LỖI TẠI SENDMESSAGE:", error); // hiện lỗi trên ter
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -184,18 +216,13 @@ exports.markAsRead = async (req, res) => {
     }
 };
 
-/**
- * Lấy danh sách ticket theo user_id
- * GET /api/support/tickets/user/:userId
- * Query params hỗ trợ: status, page, limit, sort (tùy chọn)
- */
 exports.getTicketsByUserId = async (req, res) => {
     try {
-        const userId = Number(req.params.userId);
-        if (!userId || isNaN(userId)) {
+        const userId = req.params.userId;
+        if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'userId phải là số hợp lệ'
+                message: 'userId không hợp lệ'
             });
         }
 
