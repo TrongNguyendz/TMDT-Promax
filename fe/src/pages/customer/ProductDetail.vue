@@ -433,7 +433,7 @@
                   >
                     <span>
                       {{ expandedReviews.has(review.id)
-                        ? `Thu gọn ${review.replies.length - 1} phản hồi`
+                        ? `Thu gọn phản hồi`
                         : `Xem thêm ${review.replies.length - 1} phản hồi`
                       }}
                     </span>
@@ -1020,7 +1020,7 @@ const getPreviewReplies = (replies) => {
 const getExpandedReplies = (replies) => {
   if (!replies?.length) return [];
   const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  return sorted.slice(0, -1); // tất cả trừ reply mới nhất
+  return sorted;// tất cả reply theo thứ tự thời gian (cũ nhất -> mới nhất)
 };
 
 const formatRelativeTime = (dateStr) => {
