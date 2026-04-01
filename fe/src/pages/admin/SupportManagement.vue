@@ -147,6 +147,7 @@ onMounted(() => {
 onUnmounted(() => socketService.disconnect());
 </script>
 
+
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }

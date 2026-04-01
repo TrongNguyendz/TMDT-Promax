@@ -14,18 +14,14 @@
       <div class="space-y-6">
         <Step1Review 
           v-if="checkout.currentStep === 1" 
-          :items="cartItems" 
+          :items="checkoutItems" 
           @next="checkout.nextStep" 
         />
         
         <Step2Shipping 
           v-if="checkout.currentStep === 2" 
           :shippingInfo="checkout.shippingInfo" 
-          :paymentMethod="checkout.paymentMethod"
-          @update:paymentMethod="newVal => { 
-            console.log('[PARENT] Nhận update paymentMethod:', newVal);
-            checkout.paymentMethod = newVal;
-          }"
+          v-model:paymentMethod="checkout.paymentMethod"
           @prev="checkout.previousStep" 
           @next="handleShippingNext" 
         />
@@ -80,7 +76,29 @@ const isProcessing = ref(false);
 const successOrder = ref(null); 
 let socket = null;
 
-const cartItems = computed(() => cart.items);
+// 1. Lấy sản phẩm hiển thị
+const checkoutItems = computed(() => {
+    if (successOrder.value && successOrder.value.items) {
+        return successOrder.value.items;
+    }
+    
+    if (checkout.isDirectBuy && checkout.directBuyItem) {
+        return [checkout.directBuyItem]; 
+    }
+    return cart.items; 
+});
+
+// 2. Lấy tổng tiền
+const checkoutSubtotal = computed(() => {
+    if (successOrder.value) {
+        return successOrder.value.total_amount || successOrder.value.final_amount;
+    }
+    
+    if (checkout.isDirectBuy && checkout.directBuyItem) {
+        return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
+    }
+    return cart.subtotal;
+});
 
 onMounted(() => {
   checkout.currentStep = 1;
@@ -140,7 +158,6 @@ async function generatePayOSUrl(orderId, amount) {
     if (!orderId) return;
 
     const cleanAmount = Math.round(Number(amount));
-    
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
         ui.pushToast({ type: 'error', message: 'Số tiền không hợp lệ' });
         return;
@@ -232,7 +249,6 @@ function finishSteps() {
 }
 
 async function handleBackStep() {
-    // Nếu đang ở bước QR Code và đã có đơn hàng Pending
     if (checkout.currentStep === 3 && successOrder.value) {
         if (!confirm('Đơn hàng chờ thanh toán hiện tại sẽ bị hủy để bạn chọn phương thức mới. Bạn chắc chắn chứ?')) {
             return;
@@ -241,8 +257,6 @@ async function handleBackStep() {
         try {
             isProcessing.value = true;
             await orderStore.cancelOrder(successOrder.value.id, 'Khách đổi phương thức thanh toán');
-            
-            // Dọn dẹp
             successOrder.value = null;
             qrCodeData.value = '';
             checkoutUrl.value = '';

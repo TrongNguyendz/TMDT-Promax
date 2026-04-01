@@ -172,6 +172,7 @@ exports.sendMessage = async (req, res) => {
 
         res.json({ success: true, data: savedMessage });
     } catch (error) {
+        console.error("LỖI TẠI SENDMESSAGE:", error); // hiện lỗi trên ter
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -199,11 +200,6 @@ exports.markAsRead = async (req, res) => {
     }
 };
 
-/**
- * Lấy danh sách ticket theo user_id
- * GET /api/support/tickets/user/:userId
- * Query params hỗ trợ: status, page, limit, sort (tùy chọn)
- */
 exports.getTicketsByUserId = async (req, res) => {
     try {
         const userId = Number(req.params.userId); 

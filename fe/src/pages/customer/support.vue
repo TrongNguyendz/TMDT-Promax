@@ -1,3 +1,4 @@
+<!-- fe/src/pages/customer/support.vue -->
 <template>
   <section class="relative left-1/2 -translate-x-1/2 w-[95vw] max-w-[1400px] py-6 px-4 h-[calc(100vh-100px)] flex flex-col">
     <div class="mb-6 flex-shrink-0">

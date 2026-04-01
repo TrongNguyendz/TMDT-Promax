@@ -186,6 +186,7 @@ async function logout() {
 function logoutAndClose() {
   isDropdownOpen.value = false;
   logout();
+  localStorage.removeItem('support_ticket_id');
 }
 </script>
 
