@@ -1,3 +1,4 @@
+<!-- fe/src/pages/customer/support.vue -->
 <template>
   <section class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
     <div class="mb-8">
@@ -31,7 +32,7 @@
         </div>
 
         <div 
-          v-for="(msg, index) in messages" 
+          v-for="(msg, index) in supportStore.messages" 
           :key="index"
           :class="['flex', !msg.isStaff ? 'justify-end' : 'justify-start']"
         >
@@ -100,189 +101,97 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useUserStore } from '../../stores/user';
-const API_BASE = 'http://localhost:3007/api/support';
+import { useSupportStore } from '../../stores/support';
+import { io } from 'socket.io-client';
+
 const user = useUserStore();
+const supportStore = useSupportStore();
 const chatContainer = ref(null);
 const newMessage = ref('');
+const socket = ref(null);
 const isTyping = ref(false);
-const messages = ref([]);
-const currentTicketId = ref(null);     // Lưu _id của ticket đang chat tạm thời đã tạo hoặc lấy được từ API
-const guestInfo = ref({                // Thông tin guest tạm thời
-  name: user.username || '',
-  email: user.email || ''
-});
-
 const scrollToBottom = () => {
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-  }
+  nextTick(() => { if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight; });
 };
 
-const formatTime = (dateStr) => {
-  if (!dateStr) return '--:--';
-  return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-};
-
-// Tìm ticket đang mở (ưu tiên) hoặc ticket mới nhất của user
-const fetchUserTicket = async () => {
-  if (!user.profile?.id) return null; // chưa login → xử lý guest riêng
-
-  try {
-    const res = await axios.get(`${API_BASE}/tickets/user/${user.profile.id}`, {
-      params: {
-        status: 'open',     // ưu tiên ticket đang mở
-        page: 1,
-        limit: 1            // chỉ cần 1 ticket là đủ (mới nhất theo last_message_at)
-      }
-    });
-
-    if (res.data.success && res.data.data?.length > 0) {
-      const ticket = res.data.data[0];
-      console.log('Tìm thấy ticket đang mở:', ticket._id);
-      return ticket._id;
+const setupSocket = (ticketId) => {
+  if (!ticketId || socket.value) return;
+  socket.value = io('http://localhost:3007');
+  socket.value.emit('join_ticket', ticketId);
+  socket.value.on('receive_message', (data) => {
+    if (data.isStaff) {
+      supportStore.pushNewMessage({ text: data.text, time: data.time, isStaff: true });
+      scrollToBottom();
     }
-
-    console.log('Không tìm thấy ticket open nào');
-    return null;
-  } catch (err) {
-    console.error('Lỗi khi gọi API lấy ticket của user:', err);
-    return null;
-  }
+  });
 };
 
-// Khởi tạo: kiểm tra ticket mở của guest hoặc tạo mới
 const initChat = async () => {
   let ticketId = localStorage.getItem('support_ticket_id');
+  const userId = user.profile?.id;
 
-  // 1. Kiểm tra ticket cũ còn hợp lệ không
-  if (ticketId) {
+  if (ticketId && ticketId !== 'undefined') {
     try {
-      const res = await axios.get(`${API_BASE}/tickets/${ticketId}`);
-      if (res.data.success && res.data.data.ticket.status === 'open') {
-        currentTicketId.value = ticketId;
-        await loadMessages(ticketId);
+      const data = await supportStore.fetchTicketDetails(ticketId);
+      if (data?.ticket.status === 'open' && String(data.ticket.user_id || '') === String(userId || '')) {
+        setupSocket(ticketId);
         scrollToBottom();
         return;
       }
-    } catch (e) {
-      console.warn('Ticket cũ không còn tồn tại hoặc đã đóng');
-      localStorage.removeItem('support_ticket_id');
-    }
+    } catch { localStorage.removeItem('support_ticket_id'); }
   }
 
-  // 2. Nếu user đã login → tìm ticket đang mở
-  if (user.profile?.id) {
-    ticketId = await fetchUserTicket();
-    if (ticketId) {
-      currentTicketId.value = ticketId;
+  if (userId) {
+    const active = await supportStore.fetchMyActiveTicket(userId);
+    if (active) {
+      ticketId = active._id;
+      await supportStore.fetchTicketDetails(ticketId);
       localStorage.setItem('support_ticket_id', ticketId);
-      await loadMessages(ticketId);
+      setupSocket(ticketId);
       scrollToBottom();
       return;
     }
   }
 
-  // 3. Không có ticket hợp lệ → tạo mới
-  ticketId = await fetchUserTicket();
-  if (ticketId) {
-    currentTicketId.value = ticketId;
+  try {
+    const res = await supportStore.createNewTicket({
+      user_id: userId ? String(userId) : null,
+      user_name: user.profile?.username || 'Khách vãng lai',
+      subject: 'Hỗ trợ khách hàng'
+    });
+    const newTicket = res.data.data;
+    ticketId = newTicket._id;
+    supportStore.currentTicket = { ...newTicket, id: newTicket._id };
+    supportStore.messages = [];
     localStorage.setItem('support_ticket_id', ticketId);
-
-    // Tin nhắn hệ thống chào mừng
-    messages.value = [{
-      text: 'Xin chào! Cảm ơn bạn đã liên hệ. Mình có thể giúp gì cho bạn hôm nay?',
-      time: new Date().toISOString(),
-      isStaff: true
-    }];
-  } else {
-    messages.value = [{
-      text: 'Hiện tại hệ thống đang bận, bạn vui lòng thử lại sau vài phút nhé.',
-      time: new Date().toISOString(),
-      isStaff: true
-    }];
-  }
-
-  scrollToBottom();
+    setupSocket(ticketId);
+  } catch {}
 };
 
-async function loadMessages(ticketId) {
-  try {
-    const res = await axios.get(`${API_BASE}/tickets/${ticketId}`);
-    const { messages: apiMessages } = res.data.data;
-
-    messages.value = apiMessages.map(m => ({
-      text: m.content,
-      time: m.created_at,
-      isStaff: m.sender_type !== 'customer'
-    }));
-
-    // Thêm tin chào nếu ticket mới tạo
-    if (messages.value.length === 0) {
-      messages.value.push({
-        text: 'Xin chào! Mình có thể hỗ trợ gì cho bạn ạ?',
-        time: new Date().toISOString(),
-        isStaff: true
-      });
-    }
-  } catch (err) {
-    console.error('Load messages lỗi:', err);
-  }
-}
-
-async function sendMessage() {
-  if (!newMessage.value.trim() || !currentTicketId.value) return;
+const sendMessage = async () => {
+  const ticketId = supportStore.currentTicket?.id || supportStore.currentTicket?._id;
+  if (!newMessage.value.trim() || !ticketId) return;
 
   const msgText = newMessage.value.trim();
-
-  // Optimistic UI - hiển thị ngay
-  messages.value.push({
-    text: msgText,
-    time: new Date().toISOString(),
-    isStaff: false
-  });
+  supportStore.pushNewMessage({ text: msgText, time: new Date().toISOString(), isStaff: false });
   scrollToBottom();
-
   newMessage.value = '';
 
   try {
-    await axios.post(`${API_BASE}/tickets/${currentTicketId.value}/messages`, {
+    await supportStore.sendChatMessage(ticketId, {
       sender_type: 'customer',
-      sender_id: user.id || 0,                   // guest → sender_id = 0 hoặc bỏ qua
-      content: msgText,
-      message_type: 'text'
+      sender_id: String(user.profile?.id || 0),
+      content: msgText
     });
+  } catch {}
+};
 
-    // Optional: lưu tên/email nếu khách nhập lần đầu
-    if (guestInfo.value.name && !localStorage.getItem('guest_name')) {
-      localStorage.setItem('guest_name', guestInfo.value.name);
-    }
-    if (guestInfo.value.email && !localStorage.getItem('guest_email')) {
-      localStorage.setItem('guest_email', guestInfo.value.email);
-    }
-
-  } catch (err) {
-    console.error('Gửi tin nhắn lỗi:', err);
-    messages.value.push({
-      text: 'Có lỗi xảy ra khi gửi tin nhắn. Bạn thử lại nhé!',
-      time: new Date().toISOString(),
-      isStaff: true
-    });
-  } finally {
-    scrollToBottom();
-  }
-}
-
-onMounted(async () => {
-  await initChat();
-  scrollToBottom();   // optional, để chắc chắn
-});
+onMounted(() => initChat());
+onUnmounted(() => { socket.value?.disconnect(); });
+const formatTime = (t) => t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 </script>
-
-
-
 
 <style scoped>
 /* Hiệu ứng nhấp nháy 3 dấu chấm */

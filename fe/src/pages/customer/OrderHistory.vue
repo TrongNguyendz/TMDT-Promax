@@ -1,159 +1,126 @@
 <template>
-	<div class="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-		<!-- Header -->
-		<div class="flex items-center justify-between mb-8">
-			<div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2 dark:text-white">Lịch sử đơn hàng</h1>
-				<p class="text-gray-600 dark:text-gray-400">Bạn có {{ orders.length }} đơn hàng</p>
-			</div>
-			<RouterLink
-				to="/products"
-				class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-			>
-				← Tiếp tục mua sắm
-			</RouterLink>
-		</div>
+  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Đơn hàng của tôi</h1>
+        <p class="text-sm text-gray-500">Theo dõi và quản lý các đơn hàng đã đặt</p>
+      </div>
+      <RouterLink
+        to="/products"
+        class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+      >
+        ← Tiếp tục mua sắm
+      </RouterLink>
+    </div>
 
-		<!-- Loading State -->
-		<div v-if="loading" class="text-center py-12">
-			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-			<p class="mt-4 text-gray-600">Đang tải dữ liệu...</p>
-		</div>
+    <div class="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div class="flex overflow-x-auto no-scrollbar gap-8">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          @click="currentTab = tab.key"
+          :class="[
+            'relative py-4 text-sm font-medium whitespace-nowrap transition-all',
+            currentTab === tab.key
+              ? 'text-blue-600 font-bold'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+          ]"
+        >
+          {{ tab.label }}
+          <span 
+            v-if="getBadgeCount(tab.key) > 0"
+            class="ml-1 text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full"
+          >
+            {{ getBadgeCount(tab.key) }}
+          </span>
+          <div 
+            v-if="currentTab === tab.key"
+            class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+          ></div>
+        </button>
+      </div>
+    </div>
 
-		<!-- Orders List -->
-		<div v-else-if="orders.length > 0" class="space-y-6">
-			<div
-				v-for="order in orders"
-				:key="order.id"
-				class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-white dark:bg-gray-900 dark:border-gray-800"
-			>
-				<!-- Order Header -->
-				<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 gap-4">
-					<div class="flex-1">
-						<div class="flex items-center gap-3 mb-2">
-							<!-- Hiển thị Mã đơn hàng (ORD-...) -->
-							<h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ order.order_number }}</h3>
-							<span
-								:class="[
-									'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase',
-									statusBadgeClass(order.status)
-								]"
-							>
-								{{ getStatusLabel(order.status) }}
-							</span>
-						</div>
-						<p class="text-sm text-gray-600 dark:text-gray-400">
-							Ngày đặt: {{ new Date(order.created_at).toLocaleString('vi-VN') }}
-						</p>
-					</div>
-					<div class="text-right">
-						<p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Tổng thành tiền</p>
-						<p class="font-bold text-xl text-blue-600">{{ formatCurrency(order.final_amount) }}</p>
-					</div>
-				</div>
+    <div v-if="loading" class="text-center py-20">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="mt-4 text-gray-500 text-sm">Đang tải đơn hàng...</p>
+    </div>
 
-				<!-- Order Items (Snapshot Data) -->
-				<div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-					<p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-						Sản phẩm ({{ order.items ? order.items.length : 0 }})
-					</p>
-					<div class="space-y-3">
-						<div
-							v-for="item in order.items"
-							:key="item.id"
-							class="flex items-center justify-between text-sm"
-						>
-							<div class="flex items-center gap-3 flex-1">
-								<img
-									:src="item.product_image || 'https://via.placeholder.com/60'"
-									:alt="item.product_name"
-									class="w-12 h-12 object-cover rounded border border-gray-200"
-								/>
-								<div>
-									<!-- Sử dụng tên snapshot (product_name) -->
-									<p class="font-medium text-gray-900 dark:text-white">{{ item.product_name }}</p>
-									<p class="text-xs text-gray-500">
-										<span v-if="item.color">{{ item.color }}</span>
-										<span v-if="item.size" class="ml-1">/ {{ item.size }}</span>
-										<span class="ml-2">x{{ item.quantity }}</span>
-									</p>
-								</div>
-							</div>
-							<!-- Sử dụng giá snapshot (unit_price) -->
-							<p class="font-medium text-gray-900 dark:text-gray-100">
-								{{ formatCurrency(item.unit_price) }}
-							</p>
-						</div>
-					</div>
-				</div>
+    <div v-else-if="filteredOrders.length > 0" class="space-y-6">
+      <div
+        v-for="order in filteredOrders"
+        :key="order.id"
+        class="border border-gray-200 rounded-xl overflow-hidden bg-white dark:bg-gray-900 dark:border-gray-800 hover:shadow-md transition-shadow"
+      >
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/30">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-gray-900 dark:text-white">{{ order.order_number }}</span>
+            <span class="text-gray-300 dark:text-gray-700">|</span>
+            <span :class="['text-xs font-bold uppercase tracking-wider', statusColor(order.status)]">
+              {{ getStatusLabel(order.status) }}
+            </span>
+          </div>
+          <p class="text-xs text-gray-500">
+            Ngày đặt: {{ new Date(order.created_at).toLocaleString('vi-VN') }}
+          </p>
+        </div>
 
-				<!-- Shipping & Info -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-sm">
-					<div>
-						<p class="text-gray-500 mb-1">Địa chỉ giao hàng</p>
-						<p class="font-medium text-gray-900 dark:text-gray-200">
-							{{ order.shipping_fullname }} <span class="text-gray-400">|</span> {{ order.shipping_phone }}
-						</p>
-						<p class="text-gray-600 dark:text-gray-400 truncate">
-							{{ order.shipping_address }}, {{ order.shipping_city }}
-						</p>
-					</div>
-					<div class="md:text-right">
-						<p class="text-gray-500 mb-1">Thanh toán</p>
-						<p class="font-medium text-gray-900 dark:text-gray-200">{{ getPaymentLabel(order.payment_method) }}</p>
-						<p :class="order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'">
-							{{ order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán' }}
-						</p>
-					</div>
-				</div>
+        <div class="p-6">
+          <div v-for="item in order.items" :key="item.id" class="flex gap-4 mb-4 last:mb-0">
+            <img :src="item.product_image || 'https://via.placeholder.com/80'" class="w-20 h-20 object-cover rounded-lg border dark:border-gray-800" />
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.product_name }}</h4>
+              <p class="text-xs text-gray-500 mt-1">Phân loại: {{ item.color }} / {{ item.size }}</p>
+              <p class="text-xs text-gray-900 dark:text-gray-300 mt-1">x{{ item.quantity }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-bold text-blue-600">{{ formatCurrency(item.unit_price) }}</p>
+            </div>
+          </div>
+        </div>
 
-				<!-- Action Buttons -->
-				<div class="flex flex-col sm:flex-row gap-3">
-					<RouterLink
-						:to="`/orders/${order.id}`"
-						class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
-					>
-						Xem chi tiết
-					</RouterLink>
-					
-					<!-- Nút Đặt lại (Re-order) -->
-					<button
-						@click="reorderItems(order)"
-						class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-					>
-						Mua lại đơn này
-					</button>
+        <div class="px-6 py-4 bg-gray-50/30 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            Thành tiền: <span class="text-lg font-bold text-blue-600 ml-1">{{ formatCurrency(order.final_amount) }}</span>
+          </div>
+          
+          <div class="flex gap-2 w-full sm:w-auto">
+            <RouterLink
+              :to="`/orders/${order.id}`"
+              class="flex-1 sm:flex-none px-5 py-2 text-xs font-bold border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-center"
+            >
+              XEM CHI TIẾT
+            </RouterLink>
 
-					<!-- Nút Hủy (Chỉ hiện khi chưa xử lý) -->
-					<button
-						v-if="['pending', 'unpaid'].includes(order.status)"
-						@click="handleCancel(order.id)"
-						class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-					>
-						Hủy đơn hàng
-					</button>
-				</div>
-			</div>
-		</div>
+            <button
+              v-if="['delivered', 'cancelled'].includes(order.status)"
+              @click="reorderItems(order)"
+              class="flex-1 sm:flex-none px-5 py-2 text-xs font-bold bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              MUA LẠI
+            </button>
 
-		<!-- Empty State -->
-		<div v-else class="text-center py-16">
-			<div class="mb-4">
-				<svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-			</div>
-			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Chưa có đơn hàng nào</h3>
-			<RouterLink
-				to="/products"
-				class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-			>
-				Bắt đầu mua sắm
-			</RouterLink>
-		</div>
-	</div>
+            <button
+              v-if="['pending', 'unpaid'].includes(order.status)"
+              @click="handleCancel(order.id)"
+              class="flex-1 sm:flex-none px-5 py-2 text-xs font-bold text-red-600 border border-red-100 hover:bg-red-50 rounded"
+            >
+              HỦY ĐƠN
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="text-center py-24 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+      <h3 class="text-gray-900 dark:text-white font-medium">Không có đơn hàng nào</h3>
+      <p class="text-gray-500 text-sm mt-1">Bạn chưa có đơn hàng nào trong mục này.</p>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useOrderStore } from '@/stores/order';
 import { useCartStore } from '@/stores/cart';
@@ -164,72 +131,79 @@ const orderStore = useOrderStore();
 const cartStore = useCartStore();
 const uiStore = useUIStore();
 
-// Lấy dữ liệu từ Store
-const orders = computed(() => orderStore.orders);
+const currentTab = ref('all');
+
+const tabs = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'pending', label: 'Chờ xác nhận' },
+  { key: 'processing', label: 'Chờ lấy hàng' },
+  { key: 'shipping', label: 'Đang giao' }, // Thêm tab Đang giao
+  { key: 'delivered', label: 'Đã giao' },
+  { key: 'cancelled', label: 'Đã hủy' },
+];
+
 const loading = computed(() => orderStore.loading);
 
-// 1. Gọi API lấy danh sách khi vào trang
-onMounted(() => {
-	orderStore.fetchMyOrders();
+const filteredOrders = computed(() => {
+  if (currentTab.value === 'all') return orderStore.orders;
+  return orderStore.orders.filter(order => order.status === currentTab.value);
 });
 
-// 2. Xử lý Hủy đơn
+const getBadgeCount = (statusKey) => {
+  if (statusKey === 'all') return 0;
+  return orderStore.orders.filter(o => o.status === statusKey).length;
+};
+
+onMounted(() => {
+  orderStore.fetchMyOrders();
+});
+
 const handleCancel = async (orderId) => {
-	if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-		await orderStore.cancelOrder(orderId, 'Khách hàng hủy');
-	}
+  if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+    await orderStore.cancelOrder(orderId, 'Khách hàng hủy');
+    uiStore.pushToast({ type: 'success', message: 'Đã hủy đơn thành công' });
+  }
 };
 
-// 3. Xử lý Mua lại (Re-order)
 const reorderItems = (order) => {
-	let count = 0;
-	order.items.forEach(item => {
-		// Map lại dữ liệu snapshot sang dữ liệu Cart Store cần
-		cartStore.addToCart({
-			id: item.product_id,
-			name: item.product_name,
-			price: item.unit_price,
-			image: item.product_image,
-			selectedColor: item.color,
-			selectedSize: item.size
-		}, item.quantity);
-		count++;
-	});
-
-	
+  order.items.forEach(item => {
+    cartStore.addToCart({
+      id: item.product_id,
+      name: item.product_name,
+      price: item.unit_price,
+      image: item.product_image,
+      selectedColor: item.color,
+      selectedSize: item.size
+    }, item.quantity);
+  });
+  uiStore.pushToast({ type: 'success', message: 'Đã thêm vào giỏ hàng' });
 };
 
-// Helper: Badge màu sắc
-const statusBadgeClass = (status) => {
-	const map = {
-		pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-		processing: 'bg-blue-100 text-blue-800 border-blue-200',
-		shipping: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-		delivered: 'bg-green-100 text-green-800 border-green-200',
-		cancelled: 'bg-red-100 text-red-800 border-red-200'
-	};
-	return map[status] || 'bg-gray-100 text-gray-800';
+const statusColor = (status) => {
+  const map = {
+    pending: 'text-yellow-600',
+    processing: 'text-blue-600',
+    shipping: 'text-indigo-600',
+    delivered: 'text-green-600',
+    cancelled: 'text-red-500',
+  };
+  return map[status] || 'text-gray-500';
 };
 
-// Helper: Label trạng thái
 const getStatusLabel = (status) => {
-	const map = {
-		pending: 'Chờ xác nhận',
-		processing: 'Đang xử lý',
-		shipping: 'Đang giao hàng',
-		delivered: 'Giao thành công',
-		cancelled: 'Đã hủy',
-		unpaid: 'Chưa thanh toán'
-	};
-	return map[status] || status;
-};
-
-const getPaymentLabel = (method) => {
-	const map = {
-		cod: 'Tiền mặt (COD)',
-		momo: 'Ví MoMo',
-		banking: 'Chuyển khoản'
-	};
-	return map[method] || method;
+  const map = {
+    pending: 'Chờ xác nhận',
+    processing: 'Chờ lấy hàng',
+    shipping: 'Đang giao hàng',
+    delivered: 'Đã giao thành công',
+    cancelled: 'Đã hủy',
+    unpaid: 'Chưa thanh toán'
+  };
+  return map[status] || status;
 };
 </script>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

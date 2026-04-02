@@ -1,4 +1,4 @@
-<!-- views/admin/AdminChat.vue -->
+<!-- fe/src/pages/admin/SupportManagement.vue -->
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
@@ -94,18 +94,18 @@
 
       <!-- Right Panel: Chat Area -->
       <div class="flex-1 flex flex-col">
-        <div v-if="selectedConversation" class="flex flex-col h-full">
+        <div v-if="supportStore.currentTicket" class="flex flex-col h-full">
           <!-- Chat Header – Admin version -->
           <div class="p-4 border-b dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
             <div class="flex items-center gap-3">
               <div class="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                {{ selectedConversation.customer.charAt(0).toUpperCase() }}
+                {{ (supportStore.currentTicket.customer || 'K').charAt(0).toUpperCase() }}
               </div>
               <div>
-                <p class="font-semibold">{{ selectedConversation.customer }}</p>
+                <p class="font-semibold">{{ supportStore.currentTicket.customer }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ selectedConversation.role || 'Khách hàng' }} • 
-                  <span v-if="selectedConversation.lastActive">Hoạt động {{ formatTime(selectedConversation.lastActive) }}</span>
+                  {{ supportStore.currentTicket.role || 'Khách hàng' }} • 
+                  <span v-if="supportStore.currentTicket.lastActive">Hoạt động {{ formatTime(supportStore.currentTicket.lastActive) }}</span>
                 </p>
               </div>
             </div>
@@ -129,7 +129,7 @@
             class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-gray-50/50 dark:bg-gray-950/50"
           >
             <div 
-              v-for="(msg, index) in selectedConversation.messages" 
+              v-for="(msg, index) in supportStore.messages" 
               :key="index"
               :class="msg.isAdmin ? 'justify-end' : 'justify-start'"
               class="flex"
@@ -137,15 +137,18 @@
               <div 
                 :class="[
                   msg.isAdmin 
-                    ? 'bg-indigo-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-tr-2xl rounded-tl-2xl rounded-br-2xl'
-                ]"
+                    ? 'bg-indigo-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl' // Bên phải
+                    : 'bg-gray-200 text-gray-900 rounded-tr-2xl rounded-tl-2xl rounded-br-2xl'//bên trái   
+                    ]"
                 class="max-w-[80%] sm:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm"
               >
                 <p class="break-words leading-relaxed">{{ msg.text }}</p>
                 <p class="text-xs mt-1 opacity-70 text-right">
                   {{ formatTime(msg.time) }}
-                  <span v-if="msg.isAdmin" class="ml-1 opacity-60">(Admin)</span>
+                  <span v-if="msg.sender_type === 'staff'" class="ml-1 font-bold">
+                    <!-- Ép kiểu string để so sánh chính xác -->
+                    ({{ String(msg.sender_id) === myId ? 'Bạn' : 'Nhân viên' }})
+                  </span>
                 </p>
               </div>
             </div>
@@ -162,7 +165,7 @@
             </div>
           </div>
 
-          <!-- Input area – Admin có thêm nút gửi nhanh / template -->
+          <!-- Input area -->
           <div class="p-4 border-t dark:border-gray-800 bg-white dark:bg-gray-900">
             <div class="flex gap-3">
               <input 
@@ -203,153 +206,87 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
-import axios from 'axios';
+import { ref, computed, onUnmounted, onMounted, nextTick } from 'vue';
+import { io } from 'socket.io-client';
+import { useUserStore } from '../../stores/user';
+import { useSupportStore } from '../../stores/support';
 
-const API_BASE = 'http://localhost:3007/api/support';
-
+const user = useUserStore();
+const supportStore = useSupportStore();
 const searchQuery = ref('');
 const priorityFilter = ref('');
-const selectedConversation = ref(null);
 const newMessage = ref('');
-const loading = ref(false);
+const socket = ref(null);
+const chatContainer = ref(null); 
+const myId = computed(() => String(user.profile?.id || user.id)); 
 
-const conversations = ref([]);
+const setupSocket = () => {
+  socket.value = io('http://localhost:3007');
+  socket.value.on('receive_message', (data) => {
+    if (supportStore.currentTicket?.id === data.ticket_id && String(data.sender_id) !== myId.value) {
+        if (String(data.sender_id) !== myId.value) {
+      supportStore.pushNewMessage({
+        text: data.text,
+        time: data.time,
+        sender_id: data.sender_id,
+        sender_type: data.sender_type,
+        isAdmin: data.isStaff, 
+        isStaff: data.isStaff
+      });
+      scrollToBottom();
+    }
+    }
+  });
+  socket.value.on('ticket_list_updated', (data) => {
+     const conv = supportStore.tickets.find(c => c.id === data.ticket_id);
+     if (conv) {
+        conv.lastMessage = data.last_message;
+        conv.lastMessageTime = data.last_message_at;
+        if (String(data.sender_id) !== myId.value && supportStore.currentTicket?.id !== data.ticket_id) {
+           conv.unread_count_staff++;
+        }
+        supportStore.tickets.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
+     } else { supportStore.fetchAllTickets(); }
+  });
+};
 
 const filteredConversations = computed(() => {
-  let list = conversations.value;
-
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(c =>
-      (c.customer?.toLowerCase().includes(q) || false) ||
-      (c.lastMessage?.toLowerCase().includes(q) || false) ||
-      (c.orderId && String(c.orderId).includes(q))
-    );
-  }
-
-  if (priorityFilter.value) {
-    list = list.filter(c => c.priority === priorityFilter.value);
-  }
-
-  return list;
+  return (supportStore.tickets || []).filter(c => 
+    (!priorityFilter.value || c.priority === priorityFilter.value) &&
+    (!searchQuery.value || c.customer.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  );
 });
 
-async function fetchTickets() {
-  loading.value = true;
-  try {
-    const res = await axios.get(`${API_BASE}/tickets`, {
-      params: {
-        status: 'open',       // chỉ lấy ticket đang mở
-        limit: 100,
-        // staffId: currentStaffId,  // nếu muốn lọc ticket được assign cho mình
-      }
-    });
-
-    conversations.value = res.data.data.map(t => ({
-      id: t._id,
-      customer: t.guest_name || t.user_name || `Khách ${t.user_id || t._id.slice(-6)}`,
-      role: t.user_id ? 'Đăng ký' : 'Khách vãng lai',   // có thể cải thiện sau
-      priority: t.priority,
-      orderId: t.order_id,
-      lastMessage: t.last_message_content || t.subject || '(chưa có tin nhắn)',
-      lastMessageTime: t.last_message_at,
-      lastActive: t.updated_at,
-      unread_count_staff: t.unread_count_staff || 0,
-      messages: []   // load sau khi chọn
-    }));
-  } catch (err) {
-    console.error('Load tickets lỗi:', err);
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function selectConversation(conv) {
-  selectedConversation.value = conv;
-
-  try {
-    const res = await axios.get(`${API_BASE}/tickets/${conv.id}`);
-    const { ticket, messages: apiMsgs } = res.data.data;
-
-    // Cập nhật thông tin
-    conv.customer = ticket.guest_name || ticket.user_name || conv.customer;
-    conv.priority = ticket.priority;
-    conv.orderId = ticket.order_id;
-    conv.lastMessageTime = ticket.last_message_at;
-
-    conv.messages = apiMsgs.map(m => ({
-      text: m.content,
-      time: m.created_at,
-      isAdmin: m.sender_type === 'staff',   // hoặc isStaff
-      isRead: m.is_read
-    }));
-
-    // Đánh dấu đã đọc
-    await axios.put(`${API_BASE}/tickets/${conv.id}/mark-read`);
-
-    nextTick(scrollToBottom);
-  } catch (err) {
-    console.error('Load chat lỗi:', err);
-  }
-}
-
-async function sendMessage() {
-  if (!newMessage.value.trim() || !selectedConversation.value) return;
-
-  const msgText = newMessage.value.trim();
-
-  // Optimistic
-  const optimisticMsg = {
-    text: msgText,
-    time: new Date().toISOString(),
-    isAdmin: true,
-    isRead: true
-  };
-  selectedConversation.value.messages.push(optimisticMsg);
-  selectedConversation.value.lastMessage = msgText;
-  selectedConversation.value.lastMessageTime = new Date();
+const selectConversation = async (conv) => {
+  if (!conv?.id) return;
+  socket.value?.emit('join_ticket', conv.id);
+  await supportStore.fetchTicketDetails(conv.id);
+  await supportStore.markAsRead(conv.id);
   scrollToBottom();
+};
 
+const sendMessage = async () => {
+  const ticketId = supportStore.currentTicket?.id;
+  if (!newMessage.value.trim() || !ticketId) return;
+  const txt = newMessage.value.trim();
+  supportStore.pushNewMessage({ 
+      text: txt, time: new Date().toISOString(), 
+      sender_id: myId.value, isStaff: true,
+      isAdmin: true, sender_type: 'staff' 
+  });
+  scrollToBottom();
   newMessage.value = '';
+  await supportStore.sendChatMessage(ticketId, { sender_type: 'staff', sender_id: myId.value, content: txt });
+};
 
-  try {
-    await axios.post(`${API_BASE}/tickets/${selectedConversation.value.id}/messages`, {
-      sender_type: 'staff',
-      sender_id: 2001,          // ← thay bằng staff id thật từ auth store
-      content: msgText,
-      message_type: 'text'
-    });
-  } catch (err) {
-    console.error('Gửi tin lỗi:', err);
-    // Có thể xóa optimistic message hoặc hiện thông báo
-  }
-}
+const scrollToBottom = () => nextTick(() => { if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight; });
+const formatTime = (t) => t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+const getUnreadCount = (c) => c.unread_count_staff || 0;
 
-function getUnreadCount(conv) {
-  return conv.unread_count_staff || 0;
-}
-
-function formatTime(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diff = now - d;
-  if (diff < 60000) return 'Vừa xong';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-}
-
-function scrollToBottom() {
-  // giả sử bạn thêm ref="chatContainer" vào div messages
-  // code giống các file trước
-}
-
-onMounted(() => {
-  fetchTickets();
-});
+onMounted(() => { supportStore.fetchAllTickets(); setupSocket(); });
+onUnmounted(() => socket.value?.disconnect());
 </script>
+
 
 <style scoped>
 /* Có thể thêm style riêng cho admin nếu muốn */

@@ -219,71 +219,60 @@
           </p>
         </div>
 
-        <div class="mt-6 flex gap-3">
-          <div
-            class="flex items-center rounded border bg-white dark:bg-gray-900 dark:border-gray-700"
-          >
-            <button
-              @click="qty = Math.max(1, qty - 1)"
-              class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              −
-            </button>
-            <input
-              v-model.number="qty"
-              type="number"
-              min="1"
-              :max="product.stock"
-              class="w-12 border-0 bg-transparent text-center focus:ring-0 appearance-none"
-            />
-            <button
-              @click="qty = Math.min(product.stock, qty + 1)"
-              class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              +
-            </button>
+
+        <div class="mt-6 flex flex-wrap gap-3">
+          <!-- Tăng giảm số lượng -->
+          <div class="flex items-center rounded border bg-white dark:bg-gray-900 dark:border-gray-700 h-12">
+            <button @click="qty = Math.max(1, qty - 1)" class="px-4 h-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">−</button>
+            <input v-model.number="qty" type="number" min="1" :max="product.stock" class="w-12 border-0 bg-transparent text-center focus:ring-0 appearance-none font-medium" />
+            <button @click="qty = Math.min(product.stock, qty + 1)" class="px-4 h-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">+</button>
           </div>
-          <button
-            :disabled="!product.inStock"
-            class="flex-1 rounded-lg bg-gray-900 px-6 py-3 font-bold text-white shadow-lg hover:bg-gray-800 hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200"
-            @click="addToCart"
-          >
-            THÊM VÀO GIỎ HÀNG
-          </button>
-          <button
-            @click="toggleWishlist"
-            class="rounded-lg border px-4 py-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
-              :fill="
-                wishlist.isInWishlist(product.id) ? 'currentColor' : 'none'
-              "
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
+
+          <!-- Nút Yêu thích -->
+          <button @click="toggleWishlist" class="rounded-lg border px-4 h-12 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :fill="wishlist.isInWishlist(product.id) ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
+
+          <!-- Nút Thêm vào giỏ -->
+          <button 
+            :disabled="!product.inStock" 
+            class="flex-1 min-w-[140px] rounded-lg bg-gray-900 h-12 font-bold text-white shadow hover:bg-gray-800 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200" 
+            @click="addToCart"
+          >
+            THÊM VÀO GIỎ
+          </button>
+
+          <!-- MUA NGAY -->
+          <button 
+            :disabled="!product.inStock" 
+            class="flex-1 min-w-[140px] rounded-lg bg-red-600 h-12 font-bold text-white shadow-lg hover:bg-red-700 hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all" 
+            @click="buyNow"
+          >
+            MUA NGAY
+          </button>
         </div>
+        <!-- [END CHANGE] -->
 
         <!-- Try On & Compare Buttons -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap items-center gap-2 mt-6">
           <RouterLink
-          :to="`/try-on/${product.id}`"
-          class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
-        >
-          THỬ ĐỒ VỚI AI
-        </RouterLink>
-        <RouterLink
-        :to="`/compare`"
-        class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center">So sánh</RouterLink>
+            :to="`/try-on/${product.id}`"
+            class="rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
+          >
+            THỬ ĐỒ VỚI AI
+          </RouterLink>
+          <button
+            type="button"
+            @click="compareStore.addToCompare(product)"
+            class="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4H8m9 5h-1v-4h-4m-5 4h-1V8h6M19 7h-1V4H8v3H7a2 2 0 00-2 2v11a2 2 0 002 2h9a2 2 0 002-2V9a2 2 0 00-2-2z" />
+            </svg>
+            So sánh sản phẩm
+          </button>
         </div>
       </div>
     </div>
@@ -451,7 +440,7 @@
                   >
                     <span>
                       {{ expandedReviews.has(review.id)
-                        ? `Thu gọn ${review.replies.length - 1} phản hồi`
+                        ? `Thu gọn phản hồi`
                         : `Xem thêm ${review.replies.length - 1} phản hồi`
                       }}
                     </span>
@@ -899,21 +888,26 @@
 
 <script setup>
 import { onMounted, ref, watch, reactive } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from 'vue-router'; 
 import { useProductsStore } from "../../stores/products";
 import { useCartStore } from "../../stores/cart";
 import { useWishlistStore } from "../../stores/wishlist";
 import { useUserStore } from "../../stores/user";
+import { useCompareStore } from "../../stores/compare";
 import { useUIStore } from "../../stores/ui";
 import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
+import { useCheckoutStore } from '../../stores/checkout'; 
 
+const router = useRouter();
 const route = useRoute();
 const productStore = useProductsStore();
 const cart = useCartStore();
 const wishlist = useWishlistStore();
 const userStore = useUserStore();
+const compareStore = useCompareStore();
 const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
+const checkoutStore = useCheckoutStore(); 
 
 const showSizeGuide = ref(false);
 const sizeTab = ref("Nam");
@@ -995,6 +989,9 @@ onMounted(async () => {
     }
 
     selectedImage.value = productImages.value[0];
+    if (product.value) {
+      product.value.image = selectedImage.value;
+    }
     fetchReviews(id);
   }
 });
@@ -1035,7 +1032,7 @@ const getPreviewReplies = (replies) => {
 const getExpandedReplies = (replies) => {
   if (!replies?.length) return [];
   const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  return sorted.slice(0, -1); // tất cả trừ reply mới nhất
+  return sorted;// tất cả reply theo thứ tự thời gian (cũ nhất -> mới nhất)
 };
 
 const formatRelativeTime = (dateStr) => {
@@ -1079,10 +1076,16 @@ async function submitReview() {
       newReview.comment = '';
       newReview.rating = 5;
       fetchReviews(product.value.id);
-      alert('Đánh giá đã được gửi!');
+      ui.pushToast({
+  message: "Đánh giá đã được gửi!",
+  type: "success"
+});
     }
   } catch (e) {
-    alert('Lỗi: ' + (e.response?.data?.message || e.message));
+    ui.pushToast({
+      message: 'Lỗi: ' + (e.response?.data?.message || e.message),
+      type: "error"
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -1102,7 +1105,10 @@ async function submitReply(reviewId) {
       fetchReviews(product.value.id);
     }
   } catch (error) {
-    alert('Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message));
+    ui.pushToast({
+      message: 'Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message),
+      type: "error"
+    });
   }
 }
 
@@ -1112,11 +1118,13 @@ async function handleDeleteReview(reviewId) {
     await api.delete(`/products/reviews/${reviewId}`);
     fetchReviews(product.value.id);
   } catch (e) {
-    alert("Lỗi xóa đánh giá");
+    ui.pushToast({
+      message: "Lỗi xóa đánh giá",
+      type: "error"
+    });
   }
 }
 
-// Other functions (giữ nguyên)
 function handleImageError(e) {
   e.target.src = "https://placehold.co/600x600?text=Error";
 }
@@ -1149,6 +1157,23 @@ function addToCart() {
     },
     qty.value
   );
+}
+
+function buyNow() {
+  if (!product.value) return;
+
+  checkoutStore.setDirectBuy({
+      id: product.value.id,
+      product_id: product.value.id,
+      name: product.value.name,
+      price: product.value.price,
+      image: selectedImage.value || productImages.value[0],
+      selectedColor: selectedColor.value?.name || null,
+      selectedSize: selectedSize.value,
+      quantity: qty.value
+  });
+
+  router.push('/checkout');
 }
 
 function toggleWishlist() {
