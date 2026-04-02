@@ -214,6 +214,11 @@ ShiftSchema.statics.hardDeleteShift = async function (id) {
   return { success: true, message: 'Đã xóa vĩnh viễn ca làm việc' };
 };
 
+// xóa cứng tất cả ca của một nhân viên (khi xóa nhân viên)
+ShiftSchema.statics.hardDeleteShiftsByStaffId = async function (staff_id) {
+  await this.deleteMany({ staff_id: Number(staff_id) });
+};
+
 const Shift = mongoose.model('Shift', ShiftSchema);
 
 module.exports = { Shift };

@@ -1,4 +1,4 @@
-const GHNService = require("../services/ghnService");
+ const GHNService = require("../services/ghnService");
 const GHNOrderSchema = require("../models/ghnOderModel");
 
 const ghnController = {

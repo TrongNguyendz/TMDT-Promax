@@ -2,6 +2,7 @@
 const { Staff } = require('../models/staffModel');
 const { deleteOldAvatar } = require('../functions/upload');
 const { hashPassword } = require('../functions/password');
+const { Shift } = require('../models/shiftModel');
 // const  UserModel  = require('../../user-service/models/userModel');
 const axios = require('axios');
 exports.healthCheck = (_req, res) => {
@@ -331,6 +332,40 @@ exports.updateStaff = async (req, res) => {
 
     const updateData = {};
     const allowedFields = ['full_name', 'email', 'phone', 'hire_date', 'status', 'notes'];
+    const UserId = await Staff.findOne({ id }).then(staff => staff?.user_id);
+    if (!UserId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy nhân viên'
+      });
+    }
+    let data = {};
+    try {
+      const response = await axios.put('http://localhost:3001/api/users/' + UserId,
+        {
+          full_name: req.body.full_name,
+          email: req.body.email,
+          phone: req.body.phone
+        }
+      );
+      console.log('Response from user-service (update):', response.data);
+      // Xử lý response từ user-service nếu cần
+      if (!response.data.success) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể tạo tài khoản nhân viên',
+          error: response.data.message || 'Unknown error from user-service'
+        });
+      }
+      data = response.data.data; // chứa user vừa tạo từ user-service
+    } catch (error) {
+      console.error('Error calling user-service:', error.response ? error.response.data : error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi cập nhật thông tin nhân viên',
+        error: error.response ? error.response.data : error.message
+      });
+    }
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -411,7 +446,29 @@ exports.hardDeleteStaff = async (req, res) => {
         message: 'ID nhân viên không hợp lệ'
       });
     }
-
+    const UserId = await Staff.findOne({ id }).then(staff => staff?.user_id);
+    if (!UserId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy nhân viên'
+      });
+    }
+    // Gọi user-service để xóa tài khoản liên quan (nếu có)
+    try {
+      console.log(`[DEBUG] Gọi user-service để xóa tài khoản nhân viên (user_id: ${UserId})...`);
+      const userDeleteRes = await axios.delete(`http://localhost:3001/api/users/${UserId}`);
+      console.log('[DEBUG] user-service delete response:', userDeleteRes.data);
+      if (!userDeleteRes.data.success) {
+        console.warn(`[WARN] user-service không thể xóa tài khoản liên quan (user_id: ${UserId}):`, userDeleteRes.data);
+        // Không làm fail request, chỉ log cảnh báo
+      }
+    } catch (userDeleteError) {
+      console.error(`[LỖI] Gọi user-service để xóa tài khoản nhân viên thất bại (user_id: ${UserId}):`, userDeleteError.response ? userDeleteError.response.data : userDeleteError.message);
+      // Không làm fail request, chỉ log lỗi
+    }
+    
+    Shift.hardDeleteShiftsByStaffId(id); // xóa cứng tất cả ca của nhân viên này trước khi xóa nhân viên
+    console.log(`[DEBUG] Đã xóa cứng tất cả ca làm việc của nhân viên (staff_id: ${id})`);
     const result = await Staff.hardDeleteStaff(id);
     res.json(result);
   } catch (error) {

@@ -92,7 +92,7 @@ doc.text(`sdt: ${invoiceData.company.phone || ''}`, 50, infoY + 50);
     doc.fillColor('#4e73df').text('Khách hàng:', 330, infoY, { underline: true });
     doc.fillColor('black').text(invoiceData.customer.name || 'Khách lẻ', 330, infoY + 20);
     doc.text(invoiceData.customer.address || '', 330, infoY + 35);
-    doc.text(`sdt: ${invoiceData.customer.phone || ''}`, 330, infoY + 70);
+    doc.text(`sdt: ${invoiceData.customer.phone || ''}`, 330, infoY + 80);
 
     doc.strokeColor('#d3d3d3').lineWidth(1)
        .moveTo(50, infoY + 110).lineTo(550, infoY + 110).stroke();
@@ -185,7 +185,7 @@ let totalY = lastY + 30;
        .text(invoiceData.notes || 'Cảm ơn quý khách đã mua sắm!', 50, noteY, { align: 'left', width: 500 });
 
     doc.fontSize(12).fillColor('#4e73df')
-       .text('Cảm ơn quý khách đã mua sắm tại UNQILO Fashion!', 50, doc.page.height - 100, { align: 'center', width: 500 });
+       .text('Cảm ơn quý khách đã mua sắm tại GOGHEVENT Fashion!', 50, doc.page.height - 100, { align: 'center', width: 500 });
 
     doc.end();
 
@@ -240,22 +240,135 @@ if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
   }
 }
 
-async function sendPasswordEmail(userEmail, password) {
-  // Giữ nguyên, chỉ thêm return
-//   const transporter = getTransporter();
+async function sendPasswordEmail(userEmail, password, userName = '') {
+  // const transporter = getTransporter(); // giữ nguyên như cũ
+
+  const companyName = process.env.COMPANY_NAME || 'Công ty của bạn';
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.GMAIL_USER;
+
+  const mailOptions = {
+    from: `"${companyName}" <${process.env.GMAIL_USER}>`,
+    to: userEmail,
+    subject: `Mật khẩu tài khoản ${companyName} của bạn`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mật khẩu tài khoản</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f4f7fa; font-family: Arial, Helvetica, sans-serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f7fa; padding: 40px 0;">
+          <tr>
+            <td align="center">
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background-color: #2563eb; padding: 30px 40px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">${companyName}</h1>
+                  </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px;">
+                    <h2 style="color: #1f2937; margin-top: 0; font-size: 24px;">Chào ${userName || 'bạn'},</h2>
+                    
+                    <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                      Tài khoản của bạn đã được tạo/thiết lập thành công. Dưới đây là mật khẩu tạm thời:
+                    </p>
+
+                    <!-- Password Box -->
+                    <div style="background-color: #f8fafc; border: 2px dashed #64748b; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
+                      <p style="margin: 0 0 8px 0; color: #64748b; font-size: 14px;">MẬT KHẨU TẠM THỜI</p>
+                      <p style="margin: 0; font-size: 26px; font-weight: bold; letter-spacing: 4px; color: #1e40af; font-family: monospace;">
+                        ${password}
+                      </p>
+                    </div>
+
+                    <p style="color: #ef4444; font-weight: 600; background-color: #fee2e2; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #ef4444;">
+                      ⚠️ Vui lòng đổi mật khẩu ngay sau khi đăng nhập lần đầu để đảm bảo an toàn cho tài khoản.
+                    </p>
+
+                    <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+                      Nếu bạn không phải là người yêu cầu tạo tài khoản này, vui lòng liên hệ ngay với chúng tôi để được hỗ trợ.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8fafc; padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                      Trân trọng,<br>
+                      <strong>Đội ngũ ${companyName}</strong>
+                    </p>
+                    <p style="margin: 15px 0 0 0; color: #9ca3af; font-size: 13px;">
+                      Nếu cần hỗ trợ, hãy liên hệ: <a href="mailto:${supportEmail}" style="color: #2563eb; text-decoration: none;">${supportEmail}</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Signature -->
+              <p style="margin-top: 20px; color: #9ca3af; font-size: 12px;">
+                Email này được gửi tự động. Vui lòng không trả lời trực tiếp.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+    text: `Mật khẩu tài khoản của bạn là: ${password}\n\nVui lòng đổi mật khẩu ngay sau khi đăng nhập để đảm bảo an toàn.` // fallback cho client không hỗ trợ HTML
+  };
+
+  await transporter.sendMail(mailOptions);
+  return { success: true, message: 'Email đã được gửi thành công' };
+}
+
+async function sendActivationOTP(userEmail, otp) {
+  // Nếu transporter chưa được khai báo ở đầu file, bạn có thể dùng getTransporter() như hàm cũ
+  // const transporter = getTransporter();
 
   const mailOptions = {
     from: `"${process.env.COMPANY_NAME}" <${process.env.GMAIL_USER}>`,
     to: userEmail,
-    subject: 'Mật khẩu tài khoản của bạn',
-    text: `Mật khẩu tài khoản của bạn là: ${password}\n\nVui lòng đổi mật khẩu ngay sau khi đăng nhập.`
+    subject: 'Mã kích hoạt tài khoản của bạn',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #2563eb;">Xác thực email đăng ký</h2>
+        <p>Chào bạn,</p>
+        <p>Chúng tôi đã nhận được yêu cầu đăng ký tài khoản. Đây là mã kích hoạt (OTP) của bạn:</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #1e40af; margin: 20px 0; border-radius: 6px;">
+          ${otp}
+        </div>
+
+        <p><strong>Mã này sẽ hết hạn sau 10 phút.</strong></p>
+        <p>Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
+        
+        <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+          Nếu bạn không thực hiện đăng ký, vui lòng bỏ qua email này.
+        </p>
+      </div>
+    `
   };
 
-  await transporter.sendMail(mailOptions);
-  return { success: true };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Đã gửi OTP đến: ${userEmail}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi gửi OTP email:', error);
+    throw error; // Để controller bắt lỗi
+  }
 }
 
 module.exports = {
   createAndSendInvoice,
-  sendPasswordEmail
+  sendPasswordEmail,
+  sendActivationOTP
 };

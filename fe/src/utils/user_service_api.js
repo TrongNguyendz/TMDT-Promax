@@ -94,3 +94,11 @@ export const getavartar = async (url) => {
         `http://localhost:3001${url}`
     );
 }   
+
+export const VerifyOTP = async (data) => {
+    return await axios.post('http://localhost:3000/api/v1/users/verify-otp', data);
+}
+
+export const ResendOTP = async (data) => {
+    return await axios.post('http://localhost:3000/api/v1/users/resend-otp', data);
+}
