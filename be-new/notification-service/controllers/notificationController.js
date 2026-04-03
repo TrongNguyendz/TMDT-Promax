@@ -1,7 +1,7 @@
 const NotificationModel = require('../models/notificationModel');
 
 
-const { createAndSendInvoice,sendPasswordEmail } = require('../functions/CreatAndSendInvoice');
+const { createAndSendInvoice,sendPasswordEmail,sendActivationOTP } = require('../functions/CreatAndSendInvoice');
 
 
 exports.healthCheck = (_req, res) => {
@@ -86,7 +86,18 @@ exports.createNotification = async (req, res) => {
       await sendPasswordEmail(email_user, password);
       console.log('✅ Đã gửi email đặt lại mật khẩu đến:', email_user);
     }
+    else if (notification_type === 'email_verification_otp') {
+      const otp = req.body.otp || data?.otp;
+      if (!otp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu OTP để gửi email xác thực'
+        });
+      }
 
+      await sendActivationOTP(email_user, otp);
+      console.log('✅ Đã gửi OTP xác thực email đến:', email_user);
+    }
     // BƯỚC 2: Lưu record vào DB (chỉ lưu thông tin cơ bản - KHÔNG lưu data)
     const payloadForDB = {
       user_id,
