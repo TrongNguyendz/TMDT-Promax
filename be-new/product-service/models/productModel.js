@@ -117,20 +117,28 @@ exports.getProductById = async (id) => {
 };
 
 exports.increaseSold = async (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
   const bulkOps = items.map(item => ({
     updateOne: {
-      filter: { sku: item.sku },
+      filter: {
+        _id: new mongoose.Types.ObjectId(
+          item.product_id || item.productId
+        )
+      },
       update: {
         $inc: {
-          sold: item.quantity
+          sold: Number(item.quantity || 0)
         }
       }
     }
   }));
 
-  if (bulkOps.length > 0) {
-    await Product.bulkWrite(bulkOps);
-  }
+console.log('🧪 bulkOps:', JSON.stringify(bulkOps, null, 2));
+
+  return await Product.bulkWrite(bulkOps);
 };
 
 exports.getTopProducts = async (limit = 20) => {

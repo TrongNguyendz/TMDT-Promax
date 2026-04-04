@@ -62,18 +62,29 @@ exports.getTopProducts = async (req, res) => {
 
 exports.increaseSold = async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items } = req.body
 
-    await ProductModel.increaseSold(items);
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu items'
+      })
+    }
 
-    res.json({ success: true });
+    await ProductModel.increaseSold(items)
+
+    res.json({
+      success: true,
+      message: 'Đã cập nhật sold'
+    })
   } catch (err) {
+    console.error('increaseSold error:', err)
     res.status(500).json({
       success: false,
-      message: err.message
-    });
+      message: err.message || 'Lỗi cập nhật sold'
+    })
   }
-};
+}
 
 exports.createProduct = async (req, res) => {
   let payload;
