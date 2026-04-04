@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { useUIStore } from '../stores/ui';
-// 1. Import Store User để lấy Token
 import { useUserStore } from '../stores/user'; 
 
 const productApi = axios.create({

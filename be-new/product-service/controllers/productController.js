@@ -60,6 +60,21 @@ exports.getTopProducts = async (req, res) => {
   }
 };
 
+exports.increaseSold = async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    await ProductModel.increaseSold(items);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
 exports.createProduct = async (req, res) => {
   let payload;
   try {

@@ -273,7 +273,7 @@
           </button>
         </div>
 
-        <!-- Try On Button -->
+        <!-- Try On & Compare Buttons -->
         <div class="flex gap-2">
           <RouterLink
           :to="`/try-on/${product.id}`"
@@ -336,146 +336,190 @@
 
         <!-- 2. Đánh giá -->
         <div v-else-if="activeTab === 'reviews'" class="space-y-8">
-          <div
-            class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700"
-          >
-            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">
-              Viết đánh giá của bạn
-            </h3>
+          <!-- Form Viết đánh giá -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
+            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Viết đánh giá của bạn</h3>
             <div v-if="userStore.token">
               <form @submit.prevent="submitReview">
                 <div class="mb-4">
-                  <label
-                    class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >Bạn cảm thấy thế nào?</label
-                  >
+                  <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bạn cảm thấy thế nào?</label>
                   <div class="flex gap-2">
-                    <button
-                      type="button"
-                      v-for="star in 5"
-                      :key="star"
-                      @click="newReview.rating = star"
-                      class="text-2xl transition-transform hover:scale-110"
-                      :class="
-                        star <= newReview.rating
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                      "
-                    >
-                      ★
-                    </button>
+                    <button type="button" v-for="star in 5" :key="star" @click="newReview.rating = star" class="text-2xl transition-transform hover:scale-110" :class="star <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'">★</button>
                   </div>
                 </div>
                 <div class="mb-4">
-                  <label
-                    class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >Nội dung đánh giá</label
-                  >
-                  <textarea
-                    v-model="newReview.comment"
-                    rows="3"
-                    class="w-full p-3 rounded border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
-                    placeholder="Chia sẻ cảm nhận..."
-                    required
-                  ></textarea>
+                  <textarea v-model="newReview.comment" rows="3" class="w-full p-3 rounded border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white" placeholder="Chia sẻ cảm nhận..." required></textarea>
                 </div>
-                <button
-                  type="submit"
-                  class="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                  :disabled="isSubmitting"
-                >
-                  {{ isSubmitting ? "Đang gửi..." : "Gửi đánh giá" }}
-                </button>
+                <button type="submit" class="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200" :disabled="isSubmitting">{{ isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá' }}</button>
               </form>
             </div>
             <div v-else class="text-center py-4 text-gray-500">
-              Vui lòng
-              <router-link
-                to="/auth"
-                class="text-blue-600 hover:underline font-medium"
-                >đăng nhập</router-link
-              >
-              để viết đánh giá.
+              Vui lòng <router-link to="/auth" class="text-blue-600 hover:underline font-medium">đăng nhập</router-link> để viết đánh giá.
             </div>
           </div>
 
+          <!-- Danh sách đánh giá -->
           <div>
-            <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white">
-              Khách hàng nhận xét ({{ reviews.length }})
-            </h3>
-            <div
-              v-if="reviews.length === 0"
-              class="text-center py-10 text-gray-500 border border-dashed rounded-lg"
-            >
+            <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white">Khách hàng nhận xét ({{ reviews.length }})</h3>
+            <div v-if="reviews.length === 0" class="text-center py-10 text-gray-500 border border-dashed rounded-lg dark:border-gray-700">
               Chưa có đánh giá nào. Hãy là người đầu tiên!
             </div>
-            <div v-else class="space-y-6">
-              <div
-                v-for="review in reviews"
-                :key="review.id"
-                class="border-b pb-6 dark:border-gray-700 last:border-0"
-              >
-                <div class="flex justify-between items-start mb-2">
+
+            <div v-else class="space-y-8">
+              <div v-for="review in reviews" :key="review.id" class="pb-8 border-b dark:border-gray-700 last:border-0 last:pb-0">
+
+                <!-- Header review -->
+                <div class="flex justify-between items-start mb-3">
                   <div class="flex gap-3">
-                    <div
-                      class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600"
-                    >
-                      {{ (review.author || "U").charAt(0).toUpperCase() }}
+                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 shrink-0">
+                      {{ (review.user_name || 'K').charAt(0).toUpperCase() }}
                     </div>
                     <div>
-                      <h4 class="font-bold text-gray-900 dark:text-white">
-                        {{ review.author || "Người dùng" }}
-                      </h4>
+                      <h4 class="font-bold text-gray-900 dark:text-white">{{ review.user_name || 'Khách hàng' }}</h4>
                       <div class="flex text-yellow-400 text-sm mt-0.5">
-                        <span v-for="i in 5" :key="i">{{
-                          i <= review.rating ? "★" : "☆"
-                        }}</span>
+                        <span v-for="i in 5" :key="i">{{ i <= review.rating ? '★' : '☆' }}</span>
                       </div>
                     </div>
                   </div>
-                  <span class="text-xs text-gray-400">{{
-                    formatDate(review.created_at)
-                  }}</span>
+                  <span class="text-xs text-gray-400">{{ formatRelativeTime(review.created_at) }}</span>
                 </div>
-                <p class="text-gray-700 dark:text-gray-300 mt-2 ml-14">
-                  {{ review.comment }}
-                </p>
 
-                <div
-                  v-if="review.admin_reply"
-                  class="ml-14 mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800"
-                >
-                  <div class="flex items-center gap-2 mb-1">
-                    <span
-                      class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
-                      >Shop phản hồi</span
+                <!-- Nội dung comment -->
+                <p class="text-gray-700 dark:text-gray-300 ml-13 leading-relaxed">{{ review.comment || '(Chỉ đánh giá sao)' }}</p>
+
+                <!-- Replies với Xem thêm / Thu gọn -->
+                <div v-if="review.replies && review.replies.length > 0" class="ml-13 mt-5 space-y-4">
+                  <!-- Preview (chỉ 1 reply mới nhất) -->
+                  <div v-if="!expandedReviews.has(review.id)">
+                    <div
+                      v-for="(reply, rIdx) in getPreviewReplies(review.replies)"
+                      :key="rIdx"
+                      class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
+                      :class="['admin', 'staff'].includes(reply.role) ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : ''"
                     >
-                    <span class="text-xs text-gray-400">{{
-                      formatDate(review.updated_at)
-                    }}</span>
+                      <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        <span
+                          v-if="['admin', 'staff'].includes(reply.role)"
+                          class="bg-blue-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Shop phản hồi
+                        </span>
+                        <span v-else class="font-bold text-xs text-gray-800 dark:text-gray-200">
+                          ↳ {{ reply.user_name }}
+                        </span>
+                        <span class="text-[10px] text-gray-400">{{ formatRelativeTime(reply.created_at) }}</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">{{ reply.content }}</p>
+                    </div>
                   </div>
-                  <p class="text-sm text-gray-800 dark:text-gray-200">
-                    {{ review.admin_reply }}
-                  </p>
+
+                  <!-- Expanded: tất cả trừ reply cuối (đã preview) -->
+                  <div v-if="expandedReviews.has(review.id)" class="space-y-4">
+                    <div
+                      v-for="(reply, rIdx) in getExpandedReplies(review.replies)"
+                      :key="rIdx"
+                      class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
+                      :class="['admin', 'staff'].includes(reply.role) ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : ''"
+                    >
+                      <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        <span
+                          v-if="['admin', 'staff'].includes(reply.role)"
+                          class="bg-blue-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Shop phản hồi
+                        </span>
+                        <span v-else class="font-bold text-xs text-gray-800 dark:text-gray-200">
+                          ↳ {{ reply.user_name }}
+                        </span>
+                        <span class="text-[10px] text-gray-400">{{ formatRelativeTime(reply.created_at) }}</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">{{ reply.content }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Nút Xem thêm / Thu gọn -->
+                  <button
+                    v-if="review.replies.length > 1"
+                    @click="toggleReplies(review.id)"
+                    class="mt-3 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 rounded px-3 py-1.5"
+                  >
+                    <span>
+                      {{ expandedReviews.has(review.id)
+                        ? `Thu gọn ${review.replies.length - 1} phản hồi`
+                        : `Xem thêm ${review.replies.length - 1} phản hồi`
+                      }}
+                    </span>
+                    <svg
+                      class="w-4 h-4 transition-transform duration-200"
+                      :class="expandedReviews.has(review.id) ? 'rotate-180' : ''"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
 
-                <!-- <div class="ml-14 mt-2" v-if="userStore.profile?.role === 'admin' || userStore.profile?.id === review.user_id">
-                            <button @click="handleDeleteReview(review.id)" class="text-xs text-red-500 hover:text-red-700 hover:underline font-medium transition-colors">Xóa bình luận này</button>
-                        </div> -->
+                <!-- Nút tương tác -->
+                <div class="ml-13 mt-4 flex gap-5 items-center text-sm">
+                  <button
+                    v-if="userStore.token"
+                    @click="activeReplyId = review.id"
+                    class="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 font-medium flex items-center gap-1 transition"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    Trả lời
+                  </button>
+
+                  <button
+                    v-if="['admin', 'staff'].includes(userStore.profile?.role) || userStore.profile?.id === review.user_id"
+                    @click="handleDeleteReview(review.id)"
+                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition"
+                  >
+                    Xóa
+                  </button>
+                </div>
+
+                <!-- Input reply -->
+                <div v-if="activeReplyId === review.id" class="ml-13 mt-4 flex gap-3">
+                  <input
+                    v-model="replyText"
+                    type="text"
+                    :placeholder="`Trả lời ${review.user_name}...`"
+                    class="flex-1 text-sm px-4 py-3 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    @keyup.enter="submitReply(review.id)"
+                  />
+                  <button
+                    @click="submitReply(review.id)"
+                    class="px-6 py-3 bg-gray-900 dark:bg-white dark:text-black text-white text-sm font-bold rounded-xl hover:opacity-90 transition"
+                  >
+                    Gửi
+                  </button>
+                  <button
+                    @click="activeReplyId = null"
+                    class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition"
+                  >
+                    Hủy
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
-  </section>
-  <div v-else class="container mx-auto px-4 py-8 animate-pulse">
-    <div class="h-64 bg-gray-200 rounded"></div>
-  </div>
 
-  <!-- MODAL SIZE GUIDE -->
-  <div
+    <!-- Modal Size Guide (giữ nguyên) -->
+    <div
     v-if="showSizeGuide"
     class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
     @click.self="showSizeGuide = false"
@@ -846,12 +890,15 @@
       </div>
     </div>
   </div>
+  </section>
 
-
+  <div v-else class="container mx-auto px-4 py-8 animate-pulse">
+    <div class="h-64 bg-gray-200 rounded"></div>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch, reactive, computed } from "vue";
+import { onMounted, ref, watch, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { useProductsStore } from "../../stores/products";
 import { useCartStore } from "../../stores/cart";
@@ -860,17 +907,18 @@ import { useUserStore } from "../../stores/user";
 import { useUIStore } from "../../stores/ui";
 import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
+
 const route = useRoute();
 const productStore = useProductsStore();
 const cart = useCartStore();
 const wishlist = useWishlistStore();
 const userStore = useUserStore();
-const ui = useUIStore();
+const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
 
 const showSizeGuide = ref(false);
 const sizeTab = ref("Nam");
 
-// State Product Detail
+// Product states
 const product = ref(null);
 const reviews = ref([]);
 const newReview = reactive({ rating: 5, comment: "" });
@@ -887,6 +935,12 @@ const selectedSize = ref("");
 const imageColorMap = ref({});
 const imageIndexToColor = ref({});
 
+// Review states
+const activeReplyId = ref(null);
+const replyText = ref('');
+const expandedReviews = ref(new Set());
+
+// Fetch product & reviews
 onMounted(async () => {
   const id = route.params.id;
   await productStore.fetchProductById(id);
@@ -905,45 +959,35 @@ onMounted(async () => {
       reviews: data.review_count || 0,
     };
 
+    // Attributes (colors, sizes)
     if (data.attributes) {
       data.attributes.forEach((attr) => {
         const name = attr.attribute_name.toLowerCase();
         if (name === "màu") {
           const match = attr.attribute_value.match(/^(.*)\s\((#.*)\)$/);
           if (match) colors.value.push({ name: match[1], hex: match[2] });
-          else
-            colors.value.push({ name: attr.attribute_value, hex: "#000000" });
+          else colors.value.push({ name: attr.attribute_value, hex: "#000000" });
         } else if (name === "size" || name === "kích cỡ") {
           sizes.value.push(attr.attribute_value);
         }
       });
     }
 
-    // Auto select
-    if (colors.value.length > 0) {
-      selectedColor.value = colors.value[0];
-    }
+    if (colors.value.length > 0) selectedColor.value = colors.value[0];
     if (sizes.value.length > 0) selectedSize.value = sizes.value[0];
 
-    // Xử lý Ảnh
+    // Images
     if (data.images && data.images.length > 0) {
-      const sortedImages = [...data.images].sort(
-        (a, b) => a.sort_order - b.sort_order,
-      );
+      const sortedImages = [...data.images].sort((a, b) => a.sort_order - b.sort_order);
       productImages.value = sortedImages.map((img) => img.image_url);
-
-      imageColorMap.value = {};
-      imageIndexToColor.value = {};
 
       sortedImages.forEach((img, index) => {
         if (img.color) {
-          const normalizedColor = img.color.toLowerCase();
-          // Map Màu -> Ảnh (Chỉ lấy ảnh đầu tiên của màu đó)
-          if (imageColorMap.value[normalizedColor] === undefined) {
-            imageColorMap.value[normalizedColor] = index;
+          const normalized = img.color.toLowerCase();
+          if (imageColorMap.value[normalized] === undefined) {
+            imageColorMap.value[normalized] = index;
           }
-          // Map Ảnh -> Màu (Tất cả ảnh)
-          imageIndexToColor.value[index] = normalizedColor;
+          imageIndexToColor.value[index] = normalized;
         }
       });
     } else {
@@ -955,40 +999,70 @@ onMounted(async () => {
   }
 });
 
-// Watch: Chọn Màu -> Đổi Ảnh
+// Watchers
 watch(selectedColor, (newColor) => {
-  if (newColor && newColor.hex) {
-    const targetIndex = imageColorMap.value[newColor.hex.toLowerCase()];
-    if (targetIndex !== undefined) selectImageByIndex(targetIndex);
+  if (newColor?.hex) {
+    const idx = imageColorMap.value[newColor.hex.toLowerCase()];
+    if (idx !== undefined) selectImageByIndex(idx);
   }
 });
 
-// Watch: Lướt Ảnh -> Đổi Màu (Reverse)
 watch(currentImageIndex, (newIndex) => {
   const colorHex = imageIndexToColor.value[newIndex];
   if (colorHex) {
-    const matchingColor = colors.value.find(
-      (c) => c.hex.toLowerCase() === colorHex,
-    );
-    if (matchingColor && selectedColor.value?.hex.toLowerCase() !== colorHex) {
-      selectedColor.value = matchingColor;
+    const match = colors.value.find(c => c.hex.toLowerCase() === colorHex);
+    if (match && selectedColor.value?.hex?.toLowerCase() !== colorHex) {
+      selectedColor.value = match;
     }
   }
 });
 
-// Helper lấy ảnh cho Try On
-function getColorImage(hex) {
-  const idx = imageColorMap.value[hex.toLowerCase()];
-  if (idx !== undefined) return productImages.value[idx];
-  return productImages.value[0]; // Fallback
+// Reply logic
+const toggleReplies = (reviewId) => {
+  if (expandedReviews.value.has(reviewId)) {
+    expandedReviews.value.delete(reviewId);
+  } else {
+    expandedReviews.value.add(reviewId);
+  }
+};
+
+const getPreviewReplies = (replies) => {
+  if (!replies?.length) return [];
+  const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  return [sorted[sorted.length - 1]]; // reply mới nhất
+};
+
+const getExpandedReplies = (replies) => {
+  if (!replies?.length) return [];
+  const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  return sorted.slice(0, -1); // tất cả trừ reply mới nhất
+};
+
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+
+  if (diffMin < 1) return 'Vừa xong';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)} giờ trước`;
+  if (diffMin < 10080) return `${Math.floor(diffMin / 1440)} ngày trước`;
+  return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+// API calls
+async function fetchReviews(productId) {
+  try {
+    const res = await api.get(`/products/${productId}/reviews`);
+    if (res.data.success) {
+      reviews.value = res.data.data;
+    }
+  } catch (e) {
+    console.error("Lỗi tải đánh giá:", e);
+  }
 }
-
-// Handler lỗi ảnh
-function handleImageError(e) {
-  e.target.src = "https://placehold.co/600x600?text=Error";
-}
-
-
 
 async function submitReview() {
   if (!newReview.comment.trim()) return;
@@ -996,62 +1070,67 @@ async function submitReview() {
   try {
     const payload = {
       user_id: userStore.profile?.id || 99,
+      user_name: userStore.profile?.full_name || userStore.profile?.username || 'Khách hàng',
       rating: newReview.rating,
-      comment: newReview.comment,
-      title: "Đánh giá",
+      comment: newReview.comment
     };
-    const res = await api.post(
-      `/products/${product.value.id}/reviews`,
-      payload,
-    );
+    const res = await api.post(`/products/${product.value.id}/reviews`, payload);
     if (res.data.success) {
-      alert("Đánh giá thành công!");
-      newReview.comment = "";
+      newReview.comment = '';
+      newReview.rating = 5;
       fetchReviews(product.value.id);
+      alert('Đánh giá đã được gửi!');
     }
   } catch (e) {
-    alert(e.message);
+    alert('Lỗi: ' + (e.response?.data?.message || e.message));
   } finally {
     isSubmitting.value = false;
   }
 }
 
-async function handleDeleteReview(reviewId) {
-  if (!confirm("Xóa bình luận?")) return;
+async function submitReply(reviewId) {
+  if (!replyText.value.trim()) return;
   try {
-    await api.delete(`/products/reviews/${reviewId}`);
-    alert("Đã xóa");
-    fetchReviews(product.value.id);
-  } catch (e) {
-    alert("Lỗi xóa");
+    const payload = {
+      reply: replyText.value.trim(),
+      user_name: userStore.profile?.full_name || userStore.profile?.username || 'Khách hàng'
+    };
+    const res = await api.put(`/products/reviews/${reviewId}/reply`, payload);
+    if (res.data.success) {
+      activeReplyId.value = null;
+      replyText.value = '';
+      fetchReviews(product.value.id);
+    }
+  } catch (error) {
+    alert('Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message));
   }
 }
 
-async function fetchReviews(productId) {
+async function handleDeleteReview(reviewId) {
+  if (!confirm("Xác nhận xóa đánh giá này?")) return;
   try {
-    const res = await api.get(`/products/${productId}/reviews`);
-    if (res.data.success) reviews.value = res.data.data;
+    await api.delete(`/products/reviews/${reviewId}`);
+    fetchReviews(product.value.id);
   } catch (e) {
-    console.error(e);
+    alert("Lỗi xóa đánh giá");
   }
 }
-function formatDate(d) {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("vi-VN");
+
+// Other functions (giữ nguyên)
+function handleImageError(e) {
+  e.target.src = "https://placehold.co/600x600?text=Error";
 }
+
 function nextImage() {
-  if (!productImages.value.length) return;
-  currentImageIndex.value =
-    (currentImageIndex.value + 1) % productImages.value.length;
+  currentImageIndex.value = (currentImageIndex.value + 1) % productImages.value.length;
   selectedImage.value = productImages.value[currentImageIndex.value];
 }
+
 function previousImage() {
-  if (!productImages.value.length) return;
-  currentImageIndex.value =
-    (currentImageIndex.value - 1 + productImages.value.length) %
-    productImages.value.length;
+  currentImageIndex.value = (currentImageIndex.value - 1 + productImages.value.length) % productImages.value.length;
   selectedImage.value = productImages.value[currentImageIndex.value];
 }
+
 function selectImageByIndex(idx) {
   currentImageIndex.value = idx;
   selectedImage.value = productImages.value[idx];
@@ -1065,12 +1144,13 @@ function addToCart() {
       name: product.value.name,
       price: product.value.price,
       image: selectedImage.value,
-      selectedColor: selectedColor.value?.name || selectedColor.value || null,
+      selectedColor: selectedColor.value?.name || null,
       selectedSize: selectedSize.value,
     },
-    qty.value,
+    qty.value
   );
 }
+
 function toggleWishlist() {
   if (!product.value) return;
   wishlist.toggleWishlist({
@@ -1083,12 +1163,11 @@ function toggleWishlist() {
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
+/* Có thể thêm animation nếu muốn */
+.fade-enter-active, .fade-leave-active {
   transition: opacity 0.3s ease;
 }
-.fade-enter-from,
-.fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>

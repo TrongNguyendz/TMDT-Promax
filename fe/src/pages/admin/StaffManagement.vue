@@ -464,27 +464,27 @@ const loadStaff = async () => {
 // Shifts Data
 const shifts = ref([]);
 
-async function loadShifts() {
-  try {
-    const res = await getListShifts(token.value);
-    if (!res.data.success) return;
+// async function loadShifts() {
+//   try {
+//     const res = await getListShifts(token.value);
+//     if (!res.data.success) return;
 
-    shifts.value = res.data.data.map((s) => {
-      const date = new Date(s.shift_date).toISOString().split("T")[0];
-      return {
-        id: s.id,
-        staffId: s.staff_id,
-        date: date,
-        start: `${date}T${s.start_time}`,
-        end: `${date}T${s.end_time}`,
-        notes: s.notes,
-        color: s.color || '#3b82f6'
-      };
-    });
-  } catch (err) {
-    console.error("Load shifts failed:", err);
-  }
-}
+//     shifts.value = res.data.data.map((s) => {
+//       const date = new Date(s.shift_date).toISOString().split("T")[0];
+//       return {
+//         id: s.id,
+//         staffId: s.staff_id,
+//         date: date,
+//         start: `${date}T${s.start_time}`,
+//         end: `${date}T${s.end_time}`,
+//         notes: s.notes,
+//         color: s.color || '#3b82f6'
+//       };
+//     });
+//   } catch (err) {
+//     console.error("Load shifts failed:", err);
+//   }
+// }
 
 // Filters
 const filters = reactive({
@@ -633,25 +633,23 @@ const shiftForm = ref({
   date: '',
   startTime: '08:00',
   endTime: '17:00',
-  note: 'Ca làm việc',
+  note: '',
   color: '#3b82f6'
 });
 
-function openShiftModal(staff, date, shiftToEdit = null) {   // ← thêm tham số shiftToEdit
+function openShiftModal(staff, date, shiftToEdit = null) {
   if (shiftToEdit) {
-    // đang sửa
     editingShift.value = shiftToEdit;
     shiftForm.value = {
       id: shiftToEdit.id,
       staffId: shiftToEdit.staffId,
       date: shiftToEdit.date,
       startTime: shiftToEdit.start.split('T')[1]?.slice(0,5) || '08:00',
-      endTime:   shiftToEdit.end.split('T')[1]?.slice(0,5)   || '17:00',
+      endTime: shiftToEdit.end.split('T')[1]?.slice(0,5) || '17:00',
       note: shiftToEdit.notes || '',
       color: shiftToEdit.color || '#3b82f6'
     };
   } else {
-    // thêm mới
     editingShift.value = null;
     shiftForm.value = {
       id: null,
@@ -666,44 +664,21 @@ function openShiftModal(staff, date, shiftToEdit = null) {   // ← thêm tham s
   showShiftModal.value = true;
 }
 
-// function saveShift() {
-//   if (!shiftForm.value.staffId || !shiftForm.value.date || !shiftForm.value.startTime || !shiftForm.value.endTime) {
-//     ui.pushToast({ type: 'error', message: 'Vui lòng điền đầy đủ thông tin ca làm' });
-//     return;
-//   }
+function closeModal() {
+  showModal.value = false;
+  editingId.value = null;
+  // Optional: reset form nếu cần
+  Object.assign(formData, {
+    user_id: '',
+    full_name: '',
+    email: '',
+    phone: '',
+    username: '',
+    avatar_url: ''
+  });
+  fileToUpload.value = null;
+}
 
-//   const start = `${shiftForm.value.date}T${shiftForm.value.startTime}:00`;
-//   const end = `${shiftForm.value.date}T${shiftForm.value.endTime}:00`;
-
-//   if (editingShift.value) {
-//     const idx = shifts.value.findIndex(s => s.id === editingShift.value.id);
-//     if (idx !== -1) {
-//       shifts.value[idx] = {
-//         ...shifts.value[idx],
-//         staffId: shiftForm.value.staffId,
-//         date: shiftForm.value.date,
-//         start,
-//         end,
-//         type: shiftForm.value.type,
-//         color: shiftForm.value.color
-//       };
-//     }
-//   } else {
-//     const newId = shifts.value.length ? Math.max(...shifts.value.map(s => s.id)) + 1 : 1;
-//     shifts.value.push({
-//       id: newId,
-//       staffId: shiftForm.value.staffId,
-//       date: shiftForm.value.date,
-//       start,
-//       end,
-//       type: shiftForm.value.type,
-//       color: shiftForm.value.color
-//     });
-//   }
-//   console.log('Saved shift:', shiftForm.value);
-//   ui.pushToast({ type: 'success', message: 'Đã lưu ca làm việc' });
-//   closeShiftModal();
-// }
 async function saveShift() {
   if (!shiftForm.value.staffId || !shiftForm.value.date || 
       !shiftForm.value.startTime || !shiftForm.value.endTime) {
@@ -711,39 +686,30 @@ async function saveShift() {
     return;
   }
 
-  // Chuẩn bị payload đúng format backend mong đợi
   const payload = {
     staff_id: Number(shiftForm.value.staffId),
     shift_date: shiftForm.value.date,
-    start_time: shiftForm.value.startTime + ':00',   // backend thường mong đợi HH:mm:ss
-    end_time:   shiftForm.value.endTime   + ':00',
-    // shift_type: shiftForm.value.type.trim() || null,
+    start_time: shiftForm.value.startTime + ':00',
+    end_time: shiftForm.value.endTime + ':00',
     notes: shiftForm.value.note.trim() || null,
     color: shiftForm.value.color || null,
-    // status: 'scheduled', // nếu backend yêu cầu
   };
-  console.log("dữ liệu được gửi:", payload); 
+
   try {
     let res;
-
     if (editingShift.value) {
-      // UPDATE
       res = await updateShift(editingShift.value.id, payload, token.value);
       ui.pushToast({ type: 'success', message: 'Đã cập nhật ca làm việc' });
     } else {
-      // CREATE
       res = await createShift(payload, token.value);
       ui.pushToast({ type: 'success', message: 'Đã tạo ca làm việc mới' });
     }
-
-    // Reload lại danh sách ca
     await loadShifts();
-
   } catch (err) {
     console.error("Lỗi lưu ca làm:", err);
     ui.pushToast({ 
       type: 'error', 
-      message: err.response?.data?.message || 'Không thể lưu ca làm việc. Vui lòng thử lại.' 
+      message: err.response?.data?.message || 'Không thể lưu ca làm việc' 
     });
   }
 
@@ -760,36 +726,16 @@ function getShifts(staffId, date) {
   return shifts.value.filter(s => s.staffId === staffId && s.date === dateStr);
 }
 
-// function removeShift(shift) {
-//   if (confirm(`Xóa ca ${shift.type || ''} của ${getStaffName(shift.staffId)} ?`)) {
-//     shifts.value = shifts.value.filter(s => s.id !== shift.id);
-//     ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
-//   }
-// }
-
 async function removeShift(shift) {
-  if (!confirm(`Xác nhận xóa ca "${shift.type || '—'}" của ${getStaffName(shift.staffId)} ?`)) {
-    return;
-  }
+  if (!confirm(`Xác nhận xóa ca của ${getStaffName(shift.staffId)} ?`)) return;
 
   try {
-    // Nếu bạn muốn soft-delete (status = cancelled)
-    // await deleteShift(shift.id, token.value);
-
-    // Nếu bạn muốn xóa cứng hẳn khỏi database
     await hardDeleteShift(shift.id, token.value);
-
     ui.pushToast({ type: 'success', message: 'Đã xóa ca làm việc' });
-
-    // Cập nhật lại danh sách
     await loadShifts();
-
   } catch (err) {
     console.error("Lỗi xóa ca:", err);
-    ui.pushToast({ 
-      type: 'error', 
-      message: err.response?.data?.message || 'Không thể xóa ca làm việc' 
-    });
+    ui.pushToast({ type: 'error', message: 'Không thể xóa ca làm việc' });
   }
 }
 
@@ -828,7 +774,7 @@ const totalHours = computed(() => {
 // Staff CRUD
 function openCreateModal() {
   editingId.value = null;
-  Object.assign(formData, { name: '', username: '', email: '', phone: '', avatar: '' });
+  Object.assign(formData, { full_name: '', username: '', email: '', phone: '', avatar_url: '' });
   fileToUpload.value = null;
   showModal.value = true;
 }
@@ -847,27 +793,34 @@ function editStaff(staff) {
 async function saveStaff() {
   try {
     const payload = {
-      user_id: formData.user_id,
-      full_name: formData.full_name,
-      email: formData.email,
-      phone: formData.phone,
-      username: formData.username
+      user_id: formData.user_id || undefined,
+      full_name: formData.full_name?.trim(),
+      email: formData.email?.trim(),
+      phone: formData.phone?.trim() || null,
+      username: formData.username?.trim()
     };
 
+    let res;
     if (editingId.value) {
-      await updateStaff(editingId.value, payload, token.value);
+      res = await updateStaff(editingId.value, payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Cập nhật nhân viên thành công' });
     } else {
-      const res = await createStaff(payload, token.value);
-      if (fileToUpload.value) {
+      res = await createStaff(payload, token.value);
+      ui.pushToast({ type: 'success', message: 'Thêm nhân viên thành công' });
+
+      // Upload avatar nếu có (sau khi tạo thành công)
+      if (fileToUpload.value && res?.data?.data?.id) {
         await uploadStaffAvatar(res.data.data.id, fileToUpload.value, token.value);
       }
     }
 
     await loadStaff();
-    showModal.value = false;
+    showModal.value = false;          // ← quan trọng: đóng modal
+    editingId.value = null;
   } catch (err) {
-    console.error("Save staff error:", err);
-    ui.pushToast({ type: 'error', message: 'Lưu nhân viên thất bại' });
+    console.error("Lỗi khi lưu nhân viên:", err);
+    const msg = err.response?.data?.message || 'Không thể lưu nhân viên. Vui lòng kiểm tra lại.';
+    ui.pushToast({ type: 'error', message: msg });
   }
 }
 
@@ -876,6 +829,7 @@ function deleteStaff1(staff) {
   showDeleteModal.value = true;
 }
 
+  
 const confirmDelete = async () => {
   if (staffToDelete.value) {
     console.log("thông tin nhân viên cần xóa:", staffToDelete.value);

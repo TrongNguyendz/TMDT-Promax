@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const rateLimitMiddleware = require('./middlewares/rate-limit');
 const responseTimeMiddleware = require('./middlewares/response-time');
 const logger = require('./middlewares/logger');
@@ -26,6 +27,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+console.log("DEBUG: SUPPORT_SERVICE_URL là:", process.env.SUPPORT_SERVICE_URL);
+// api-gateway/server.js
+// Tìm đoạn proxy, sửa thành:
+
 app.use(responseTimeMiddleware);
 app.use(morganMiddleware);
 app.use(rateLimitMiddleware);
@@ -44,7 +49,6 @@ app.get('/health', async (req, res) => {
       notification: await checkServiceHealth(process.env.NOTIFICATION_SERVICE_URL),
       admin: await checkServiceHealth(process.env.ADMIN_SERVICE_URL),
       staff: await checkServiceHealth(process.env.STAFF_SERVICE_URL)
-
     }
   };
   res.json(healthStatus);
@@ -62,6 +66,7 @@ app.use('/api/v1/shifts', shiftRoutes);
 
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', orderRoutes);
+
 
 
 // Error handling middleware

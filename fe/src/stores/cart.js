@@ -19,7 +19,7 @@ export const useCartStore = defineStore('cart', () => {
 
     // --- ACTIONS ---
 
-    // 1. Thêm vào giỏ (Logic thông minh: Phân biệt Màu/Size)
+    // 1. Thêm vào giỏ (Logic phân biệt Màu/Size)
     const addToCart = (product, quantity = 1) => {
         const uiStore = useUIStore();
         
@@ -46,7 +46,7 @@ export const useCartStore = defineStore('cart', () => {
                 // Định danh
                 product_id: product.id,
                 
-                // Snapshot thông tin (Lưu cứng để hiển thị & thanh toán)
+                // Snapshot thông tin 
                 product_name: product.name,
                 product_image: product.image, // Ảnh theo màu đã chọn ở Detail
                 price: Number(product.price),

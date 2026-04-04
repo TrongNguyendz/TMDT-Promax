@@ -73,6 +73,12 @@
                       d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />\
               </svg>
             </NavItem>
+                        <NavItem to="/admin/support" label="Support" :active="$route.path.startsWith('/admin/support')">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M18 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />\
+              </svg>
+            </NavItem>
           </div>
         </div>
       </nav>
@@ -134,8 +140,8 @@ class="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-50 py-3 
     <!-- MAIN CONTENT -->
 <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <main class="flex-1 relative z-0 overflow-y-auto p-6 lg:p-12">
-        <div class="max-w-7xl mx-auto">
-          <slot />
+        <div class="max-w-screen-2xl mx-auto">
+          <slot/>
         </div>
       </main>
     </div>

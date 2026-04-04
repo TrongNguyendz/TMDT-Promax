@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <!-- Controls: Navigation + Filter + Summary -->
+    <!-- Controls -->
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
       <!-- Navigation -->
       <div class="flex flex-wrap items-center gap-4">
@@ -22,10 +22,7 @@
           Hôm nay
         </button>
 
-        <button 
-          @click="prevWeek" 
-          class="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
+        <button @click="prevWeek" class="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">
           ← Tuần trước
         </button>
 
@@ -33,15 +30,12 @@
           {{ formatDate(currentWeekStart) }} — {{ formatDate(currentWeekEnd) }}
         </div>
 
-        <button 
-          @click="nextWeek" 
-          class="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
+        <button @click="nextWeek" class="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">
           Tuần sau →
         </button>
       </div>
 
-      <!-- Filter đơn giản cho ca cá nhân -->
+      <!-- Filters -->
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1 min-w-[180px]">
           <label class="ml-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Tìm ghi chú ca</label>
@@ -72,7 +66,7 @@
           @click="resetFilters"
           class="rounded-xl bg-gray-200 px-5 py-2.5 text-sm font-bold uppercase tracking-widest text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300"
         >
-          Xóa lọc
+          XÓA LỌC
         </button>
       </div>
 
@@ -87,63 +81,63 @@
       </div>
     </div>
 
-    <!-- Timeline Grid -->
+    <!-- Timeline Grid - Bố cục sửa chính -->
     <div class="overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-inner dark:border-gray-800 dark:bg-gray-950">
-      <div class="min-w-[1000px] grid grid-cols-[220px_repeat(7,1fr)] gap-px bg-gray-200 dark:bg-gray-800">
-        <!-- Header -->
-        <div class="sticky left-0 top-0 z-20 bg-gray-100 p-4 font-black text-sm uppercase tracking-wider text-gray-900 dark:bg-gray-950 dark:text-white border-r border-gray-300 dark:border-gray-700">
+      <div class="min-w-[1000px] grid grid-cols-[minmax(220px,220px)_repeat(7,1fr)] bg-gray-200 dark:bg-gray-800 gap-px">
+
+        <!-- Header row -->
+        <div class="sticky left-0 top-0 z-30 bg-gray-100 p-4 font-black text-sm uppercase tracking-wider text-gray-900 border-r border-gray-300 dark:bg-gray-950 dark:text-white dark:border-gray-700">
           Ca của tôi
         </div>
-        <div
-          v-for="day in weekDays"
-          :key="day.toISOString()"
-          class="sticky top-0 z-10 bg-gray-100 p-3 text-center font-bold dark:bg-gray-950"
-          :class="isToday(day) ? 'text-blue-600 bg-blue-50 dark:bg-blue-950/40' : ''"
-        >
-          {{ day.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'short' }) }}
-        </div>
+        <template v-for="day in weekDays" :key="day.toISOString()">
+          <div
+            class="sticky top-0 z-20 bg-gray-100 p-3 text-center font-bold text-gray-900 dark:bg-gray-950 dark:text-white"
+            :class="{ 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300': isToday(day) }"
+          >
+            {{ day.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'short' }) }}
+          </div>
+        </template>
 
-        <!-- Staff name row (chỉ 1 dòng) -->
+        <!-- Staff name row -->
         <div class="sticky left-0 z-10 bg-white p-4 font-bold border-r border-gray-200 dark:bg-gray-900 dark:border-gray-800">
           {{ currentUserName }}
-          <span class="block text-xs font-normal text-gray-500 dark:text-gray-400">{{ currentUserPosition }}</span>
+          <span class="block text-xs font-normal text-gray-500 dark:text-gray-400 mt-1">{{ currentUserPosition }}</span>
         </div>
 
-        <!-- 7 days -->
+        <!-- 7 ngày ca làm -->
         <div
           v-for="day in weekDays"
           :key="day.toISOString()"
-          class="relative min-h-[200px] bg-white p-2 dark:bg-gray-900 transition hover:bg-gray-50 dark:hover:bg-gray-800/40"
+          class="relative bg-white dark:bg-gray-900 min-h-[480px] transition hover:bg-gray-50/70 dark:hover:bg-gray-800/30"
         >
+          <!-- Ca làm việc -->
           <div
             v-for="shift in getFilteredShiftsForDay(day)"
             :key="shift.id"
-            class="absolute left-1 right-1 rounded-xl p-3 text-sm font-medium text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
+            class="absolute left-2 right-2 rounded-xl p-3 text-white shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-150"
             :style="{
               top: `${timeToPixels(shift.start)}px`,
-              height: `${timeToPixels(shift.end) - timeToPixels(shift.start)}px`,
+              height: `${Math.max(40, timeToPixels(shift.end) - timeToPixels(shift.start))}px`,
               backgroundColor: shift.color || '#3b82f6',
-              opacity: 0.92
+              zIndex: 10
             }"
             :title="shift.notes ? `Ghi chú: ${shift.notes}` : ''"
           >
             <div class="font-bold truncate">{{ shift.notes || shift.type || 'Ca làm việc' }}</div>
-            <div class="text-xs opacity-90 mt-0.5">
+            <div class="text-xs mt-0.5 opacity-90">
               {{ formatTime(shift.start) }} – {{ formatTime(shift.end) }}
-            </div>
-            <div v-if="shift.notes" class="text-xs italic opacity-80 mt-1 truncate">
-              {{ shift.notes }}
             </div>
           </div>
 
-          <!-- Placeholder khi không có ca -->
-          <div 
+          <!-- Placeholder khi trống -->
+          <div
             v-if="!getFilteredShiftsForDay(day).length"
-            class="absolute inset-0 flex items-center justify-center text-sm text-gray-400 italic opacity-70"
+            class="absolute inset-0 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 italic"
           >
             Không có ca làm việc
           </div>
         </div>
+
       </div>
     </div>
   </div>

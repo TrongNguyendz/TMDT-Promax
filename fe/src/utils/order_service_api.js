@@ -68,14 +68,16 @@ export default {
   getWishlist(userId) {
     return orderApi.get('/wishlists', { params: { user_id: userId } });
   },
-
-  toggleWishlist(productId) {
-    // Giả lập API thành công ngay lập tức
-    return Promise.resolve({
-      data: { success: true }
+  
+  addToWishlist(userId, productId) {
+    return orderApi.post('/wishlists', { user_id: userId, product_id: productId });
+  },
+  
+  removeFromWishlist(userId, productId) {
+    return orderApi.delete('/wishlists', { 
+      data: { user_id: userId, product_id: productId } 
     });
   },
-  //CHANGE
   getReportStats() {
     return orderApi.get('/orders/stats');
   }
