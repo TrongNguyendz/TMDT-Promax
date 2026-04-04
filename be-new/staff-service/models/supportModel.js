@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const SupportTicketSchema = new mongoose.Schema({
     user_id: {
-        type: Number,
+        type: String,
         required: false
     },
     guest_email: {
@@ -64,7 +64,7 @@ const SupportMessageSchema = new mongoose.Schema({
         required: true
     },
     sender_id: {
-        type: Number,           // user_id hoặc staff_id
+        type: String,           
         required: true
     },
     message_type: {

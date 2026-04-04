@@ -17,22 +17,20 @@
     <!-- Các bước 1, 2, 3 (Layout 2 cột) -->
     <div v-else class="grid gap-8 md:grid-cols-[1fr_380px]">
       <div class="space-y-6">
+        
         <!-- Bước 1: Xem lại -->
         <Step1Review 
           v-if="checkout.currentStep === 1" 
-          :items="cartItems" 
+          :items="checkoutItems" 
           @next="checkout.nextStep" 
         />
         
         <!-- Bước 2: Thông tin giao hàng -->
+        <!-- Sửa: Dùng v-model rút gọn -->
         <Step2Shipping 
           v-if="checkout.currentStep === 2" 
           :shippingInfo="checkout.shippingInfo" 
-          :paymentMethod="checkout.paymentMethod"
-          @update:paymentMethod="newVal => { 
-            console.log('[PARENT] Nhận update paymentMethod:', newVal);
-            checkout.paymentMethod = newVal;
-          }"
+          v-model:paymentMethod="checkout.paymentMethod"
           @prev="checkout.previousStep" 
           @next="handleShippingNext" 
         />
@@ -42,7 +40,7 @@
           v-if="checkout.currentStep === 3"
           :paymentMethod="checkout.paymentMethod"
           :vnpayUrl="vnpayUrl"
-          :total="cart.subtotal"
+          :total="checkoutSubtotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -51,7 +49,11 @@
       </div>
 
       <!-- 3. Sidebar tóm tắt -->
-      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
+      <OrdersSummary 
+        :itemCount="checkoutItems.length" 
+        :subtotal="checkoutSubtotal" 
+        :currentStep="checkout.currentStep" 
+      />
     </div>
   </section>
 </template>
@@ -84,7 +86,29 @@ const isProcessing = ref(false);
 const successOrder = ref(null); 
 let socket = null;
 
-const cartItems = computed(() => cart.items);
+// 1. Lấy sản phẩm hiển thị
+const checkoutItems = computed(() => {
+    if (successOrder.value && successOrder.value.items) {
+        return successOrder.value.items;
+    }
+    
+    if (checkout.isDirectBuy && checkout.directBuyItem) {
+        return [checkout.directBuyItem]; 
+    }
+    return cart.items; 
+});
+
+// 2. Lấy tổng tiền
+const checkoutSubtotal = computed(() => {
+    if (successOrder.value) {
+        return successOrder.value.total_amount || successOrder.value.final_amount;
+    }
+    
+    if (checkout.isDirectBuy && checkout.directBuyItem) {
+        return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
+    }
+    return cart.subtotal;
+});
 
 onMounted(() => {
   checkout.currentStep = 1;
@@ -93,18 +117,16 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (socket) {
     socket.disconnect();
-    console.log(" Socket disconnected cleanup");
-  }
+  };
+  checkout.clearDirectBuy();
 });
 
 // --- XỬ LÝ CHUYỂN BƯỚC ---
 
 async function handleShippingNext() {
   if (checkout.paymentMethod === 'vnpay') {
-    // Nếu chọn VNPay -> Tạo đơn hàng PENDING ngay để lấy ID thật
     await createPendingOrderAndGetQR();
   } else {
-    // Nếu chọn COD -> Chỉ chuyển bước, chưa tạo đơn
     checkout.nextStep();
   }
 }
@@ -117,24 +139,20 @@ async function handleRefreshQR() {
 
 // --- LOGIC TẠO ĐƠN & THANH TOÁN ---
 
-// Hàm 1: Gọi Store để tạo đơn vào DB
 async function createOrderInDB() {
-    // submitOrder trả về object đơn hàng đầy đủ từ backend
     return await checkout.submitOrder(); 
 }
 
-// Hàm 2: Quy trình VNPay (Tạo đơn -> Lấy QR -> Lắng nghe Socket)
 async function createPendingOrderAndGetQR() {
     isProcessing.value = true;
     try {
-        // 1. Tạo đơn hàng thật trong DB (Trạng thái Pending)
         const newOrder = await createOrderInDB();
         
         if (newOrder && newOrder.id) {
-            successOrder.value = newOrder; // Lưu lại
-            checkout.nextStep(); // Chuyển sang màn hình QR (Step 3)
-
-            // 2. Gọi Payment Service lấy URL thanh toán cho ID thật này
+            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
+            successOrder.value = fullOrder; 
+            
+            checkout.nextStep(); 
             await generateVnpayUrl(newOrder.id, newOrder.final_amount);
         }
     } catch (error) {
@@ -144,25 +162,19 @@ async function createPendingOrderAndGetQR() {
     }
 }
 
-// Hàm 3: Gọi API lấy link thanh toán (ĐÃ FIX LỖI 400)
 async function generateVnpayUrl(orderId, amount) {
   try {
-    // Validate dữ liệu
     if (!orderId) return;
 
-    // 👇 FIX QUAN TRỌNG: Làm tròn số tiền (VNPay không nhận số lẻ)
     const cleanAmount = Math.round(Number(amount));
-    
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
         ui.pushToast({ type: 'error', message: 'Số tiền không hợp lệ' });
         return;
     }
 
-    console.log("📤 Tạo QR cho đơn:", orderId, "Tiền:", cleanAmount);
-
     const response = await axios.post('http://localhost:3000/api/v1/payments/vnpay/create', {
-      orderId: orderId, // ID thật
-      amount: cleanAmount, // Số tiền thật đã làm tròn
+      orderId: orderId, 
+      amount: cleanAmount, 
       userId: userStore.profile?.id || 'GUEST',
       paymentMethod: 'vnpay',
       order_info: `Thanh toan don hang #${orderId}`
@@ -170,8 +182,6 @@ async function generateVnpayUrl(orderId, amount) {
 
     if (response.data.success) {
       vnpayUrl.value = response.data.paymentUrl;
-      
-      // Lắng nghe Socket
       if (socket) socket.disconnect();
       setupSocketListener(orderId); 
     }
@@ -181,13 +191,14 @@ async function generateVnpayUrl(orderId, amount) {
   }
 }
 
-// Hàm 4: Xử lý COD (Khi bấm nút "Hoàn tất" ở Step 3)
 async function completeCODOrder() {
     isProcessing.value = true;
     try {
         const newOrder = await createOrderInDB();
-        if (newOrder) {
-            successOrder.value = newOrder;
+        if (newOrder && newOrder.id) {
+            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
+            successOrder.value = fullOrder;
+
             ui.pushToast({ type: 'success', message: 'Đặt hàng thành công, kiểm tra hóa đơn được gửi về mail!' });
             finishSteps();
         }
@@ -205,16 +216,15 @@ function setupSocketListener(orderId) {
   });
 
   socket.on('connect', () => {
-    console.log(`✅ Socket connected for Order #${orderId}`);
     socket.emit('join-order-room', orderId);
   });
 
-  socket.on('payment-success', (data) => {
-    console.log("🚀 THANH TOÁN THÀNH CÔNG!", data);
-    
-    if (successOrder.value) {
-        successOrder.value.payment_status = 'paid';
-        successOrder.value.status = 'processing';
+  socket.on('payment-success', async (data) => { 
+    try {
+        const fullOrder = await orderStore.fetchOrderById(orderId);
+        successOrder.value = fullOrder;
+    } catch (e) {
+        console.error("Lỗi tải lại đơn:", e);
     }
     
     ui.pushToast({ type: 'success', message: 'Thanh toán thành công, kiểm tra hóa đơn được gửi về mail!' });
@@ -225,29 +235,27 @@ function setupSocketListener(orderId) {
 function finishSteps() {
   checkout.currentStep = 4;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  cart.clearCart(); // Xóa giỏ hàng local
+  
+  if (!checkout.isDirectBuy) {
+      cart.clearCart(); 
+  }
+  checkout.clearDirectBuy();
+
   if (socket) socket.disconnect();
 }
 
 async function handleBackStep() {
-    // Nếu đang ở bước QR Code và đã có đơn hàng Pending
     if (checkout.currentStep === 3 && successOrder.value) {
-        // Hỏi ý ki ến người dùng
         if (!confirm('Đơn hàng chờ thanh toán hiện tại sẽ bị hủy để bạn chọn phương thức mới. Bạn chắc chắn chứ?')) {
             return;
         }
 
         try {
             isProcessing.value = true;
-            // Gọi API Hủy đơn -> Backend sẽ tự động cộng lại tồn kho
             await orderStore.cancelOrder(successOrder.value.id, 'Khách đổi phương thức thanh toán');
-            
-            // Dọn dẹp
             successOrder.value = null;
             vnpayUrl.value = '';
             if (socket) socket.disconnect();
-
-            // Quay về bước 2
             checkout.previousStep();
         } catch (e) {
             console.error("Lỗi hủy đơn:", e);
@@ -255,7 +263,6 @@ async function handleBackStep() {
             isProcessing.value = false;
         }
     } else {
-        // Trường hợp bình thường (chưa tạo đơn)
         checkout.previousStep();
     }
 }

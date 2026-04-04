@@ -5,11 +5,11 @@
     <div class="mb-4 space-y-2 border-b pb-4 dark:border-gray-700">
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Số lượng:</span>
-        <span class="font-medium">{{ cart.itemCount }} sản phẩm</span>
+        <span class="font-medium">{{ itemCount }} sản phẩm</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Tổng tiền hàng:</span>
-        <span class="font-medium">{{ formatCurrency(cart.subtotal) }}</span>
+        <span class="font-medium">{{ formatCurrency(subtotal) }}</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Vận chuyển:</span>
@@ -51,14 +51,18 @@
 </template>
 
 <script setup>
-import { ref, computed, toRef } from 'vue';
+import { ref, computed } from 'vue';
 import { formatCurrency } from '../../utils/helpers';
 import { useCheckoutStore } from '../../stores/checkout';
 import { useUIStore } from '../../stores/ui';
 import { getListVouchers1 } from '../../utils/voucher_service_api';
 
-const props = defineProps({ cart: Object, currentStep: Number });
-const cart = toRef(props, 'cart');
+
+const props = defineProps({
+  itemCount: Number,
+  subtotal: Number,
+  currentStep: Number
+});
 
 const checkout = useCheckoutStore();
 const ui = useUIStore();
@@ -67,14 +71,26 @@ const codeInput = ref('');
 const lastMessage = ref('');
 
 const applied = computed(() => checkout.appliedVoucher);
-// Ensure subtotal is a number (cart.subtotal may be a computed ref)
-const subtotalValue = computed(() => Number(cart.value?.subtotal?.value ?? cart.value?.subtotal ?? 0));
+
+const subtotalValue = computed(() => Number(props.subtotal || 0));
 const shippingFeeValue = computed(() => Number(checkout.shippingFee || 0));
-const finalTotal = computed(() => Math.max(0, Math.round(subtotalValue.value + shippingFeeValue.value - (Number(checkout.discountAmount) || 0))));
+
+const finalTotal = computed(() =>
+  Math.max(
+    0,
+    Math.round(
+      subtotalValue.value +
+      shippingFeeValue.value -
+      (Number(checkout.discountAmount) || 0)
+    )
+  )
+);
 
 function formatDiscountText(v) {
   if (!v) return '';
-  if (v.type === 'percentage' || v.type === 'Percentage') return `Giảm ${v.value}%`;
+  if (v.type === 'percentage' || v.type === 'Percentage') {
+    return `Giảm ${v.value}%`;
+  }
   return `Giảm ${formatCurrency(v.value)}`;
 }
 
@@ -83,6 +99,7 @@ async function applyCode() {
   try {
     const resp = await getListVouchers1();
     const raw = resp.data.data || [];
+
     const vouchers = raw.map(v => ({
       code: v.code,
       type: v.discount_type || v.type || 'fixed',
@@ -91,8 +108,12 @@ async function applyCode() {
       expiry: v.valid_until || v.expiry || null
     }));
 
-    const cartTotal = Number(cart.value?.subtotal?.value ?? cart.value?.subtotal ?? 0);
-    const result = await checkout.applyVoucher(codeInput.value.trim(), cartTotal, vouchers);
+    const result = await checkout.applyVoucher(
+      codeInput.value.trim(),
+      subtotalValue.value,
+      vouchers
+    );
+
     if (!result.success) {
       lastMessage.value = result.message;
       ui.pushToast({ type: 'error', message: result.message });
