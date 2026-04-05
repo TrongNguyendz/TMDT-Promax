@@ -11,45 +11,6 @@ exports.healthCheck = (_req, res) => {
   });
 }
 
-// Cập nhật avatar người dùng (1 ảnh)
-// exports.updateAvatar = async (req, res) => {
-//   try {
-//     const userId = req.params.id;
-
-//     const user = await UserModel.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Không tìm thấy người dùng'
-//       });
-//     }
-
-//     if (!req.file) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Vui lòng upload file avatar'
-//       });
-//     }
-
-//     const avatarUrl = `/uploads/${req.file.filename}`;
-
-//     const updatedUser = await UserModel.updateUser(userId, { avatar_url: avatarUrl });
-
-//     res.json({
-//       success: true,
-//       message: 'Cập nhật avatar thành công',
-//       data: UserModel.sanitizeUser(updatedUser)
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: 'Không thể cập nhật avatar',
-//       error: error.message
-//     });
-//   }
-// };
-
-// Cập nhật avatar (1 ảnh)
 exports.updateAvatar = async (req, res) => {
   try {
     const userId = Number(req.params.id); // giữ string, helper sẽ Number() bên trong

@@ -256,16 +256,23 @@
         <!-- [END CHANGE] -->
 
         <!-- Try On & Compare Buttons -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap items-center gap-2 mt-6">
           <RouterLink
-          :to="`/try-on/${product.id}`"
-          class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
-        >
-          THỬ ĐỒ VỚI AI
-        </RouterLink>
-        <RouterLink
-        :to="`/compare`"
-        class="block mt-6 rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center">So sánh</RouterLink>
+            :to="`/try-on/${product.id}`"
+            class="rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
+          >
+            THỬ ĐỒ VỚI AI
+          </RouterLink>
+          <button
+            type="button"
+            @click="compareStore.addToCompare(product)"
+            class="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4H8m9 5h-1v-4h-4m-5 4h-1V8h6M19 7h-1V4H8v3H7a2 2 0 00-2 2v11a2 2 0 002 2h9a2 2 0 002-2V9a2 2 0 00-2-2z" />
+            </svg>
+            So sánh sản phẩm
+          </button>
         </div>
       </div>
     </div>
@@ -886,6 +893,7 @@ import { useProductsStore } from "../../stores/products";
 import { useCartStore } from "../../stores/cart";
 import { useWishlistStore } from "../../stores/wishlist";
 import { useUserStore } from "../../stores/user";
+import { useCompareStore } from "../../stores/compare";
 import { useUIStore } from "../../stores/ui";
 import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
@@ -897,6 +905,7 @@ const productStore = useProductsStore();
 const cart = useCartStore();
 const wishlist = useWishlistStore();
 const userStore = useUserStore();
+const compareStore = useCompareStore();
 const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
 const checkoutStore = useCheckoutStore(); 
 
@@ -980,6 +989,9 @@ onMounted(async () => {
     }
 
     selectedImage.value = productImages.value[0];
+    if (product.value) {
+      product.value.image = selectedImage.value;
+    }
     fetchReviews(id);
   }
 });

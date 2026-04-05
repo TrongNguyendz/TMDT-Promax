@@ -82,6 +82,19 @@ router.post('/forgot-password', (req, res, next) => {
   next();
 }, authProxy);
 
+router.post('/verify-otp', (req, res, next) => {
+  console.log('[User Route] Verify OTP request received:', req.path, req.method, req.url);
+  console.log('[User Route] Request body:', req.body);
+  next();
+}, authProxy);
+
+router.post('/resend-otp', (req, res, next) => {
+  console.log('[User Route] Resend OTP request received:', req.path, req.method, req.url);
+  console.log('[User Route] Request body:', req.body);
+  next();
+}, authProxy);
+
+
 // Protected routes - User data endpoints (apply auth middleware only to protected routes)
 router.get('/', authMiddleware, cacheMiddleware(60), userDataProxy);
 // router.get('/me', authMiddleware, cacheMiddleware(60), userDataProxy);
