@@ -34,6 +34,8 @@ const paymentServiceProxy = createProxyMiddleware({
 // --- 1. NHÓM VNPAY (Ưu tiên, KHÔNG Validate Schema cũ) ---
 router.get('/vnpay/ipn', paymentServiceProxy);
 router.post('/vnpay/create',  paymentServiceProxy);
+router.post('/payos/create', paymentServiceProxy);
+router.post('/payos/webhook', paymentServiceProxy);
 
 // --- 2. NHÓM THANH TOÁN THƯỜNG ---
 router.use(authMiddleware);

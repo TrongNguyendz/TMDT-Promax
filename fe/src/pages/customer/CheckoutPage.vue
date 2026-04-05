@@ -4,29 +4,20 @@
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Thanh toán</h1>
     </div>
 
-    <!-- 1. Thanh tiến trình -->
     <CheckoutStep :currentStep="checkout.currentStep" />
 
-    <!-- 2. Nội dung chính -->
-    
-    <!-- Bước 4: Hoàn tất  -->
     <div v-if="checkout.currentStep === 4 && successOrder">
       <Step4Success :order="successOrder" />
     </div>
 
-    <!-- Các bước 1, 2, 3 (Layout 2 cột) -->
     <div v-else class="grid gap-8 md:grid-cols-[1fr_380px]">
       <div class="space-y-6">
-        
-        <!-- Bước 1: Xem lại -->
         <Step1Review 
           v-if="checkout.currentStep === 1" 
           :items="checkoutItems" 
           @next="checkout.nextStep" 
         />
         
-        <!-- Bước 2: Thông tin giao hàng -->
-        <!-- Sửa: Dùng v-model rút gọn -->
         <Step2Shipping 
           v-if="checkout.currentStep === 2" 
           :shippingInfo="checkout.shippingInfo" 
@@ -35,12 +26,12 @@
           @next="handleShippingNext" 
         />
 
-        <!-- Bước 3: Xác nhận & Thanh toán QR -->
         <Step3Payment 
           v-if="checkout.currentStep === 3"
           :paymentMethod="checkout.paymentMethod"
-          :vnpayUrl="vnpayUrl"
-          :total="checkoutSubtotal"
+          :qrData="qrCodeData"
+          :checkoutUrl="checkoutUrl"
+          :total="cart.subtotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -48,12 +39,7 @@
         />
       </div>
 
-      <!-- 3. Sidebar tóm tắt -->
-      <OrdersSummary 
-        :itemCount="checkoutItems.length" 
-        :subtotal="checkoutSubtotal" 
-        :currentStep="checkout.currentStep" 
-      />
+      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
     </div>
   </section>
 </template>
@@ -68,7 +54,9 @@ import { useOrderStore } from '../../stores/order';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
 
+// Import các component con
 import CheckoutStep from '../../components/checkout/CheckoutStep.vue';   
+// Đã sửa đường dẫn chính xác: Không có chữ 's' ở chữ OrderSummary
 import OrdersSummary from '../../components/checkout/OrderSummary.vue'; 
 import Step1Review from '../../components/checkout/Step1Review.vue';
 import Step2Shipping from '../../components/checkout/Step2Shipping.vue';
@@ -81,7 +69,9 @@ const orderStore = useOrderStore();
 const ui = useUIStore();
 const userStore = useUserStore();
 
-const vnpayUrl = ref('');
+// Biến cho PayOS
+const qrCodeData = ref('');
+const checkoutUrl = ref('');
 const isProcessing = ref(false);
 const successOrder = ref(null); 
 let socket = null;
@@ -117,14 +107,15 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (socket) {
     socket.disconnect();
-  };
-  checkout.clearDirectBuy();
+    console.log("Socket disconnected cleanup");
+  }
 });
 
 // --- XỬ LÝ CHUYỂN BƯỚC ---
 
 async function handleShippingNext() {
-  if (checkout.paymentMethod === 'vnpay') {
+  // Nhận diện cả 'vietqr' hoặc 'vnpay' (để dự phòng nếu bạn chưa đổi value ở radio button)
+  if (checkout.paymentMethod === 'vietqr' || checkout.paymentMethod === 'payos' || checkout.paymentMethod === 'vnpay') {
     await createPendingOrderAndGetQR();
   } else {
     checkout.nextStep();
@@ -133,11 +124,11 @@ async function handleShippingNext() {
 
 async function handleRefreshQR() {
     if (successOrder.value) {
-        await generateVnpayUrl(successOrder.value.id, successOrder.value.final_amount);
+        await generatePayOSUrl(successOrder.value.id, successOrder.value.final_amount);
     }
 }
 
-// --- LOGIC TẠO ĐƠN & THANH TOÁN ---
+// --- LOGIC TẠO ĐƠN & THANH TOÁN PAYOS ---
 
 async function createOrderInDB() {
     return await checkout.submitOrder(); 
@@ -149,20 +140,20 @@ async function createPendingOrderAndGetQR() {
         const newOrder = await createOrderInDB();
         
         if (newOrder && newOrder.id) {
-            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
-            successOrder.value = fullOrder; 
-            
-            checkout.nextStep(); 
-            await generateVnpayUrl(newOrder.id, newOrder.final_amount);
+            successOrder.value = newOrder; 
+            checkout.nextStep(); // Chuyển sang Step 3: Hiện QR Code
+
+            // Gọi API PayOS
+            await generatePayOSUrl(newOrder.id, newOrder.final_amount);
         }
     } catch (error) {
-        console.error("Lỗi tạo đơn VNPay:", error);
+        console.error("Lỗi tạo đơn:", error);
     } finally {
         isProcessing.value = false;
     }
 }
 
-async function generateVnpayUrl(orderId, amount) {
+async function generatePayOSUrl(orderId, amount) {
   try {
     if (!orderId) return;
 
@@ -172,34 +163,49 @@ async function generateVnpayUrl(orderId, amount) {
         return;
     }
 
-    const response = await axios.post('http://localhost:3000/api/v1/payments/vnpay/create', {
+    console.log("📤 Tạo QR PayOS cho đơn:", orderId, "Tiền:", cleanAmount);
+
+    // 1. LẤY TOKEN ĐĂNG NHẬP
+    // Tùy vào cách bạn lưu token, có thể lấy từ userStore hoặc localStorage
+    const token = userStore.token || localStorage.getItem('token'); 
+
+    // 2. CẤU HÌNH HEADER ĐỂ MANG THEO TOKEN
+    const config = {
+      headers: {}
+    };
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`; // Gắn thẻ ra vào
+    }
+
+    // 3. GỌI API VỚI CONFIG (Bao gồm Token)
+    const response = await axios.post('http://localhost:3000/api/v1/payments/payos/create', {
       orderId: orderId, 
       amount: cleanAmount, 
       userId: userStore.profile?.id || 'GUEST',
-      paymentMethod: 'vnpay',
-      order_info: `Thanh toan don hang #${orderId}`
-    });
+    }, config); // <--- Chú ý biến config được truyền vào ở đây
 
     if (response.data.success) {
-      vnpayUrl.value = response.data.paymentUrl;
+      console.log("📸 CHECK DỮ LIỆU API TRẢ VỀ:", response.data);
+      qrCodeData.value = response.data.qrCodeData; 
+      checkoutUrl.value = response.data.paymentUrl; 
+      
       if (socket) socket.disconnect();
       setupSocketListener(orderId); 
     }
   } catch (error) {
-    console.error("Lỗi API Payment:", error.response?.data);
-    ui.pushToast({ type: 'error', message: 'Không thể tạo mã thanh toán' });
+    console.error("Lỗi API PayOS:", error.response?.data || error.message);
+    ui.pushToast({ type: 'error', message: 'Không thể tạo mã thanh toán VietQR' });
   }
 }
 
+// Hàm xử lý COD
 async function completeCODOrder() {
     isProcessing.value = true;
     try {
         const newOrder = await createOrderInDB();
-        if (newOrder && newOrder.id) {
-            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
-            successOrder.value = fullOrder;
-
-            ui.pushToast({ type: 'success', message: 'Đặt hàng thành công, kiểm tra hóa đơn được gửi về mail!' });
+        if (newOrder) {
+            successOrder.value = newOrder;
+            ui.pushToast({ type: 'success', message: 'Đặt hàng thành công, kiểm tra email để xem hóa đơn!' });
             finishSteps();
         }
     } finally {
@@ -216,31 +222,29 @@ function setupSocketListener(orderId) {
   });
 
   socket.on('connect', () => {
-    socket.emit('join-order-room', orderId);
+    console.log(`✅ Socket connected for Order #${orderId}`);
+    // Xin vào đúng phòng của đơn hàng này
+    socket.emit('join-order-room', `order_${orderId}`);
   });
 
-  socket.on('payment-success', async (data) => { 
-    try {
-        const fullOrder = await orderStore.fetchOrderById(orderId);
-        successOrder.value = fullOrder;
-    } catch (e) {
-        console.error("Lỗi tải lại đơn:", e);
-    }
+  socket.on('payment-success', (data) => {
+    console.log("🚀 TING TING! THANH TOÁN THÀNH CÔNG!", data);
     
-    ui.pushToast({ type: 'success', message: 'Thanh toán thành công, kiểm tra hóa đơn được gửi về mail!' });
-    finishSteps();
+    // Nếu ID trả về khớp với ID đang thanh toán
+    if (data.orderId === orderId && successOrder.value) {
+        successOrder.value.payment_status = 'paid';
+        successOrder.value.status = 'processing';
+        
+        ui.pushToast({ type: 'success', message: 'Thanh toán thành công! Đang hoàn tất đơn...' });
+        finishSteps();
+    }
   });
 }
 
 function finishSteps() {
-  checkout.currentStep = 4;
+  checkout.currentStep = 4; // Nhảy sang Bước 4 (Thành công)
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  if (!checkout.isDirectBuy) {
-      cart.clearCart(); 
-  }
-  checkout.clearDirectBuy();
-
+  cart.clearCart(); 
   if (socket) socket.disconnect();
 }
 
@@ -254,8 +258,10 @@ async function handleBackStep() {
             isProcessing.value = true;
             await orderStore.cancelOrder(successOrder.value.id, 'Khách đổi phương thức thanh toán');
             successOrder.value = null;
-            vnpayUrl.value = '';
+            qrCodeData.value = '';
+            checkoutUrl.value = '';
             if (socket) socket.disconnect();
+
             checkout.previousStep();
         } catch (e) {
             console.error("Lỗi hủy đơn:", e);
