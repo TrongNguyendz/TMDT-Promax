@@ -1,13 +1,11 @@
 <script setup>
-import { reactive, ref, onMounted, watch, computed } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import { useUserStore } from '../../stores/user';
 import { useCartStore } from '../../stores/cart';
 import { useCheckoutStore } from '../../stores/checkout';
 import { formatCurrency } from '../../utils/helpers';
 import { calculateShippingFee as ghnCalculateShippingFee } from '../../utils/ghnapi';
 import { getProvinces, getDistricts, getWards } from '../../utils/province';
-// Import EventBus nếu cần (hiện chưa dùng)
-// import { EventBus } from '../../pages/customer/CheckoutPage.vue';
 
 const props = defineProps(['shippingInfo', 'paymentMethod']);
 const emit = defineEmits(['next', 'prev', 'update:paymentMethod']);
@@ -35,7 +33,7 @@ const paymentMethods = [
     description: 'Thanh toán trực tiếp cho nhân viên giao hàng'
   },
   {
-    value: 'vnpay',
+    value: 'vnpay', // Lát nữa bạn nhớ đổi thành 'vietqr' hoặc 'payos' ở component cha nếu cần nhé
     label: 'Thanh toán VNPAY (QR Code)',
     description: 'Quét mã QR thanh toán tức thì qua ứng dụng Ngân hàng'
   }
@@ -47,19 +45,16 @@ const errors = reactive({
 
 // --- LOGIC XỬ LÝ API ---
 
-// 1. Load tỉnh khi khởi tạo
 const loadProvinces = async () => {
   try {
     const data = await getProvinces();
-    provinces.value = data; // Service đã trả về res.data
+    provinces.value = data; 
   } catch (error) {
     console.error('Lỗi tải tỉnh:', error);
   }
 };
 
-// 2. Khi chọn Tỉnh
 const handleProvinceChange = async () => {
-  // Reset dữ liệu cấp dưới
   districts.value = [];
   wards.value = [];
   selectedDistrictCode.value = '';
@@ -73,11 +68,8 @@ const handleProvinceChange = async () => {
   }
 
   try {
-    // Tìm tên tỉnh để lưu vào info
     const p = provinces.value.find(item => item.code == selectedProvinceCode.value);
     info.province = p ? p.name : '';
-    
-    // Gọi API lấy huyện
     districts.value = await getDistricts(selectedProvinceCode.value);
     await updateShippingFee();
   } catch (error) {
@@ -85,9 +77,7 @@ const handleProvinceChange = async () => {
   }
 };
 
-// 3. Khi chọn Huyện
 const handleDistrictChange = async () => {
-  // Reset dữ liệu cấp dưới
   wards.value = [];
   selectedWardCode.value = '';
   info.ward = '';
@@ -98,11 +88,8 @@ const handleDistrictChange = async () => {
   }
 
   try {
-    // Tìm tên huyện để lưu vào info
     const d = districts.value.find(item => item.code == selectedDistrictCode.value);
     info.district = d ? d.name : '';
-
-    // Gọi API lấy xã
     wards.value = await getWards(selectedDistrictCode.value);
     await updateShippingFee();
   } catch (error) {
@@ -110,16 +97,14 @@ const handleDistrictChange = async () => {
   }
 };
 
-// 4. Khi chọn Xã
 const handleWardChange = async () => {
   if (!selectedWardCode.value) {
     info.ward = '';
-    updateShippingFee(0);
+    updateShippingFeeValue(0);
     return;
   }
   const w = wards.value.find(item => item.code == selectedWardCode.value);
   info.ward = w ? w.name : '';
-
   await updateShippingFee();
 };
 
@@ -142,10 +127,8 @@ const updateShippingFee = async () => {
     return;
   }
 
-  // Nếu GHN API có chạy, thử gọi
   try {
     const payload = {
-      // Giá trị mẫu tạm, nếu GHN không có data map đúng, sẽ dùng local fallback
       from_district_id: 1451,
       to_district_id: Number(selectedDistrictCode.value) || 0,
       to_ward_code: selectedWardCode.value || '',
@@ -204,17 +187,31 @@ const handleSubmit = async () => {
   Object.keys(errors).forEach(key => (errors[key] = ''));
   let isValid = true;
 
-  if (!info.fullName?.trim()) { errors.fullName = 'Vui lòng nhập họ và tên'; isValid = false; }
-  if (!info.email?.trim() || !validateEmail(info.email)) { errors.email = 'Email không hợp lệ'; isValid = false; }
-  if (!info.phone || !validatePhone(info.phone)) { errors.phone = 'Số điện thoại không hợp lệ'; isValid = false; }
-  if (!info.province) { errors.province = 'Vui lòng chọn tỉnh/thành'; isValid = false; }
-  if (!info.district) { errors.district = 'Vui lòng chọn quận/huyện'; isValid = false; }
-  if (!info.ward) { errors.ward = 'Vui lòng chọn phường/xã'; isValid = false; }
-  if (!info.address?.trim()) { errors.address = 'Vui lòng nhập địa chỉ cụ thể'; isValid = false; }
+  // Hàm dọn dẹp dữ liệu rác (undefined, null, khoảng trắng)
+  const cleanValue = (val) => {
+    const v = val ? String(val).trim() : '';
+    return (v === '' || v === 'undefined' || v === 'null') ? '' : v;
+  };
+
+  if (!cleanValue(info.fullName)) { errors.fullName = 'Vui lòng nhập họ và tên'; isValid = false; }
+  if (!cleanValue(info.email) || !validateEmail(info.email)) { errors.email = 'Email không hợp lệ'; isValid = false; }
+  if (!cleanValue(info.phone) || !validatePhone(info.phone)) { errors.phone = 'Số điện thoại không hợp lệ'; isValid = false; }
+  
+  // Kiểm tra trực tiếp vào mã Code của Dropdown
+if (!cleanValue(selectedProvinceCode.value)) { errors.province = 'Vui lòng chọn tỉnh/thành'; isValid = false; }
+if (!cleanValue(selectedDistrictCode.value)) { errors.district = 'Vui lòng chọn quận/huyện'; isValid = false; }
+if (!cleanValue(selectedWardCode.value)) { errors.ward = 'Vui lòng chọn phường/xã'; isValid = false; }
+  
+  if (!cleanValue(info.address)) { errors.address = 'Vui lòng nhập địa chỉ cụ thể'; isValid = false; }
   if (!props.paymentMethod) { errors.paymentMethod = 'Vui lòng chọn phương thức thanh toán'; isValid = false; }
 
-  if (isValid) emit('next');
-  else window.scrollTo({ top: 100, behavior: 'smooth' });
+  if (isValid) {
+    emit('next');
+  } else {
+    // In ra console để theo dõi chính xác trường nào đang vướng
+    console.log("Form bị chặn do lỗi:", errors);
+    window.scrollTo({ top: 100, behavior: 'smooth' });
+  }
 };
 
 onMounted(() => {
@@ -225,22 +222,23 @@ onMounted(() => {
 <template>
   <div class="space-y-4">
     <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Thông tin giao hàng</h2>
-    <form @submit.prevent="handleSubmit" class="space-y-4">
+    
+    <div class="space-y-4">
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Họ và tên *</label>
-          <input v-model="info.fullName" type="text" class="input-field" placeholder="Nhập họ và tên" />
+          <input v-model.trim="info.fullName" type="text" class="input-field" placeholder="Nhập họ và tên" />
           <p v-if="errors.fullName" class="error-msg">{{ errors.fullName }}</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-          <input v-model="info.email" type="email" class="input-field" placeholder="Nhập email" />
+          <input v-model.trim="info.email" type="email" class="input-field" placeholder="Nhập email" />
           <p v-if="errors.email" class="error-msg">{{ errors.email }}</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Số điện thoại *</label>
-          <input v-model="info.phone" type="tel" class="input-field" placeholder="Nhập số điện thoại" />
+          <input v-model.trim="info.phone" type="tel" class="input-field" placeholder="Nhập số điện thoại" />
           <p v-if="errors.phone" class="error-msg">{{ errors.phone }}</p>
         </div>
       </div>
@@ -277,7 +275,7 @@ onMounted(() => {
 
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Địa chỉ chi tiết *</label>
-          <input v-model="info.address" type="text" class="input-field" placeholder="Số nhà, đường..." />
+          <input v-model.trim="info.address" type="text" class="input-field" placeholder="Số nhà, đường..." />
           <p v-if="errors.address" class="error-msg">{{ errors.address }}</p>
         </div>
       </div>
@@ -306,9 +304,9 @@ onMounted(() => {
 
       <div class="flex gap-3 pt-6">
         <button type="button" @click="$emit('prev')" class="btn-secondary">Quay lại</button>
-        <button type="submit" class="btn-primary">Tiếp tục thanh toán</button>
+        <button type="button" @click="handleSubmit" class="btn-primary">Tiếp tục thanh toán</button>
       </div>
-    </form>
+    </div>
   </div>
 </template>
 
@@ -316,7 +314,7 @@ onMounted(() => {
 .input-field {
   @apply mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 outline-none transition-all;
 }
-.error-msg { @apply mt-1 text-xs text-red-500; }
+.error-msg { @apply mt-1 text-xs text-red-500 font-medium; }
 .btn-primary { @apply flex-1 rounded-lg bg-gray-900 px-4 py-3 text-white font-medium hover:bg-black transition-colors; }
 .btn-secondary { @apply flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors dark:text-gray-300 dark:border-gray-700; }
 </style>
