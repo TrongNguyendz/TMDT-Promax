@@ -76,7 +76,7 @@
                   @mouseleave="stopPreview"
                 >
                   <button class="text-teal-600 hover:text-teal-800 font-medium">
-                    Xem sản phẩm
+                    Ảnh sản phẩm
                   </button>
 
                   <!-- Tooltip ảnh -->
