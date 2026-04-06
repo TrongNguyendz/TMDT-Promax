@@ -13,7 +13,7 @@
     "@vuepic/vue-datepicker": "^12.1.0",
     "axios": "^1.7.7",
     "chart.js": "^4.5.1",
-    "fuse.js": "^7.1.0",
+    "fuse.js": "^7.2.0",
     "html2pdf.js": "^0.14.0",
     "iobuffer": "^6.0.1",
     "jwt-decode": "^4.0.0",
