@@ -27,7 +27,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-console.log("DEBUG: SUPPORT_SERVICE_URL là:", process.env.SUPPORT_SERVICE_URL);
 // api-gateway/server.js
 // Tìm đoạn proxy, sửa thành:
 

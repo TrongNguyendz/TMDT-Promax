@@ -480,8 +480,6 @@
 import { ref, reactive, onMounted, computed } from "vue";
 import { useProductsStore } from "../../stores/products";
 import { useUIStore } from "../../stores/ui";
-import InputField from "../../components/forms/InputField.vue";
-import SelectDropdown from "../../components/forms/SelectDropdown.vue";
 import { formatCurrency } from "../../utils/helpers";
 import api from "../../utils/product_service_api";
 
