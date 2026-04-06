@@ -17,6 +17,8 @@ const couponRoutes = require('./routes/coupon');
 const staffRoutes = require('./routes/staff');
 const shiftRoutes = require('./routes/shift');
 const supportRoutes = require('./routes/support'); // ✅ Đã thêm Support Routes
+const userCategoryRoutes = require('./routes/userCategoryInteractionRoutes'); // ✅ Đã thêm User Category Interaction Routes
+
 
 dotenv.config();
 
@@ -60,7 +62,7 @@ app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/shifts', shiftRoutes);
-
+app.use('/api/v1/user-category', userCategoryRoutes); // ✅ Route User-Category Interaction đã được mở để Gateway hiểu
 // ✅ Route Support đã được mở để Gateway hiểu
 app.use('/api/v1/support', supportRoutes); 
 
