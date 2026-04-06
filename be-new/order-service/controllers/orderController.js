@@ -170,11 +170,11 @@ exports.createOrder = async (req, res) => {
                 invoiceNumber,
                 date: today.toLocaleDateString('vi-VN'), // 30/12/2025
                 company: {
-                    name: "UNQILO Fashion",
+                    name: "GOGHEVENT Fashion",
                     slogan: "Thời trang hiện đại - Phong cách riêng",
                     address: "127 tổ 9 Nhân Trạch Phú Lương Hà Đông",
                     phone: "0912 260 352",
-                    website: "https://unqilo.vn",
+                    website: "https://goghievent.vn",
                     taxCode: "0101234567"
                 },
                 customer: {
@@ -191,7 +191,7 @@ exports.createOrder = async (req, res) => {
                 total: finalTotal,
                 notes: req.body.notes 
                     ? `Ghi chú: ${req.body.notes}. ` 
-                    : '' + `Phương thức thanh toán: ${payment_method.toUpperCase()}. Cảm ơn quý khách đã mua sắm tại UNQILO Fashion!`
+                    : '' + `Phương thức thanh toán: ${payment_method.toUpperCase()}. Cảm ơn quý khách đã mua sắm tại GOGHEVENT Fashion!`
             };
 
             // Payload gửi sang Notification Service

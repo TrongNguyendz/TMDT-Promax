@@ -36,7 +36,7 @@
             </div>
 
             <!-- Form Login - Input mỏng hơn -->
-            <form v-if="isLogin" @submit.prevent="handleLogin" class="space-y-5">
+            <form v-if="currentStep === 'login'" @submit.prevent="handleLogin" class="space-y-5">
               <input 
                 v-model="loginForm.username" 
                 type="text" 
@@ -69,7 +69,7 @@
             </form>
 
             <!-- Form Register -->
-            <form v-else @submit.prevent="handleRegister" class="space-y-4">
+            <form v-else-if="currentStep === 'register'" @submit.prevent="handleRegister" class="space-y-4">
               <div class="grid grid-cols-2 gap-3">
                 <input v-model="registerForm.fullName" type="text" placeholder="Họ tên" class="w-full px-5 py-3 bg-white/20 border border-white/40 rounded-2xl text-white placeholder-white/70 focus:ring-4 focus:ring-white/60 outline-none transition text-sm backdrop-blur-md shadow-inner" required />
                 <input v-model="registerForm.username" type="text" placeholder="Username" class="w-full px-5 py-3 bg-white/20 border border-white/40 rounded-2xl text-white placeholder-white/70 focus:ring-4 focus:ring-white/60 outline-none transition text-sm backdrop-blur-md shadow-inner" required />
@@ -85,10 +85,70 @@
                 TẠO TÀI KHOẢN
               </button>
             </form>
+ 
+            <form 
+  v-else-if="currentStep === 'verify'" 
+  @submit.prevent="handleVerifyOTP" 
+  class="space-y-6"
+>
+  <div class="text-center space-y-4">
+    <p class="text-white/80 text-sm">
+      Chúng tôi đã gửi mã OTP 6 số đến email:
+    </p>
+    <p class="text-white font-medium">
+      {{ registerForm.email }}
+    </p>
+  </div>
 
-            <div class="text-center mt-6 text-white/70 text-xs">
+  <!-- OTP Input - Đã fix hiển thị thứ tự từ trái sang phải -->
+  <div class="relative">
+    <input 
+      v-model="otpInput" 
+      type="text" 
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="000000"
+      autocomplete="one-time-code"
+      class="w-full text-center text-4xl font-mono tracking-[18px] 
+             bg-white/10 border border-white/30 rounded-2xl 
+             py-6 text-white placeholder-white/40 
+             focus:outline-none focus:border-white/60 focus:ring-2 focus:ring-white/40
+             transition-all duration-200"
+      required 
+    />
+    
+    <!-- Hiệu ứng overlay nhẹ để tăng tính thẩm mỹ -->
+    <div class="absolute inset-0 pointer-events-none rounded-2xl border border-white/10"></div>
+  </div>
+
+  <!-- Button -->
+  <button 
+    type="submit"
+    :disabled="isVerifying"
+    class="w-full py-4 bg-white text-black font-semibold rounded-2xl 
+           hover:bg-gray-100 active:scale-[0.985] transition-all duration-200
+           disabled:opacity-70 disabled:cursor-not-allowed shadow-xl shadow-black/10"
+  >
+    {{ isVerifying ? 'Đang xác thực...' : 'XÁC THỰC TÀI KHOẢN' }}
+  </button>
+
+  <!-- Resend OTP -->
+  <div class="text-center">
+    <button 
+      type="button"
+      @click="resendOTP"
+      :disabled="isResending"
+      class="text-white/70 hover:text-white text-sm transition-colors underline decoration-dotted"
+    >
+      {{ isResending ? 'Đang gửi lại...' : 'Gửi lại mã OTP' }}
+    </button>
+  </div>
+</form>
+
+            <!-- Chuyển đổi giữa Login / Register -->
+            <div v-if="currentStep !== 'verify'" class="text-center mt-6 text-white/70 text-xs">
               {{ isLogin ? 'Chưa có tài khoản?' : 'Đã có tài khoản?' }}
-              <button @click="toggleMode" class="font-bold text-white hover:underline ml-1 transition">
+              <button @click="toggleMode" class="font-bold text-white hover:underline ml-1">
                 {{ isLogin ? 'Đăng ký ngay' : 'Đăng nhập' }}
               </button>
             </div>
@@ -148,7 +208,7 @@ import { ref, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
-import { Login, Register, ForgotPassword } from '../../utils/user_service_api';
+import { Login, Register, ForgotPassword, VerifyOTP, ResendOTP } from '../../utils/user_service_api';
 import bgImage from '../../assets/auth.jpg';
 import axios from 'axios';
 
@@ -157,6 +217,8 @@ const router = useRouter();
 const user = useUserStore();
 const ui = useUIStore();
 
+
+const currentStep = ref('login');        // 'login' | 'register' | 'verify'
 const isLogin = ref(true);
 const loginForm = reactive({ username: '', password: '' });
 const registerForm = reactive({
@@ -174,9 +236,18 @@ const registerForm = reactive({
 const showForgot = ref(false);
 const forgotEmail = ref('');
 const isLoading = ref(false); // <-- Thêm biến loading
-function toggleMode() {
-	isLogin.value = !isLogin.value;
-}
+
+
+const otpInput = ref('');
+const isVerifying = ref(false);
+const isResending = ref(false);
+
+// Toggle giữa Login và Register
+const toggleMode = () => {
+  isLogin.value = !isLogin.value;
+  if (isLogin.value) currentStep.value = 'login';
+  else currentStep.value = 'register';
+};
 
 const handleLogin = async () => {
   // 1. Trim các trường nhập liệu
@@ -336,47 +407,49 @@ const handleRegister = async () => {
       password: registerForm.password,      // đã trim
       full_name: registerForm.fullName,
       phone: registerForm.phone,
-      role: '',
+      
     });
 
     const result = res.data;
-
+    console.log('Register response:', result);
     if (result.success && result.data) {
-      ui.pushToast({ type: 'success', message: 'Đăng ký thành công!' });
+      ui.pushToast({ type: 'success', message: 'Đăng ký thành công! Vui lòng kiểm tra email để nhập mã OTP.' });
+      currentStep.value = 'verify';
 
-      user.login({
-        token: result.data.token,
-        profile: {
-          id: result.data.user.id,
-          username: result.data.user.username,
-          email: result.data.user.email,
-          name: result.data.user.full_name,
-          phone: result.data.user.phone,
-          avatar: result.data.user.avatar_url,
-          role: result.data.user.role,
-        },
-        role: result.data.user.role,
-      });
+      // user.login({
+      //   token: result.data.token,
+      //   profile: {
+      //     id: result.data.user.id,
+      //     username: result.data.user.username,
+      //     email: result.data.user.email,
+      //     name: result.data.user.full_name,
+      //     phone: result.data.user.phone,
+      //     avatar: result.data.user.avatar_url,
+      //     role: result.data.user.role,
+      //   },
+      //   role: result.data.user.role,
+      // });
 
       // Reset form
-      registerForm.fullName = '';
-      registerForm.username = '';
-      registerForm.email    = '';
-      registerForm.phone    = '';
-      registerForm.password = '';
-      registerForm.confirm  = '';
-
-      router.replace('/');
-    } else {
-      // Trường hợp server trả success = false nhưng không throw error
-      ui.pushToast({
-        type: 'error',
-        message: result.message || 'Đăng ký thất bại, vui lòng thử lại',
-      });
+      // registerForm.fullName = '';
+      // registerForm.username = '';
+      // registerForm.email    = '';
+      // registerForm.phone    = '';
+      // registerForm.password = '';
+      // registerForm.confirm  = '';
+    
+      // router.replace('/');
     }
+    // } else {
+    //   // Trường hợp server trả success = false nhưng không throw error
+    //   ui.pushToast({
+    //     type: 'error',
+    //     message: result.message || 'Đăng ký thất bại, vui lòng thử lại',
+    //   });
+    // }
   } catch (err) {
     console.error('Lỗi đăng ký:', err);
-
+    
     const errorMessage =
       err.response?.data?.message ||
       err.message ||
@@ -385,6 +458,55 @@ const handleRegister = async () => {
     ui.pushToast({ type: 'error', message: errorMessage });
   }
 };
+
+// ====================== XÁC THỰC OTP ======================
+const handleVerifyOTP = async () => {
+  if (otpInput.value.length !== 6) {
+    ui.pushToast({ type: 'error', message: 'Mã OTP phải đủ 6 số' });
+    return;
+  }
+
+  isVerifying.value = true;
+
+  try {
+    const res = await VerifyOTP({
+      email: registerForm.email,
+      otp: otpInput.value
+    });
+
+    if (res.data.success) {
+      ui.pushToast({ type: 'success', message: 'Tài khoản đã được kích hoạt thành công!' });
+
+      // Tự động chuyển về form login
+      currentStep.value = 'login';
+      otpInput.value = '';
+      
+      // Optional: thông báo người dùng có thể đăng nhập
+    }
+  } catch (err) {
+    ui.pushToast({
+      type: 'error',
+      message: err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn'
+    });
+  } finally {
+    isVerifying.value = false;
+  }
+};
+
+// ====================== GỬI LẠI OTP ======================
+const resendOTP = async () => {
+  isResending.value = true;
+
+  try {
+    await ResendOTP({ email: registerForm.email });
+    ui.pushToast({ type: 'success', message: 'Đã gửi lại mã OTP' });
+  } catch (err) {
+    ui.pushToast({ type: 'error', message: 'Gửi lại OTP thất bại, vui lòng thử sau' });
+  } finally {
+    isResending.value = false;
+  }
+};
+
 
 const handleForgotPassword = async () => {
 	const email = String(forgotEmail.value || '').trim();

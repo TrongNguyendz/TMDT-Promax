@@ -1,11 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const rateLimitMiddleware = require('./middlewares/rate-limit');
 const responseTimeMiddleware = require('./middlewares/response-time');
 const logger = require('./middlewares/logger');
 const { morganMiddleware } = require('./middlewares/logger');
+
+// Import các routes
 const userRoutes = require('./routes/user');
 const productRoutes = require('./routes/product');
 const orderRoutes = require('./routes/order');
@@ -15,26 +16,24 @@ const adminRoutes = require('./routes/admin');
 const couponRoutes = require('./routes/coupon');
 const staffRoutes = require('./routes/staff');
 const shiftRoutes = require('./routes/shift');
+const supportRoutes = require('./routes/support'); // ✅ Đã thêm Support Routes
+const userCategoryRoutes = require('./routes/userCategoryInteractionRoutes'); // ✅ Đã thêm User Category Interaction Routes
+
 
 dotenv.config();
 
 const app = express();
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// api-gateway/server.js
-// Tìm đoạn proxy, sửa thành:
-
 app.use(responseTimeMiddleware);
 app.use(morganMiddleware);
 app.use(rateLimitMiddleware);
 
-// Health check endpoint
+// Health check endpoint (Đã giữ nguyên logic cũ của bạn)
 app.get('/health', async (req, res) => {
   const healthStatus = {
     status: 'UP',
@@ -61,12 +60,12 @@ app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/shifts', shiftRoutes);
-
+app.use('/api/v1/user-category', userCategoryRoutes); // ✅ Route User-Category Interaction đã được mở để Gateway hiểu
+// ✅ Route Support đã được mở để Gateway hiểu
+app.use('/api/v1/support', supportRoutes); 
 
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', orderRoutes);
-
-
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -93,7 +92,7 @@ app.use((req, res) => {
   });
 });
 
-// Helper function to check service health
+// Helper function to check service health (Đã giữ nguyên của bạn)
 async function checkServiceHealth(url) {
   try {
     const https = require('https');
@@ -125,4 +124,3 @@ app.listen(PORT, () => {
   console.log(`   POST http://localhost:${PORT}/api/v1/users/login`);
   console.log(`   GET  http://localhost:${PORT}/api/v1/products`);
 });
-

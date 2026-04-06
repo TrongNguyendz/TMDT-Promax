@@ -77,7 +77,7 @@ export const UpdateUserAvatar = async (userId, file, token) => {
     formData.append("avatar", file);
 
     return await axios.put(
-        `http://localhost:3000/api/v1/users/${userId}/avatar`,
+        `http://localhost:3001/api/v1/users/${userId}/avatar`,
         formData,
         {
             headers: {
@@ -94,3 +94,11 @@ export const getavartar = async (url) => {
         `http://localhost:3001${url}`
     );
 }   
+
+export const VerifyOTP = async (data) => {
+    return await axios.post('http://localhost:3000/api/v1/users/verify-otp', data);
+}
+
+export const ResendOTP = async (data) => {
+    return await axios.post('http://localhost:3000/api/v1/users/resend-otp', data);
+}

@@ -7,6 +7,7 @@ require('./config/connectdata');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const userCategoryRoutes = require('./routes/userCategoryInteractionRoutes');
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'upload')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('/api/user-category', userCategoryRoutes);
 module.exports = app;
 
 
