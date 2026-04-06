@@ -569,7 +569,8 @@ const selectedOrder = ref(null);
 const statusOptions = [
   { value: "all", label: "Tất cả đơn hàng" },
   { value: "pending", label: "Chờ xác nhận" },
-  { value: "processing", label: "Đang xử lý" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "packed", label: "Đã đóng gói" },
   { value: "shipping", label: "Đang giao" },
   { value: "delivered", label: "Đã giao" },
   { value: "cancelled", label: "Đã hủy" },
@@ -613,26 +614,23 @@ onMounted(() => {
 // Helpers
 const statusBadgeClass = (status) => {
   const map = {
-    pending:
-      "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800",
-    processing:
-      "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800",
-    shipping:
-      "bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-800",
-    delivered:
-      "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800",
-    cancelled:
-      "bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/20 dark:border-rose-800",
+    pending: "bg-yellow-100 border-yellow-200 text-yellow-700",
+    confirmed: "bg-blue-100 border-blue-200 text-blue-700",
+    packed: "bg-purple-100 border-purple-200 text-purple-700",
+    shipping: "bg-orange-100 border-orange-200 text-orange-700",
+    delivered: "bg-green-100 border-green-200 text-green-700",
+    cancelled: "bg-red-100 border-red-200 text-red-700",
   };
-  return map[status] || "bg-gray-100 border-gray-200 text-gray-600";
+  return map[status] || "bg-yellow-100 border-yellow-200 text-yellow-700";
 };
 
 const getStatusLabel = (status) => {
   const map = {
-    pending: "Chờ xử lý",
-    processing: "Đang gói",
+    pending: "Chờ xác nhận",
+    confirmed: "Đã xác nhận",
+    packed: "Đã đóng gói",
     shipping: "Đang giao",
-    delivered: "Hoàn tất",
+    delivered: "Đã giao",
     cancelled: "Đã hủy",
   };
   return map[status] || status;

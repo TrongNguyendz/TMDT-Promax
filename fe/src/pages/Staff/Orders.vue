@@ -20,9 +20,12 @@
           <!-- status -->
           <select v-model="statusFilter" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
             <option value="">Tất cả trạng thái</option>
-            <option value="Đã thanh toán">Đã thanh toán</option>
             <option value="Chờ xác nhận">Chờ xác nhận</option>
+            <option value="Đã xác nhận">Đã xác nhận</option>
             <option value="Đã đóng gói">Đã đóng gói</option>
+            <option value="Đang giao">Đang giao</option>
+            <option value="Đã giao">Đã giao</option>
+            <option value="Đã hủy">Đã hủy</option>
           </select>
 
           <!-- quantity -->
@@ -159,10 +162,12 @@ const imagesMap = ref({})
 
 const mapStatus = (status) => {
   switch (status) {
+    case 'pending': return 'Chờ xác nhận'
+    case 'confirmed': return 'Đã xác nhận'
+    case 'packed': return 'Đã đóng gói'
+    case 'shipping': return 'Đang giao'
     case 'delivered': return 'Đã giao'
-    case 'processing': return 'Chờ đóng gói'
-    case 'pending': return 'Chờ đóng gói'
-    case 'cancelled': return 'Hủy'
+    case 'cancelled': return 'Đã hủy'
     default: return status
   }
 }
@@ -171,20 +176,19 @@ const loadOrders = async () => {
   try {
     const res = await orderApi.getOrders()
     const data = res.data.data || []
-
     imagesMap.value = {}
 
     orders.value = data.map(o => {
     const images = (o.items || [])
-    .map(i => i.image)
-    .filter(Boolean)
+      .map(i => i.product_image)
+      .filter(Boolean)
 
     imagesMap.value[o.order_number] = images
 
     return {
       id: o.order_number,
-      customer: o.shipping_fullname,
-      product: o.items?.map(i => i.product_name).join(', ') || '---',
+      customer: o.shipping_fullname || '---',
+      product: o.items?.map(i => i.product_name).join(', '),
       quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,
       total: o.total_amount || 0,
       status: mapStatus(o.status)
@@ -267,10 +271,16 @@ const stopPreview = () => {
 }
 
 function getStatusClass(status) {
-  if (status === 'Đã giao') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
-  if (status === 'Chờ đóng gói') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-  if (status === 'Hủy') return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+  switch (status) {
+    case 'Chờ xác nhận': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+    case 'Đã xác nhận': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    case 'Đã đóng gói': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+    case 'Đang giao': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+    case 'Đã giao': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+    case 'Đã hủy': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    default:
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+  }
 }
 
 onMounted(() => {

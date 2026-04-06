@@ -6,7 +6,7 @@
     <!-- Search + Confirm area -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-800">
       <div class="max-w-xl mx-auto">
-        <label class="block text-lg font-semibold mb-3">Nhập mã đơn để đóng gói hoặc xác nhận giao</label>
+        <label class="block text-lg font-semibold mb-3">Nhập mã đơn để xác nhận giao</label>
         <div class="flex gap-3">
           <input 
             v-model="orderCode" 
@@ -63,7 +63,9 @@
             <p class="font-semibold">{{ pack.customer }} - {{ pack.order }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ pack.time }}</p>
           </div>
-          <span class="px-4 py-1 bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 rounded-full text-sm font-medium">Thành công</span>
+          <span class="px-4 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 rounded-full text-sm font-medium">
+            {{ pack.status }}
+          </span>
         </div>
       </div>
       <div class="flex justify-center items-center gap-2 mt-6">
@@ -180,14 +182,19 @@ const packOrder = async () => {
   }
 
   // ❌ Sai format ORD-
-  if (!/^ORD-\w+$/i.test(code)) {
-    message.value = { type: 'error', text: 'Mã đơn phải có dạng ORD-xxxxx!' }
+  if (!/^ORD-.+/i.test(code)) {
+    message.value = { type: 'error', text: 'Mã đơn sai định dạng!' }
     return
   }
 
   try {
     const res = await orderApi.getOrders({ keyword: code })
-    const order = res.data.data?.[0]
+
+    const orders = res.data.data || []
+
+    const order = orders.find(
+      o => (o.order_number || '').toUpperCase() === code
+    )
 
     if (!order) {
       message.value = { type: 'error', text: 'Không tìm thấy đơn hàng!' }
@@ -201,19 +208,30 @@ const packOrder = async () => {
       return
     }
 
-    await orderApi.updateOrderStatus(orderId, 'processing')
+    if (order.status !== 'packed') {
+      message.value = {
+        type: 'error',
+        text:
+          order.status === 'shipping'
+            ? `Đơn hàng ${code} đã được giao cho bên vận chuyển rồi!`
+            : 'Đơn hàng chưa được đóng gói!'
+      }
+      return
+    }
+
+    await orderApi.updateOrderStatus(orderId, 'shipping')
 
     recentPacks.value.unshift({
       id: Date.now(),
       customer: order.shipping_fullname || 'Unknown',
       order: code,
-      time: new Date().toLocaleTimeString('vi-VN'),
+      status: 'Đang giao',
+      time: new Date().toLocaleString('vi-VN'),
       timestamp: Date.now()
     })
-
     message.value = {
       type: 'success',
-      text: `Đơn hàng ${code} đã được đóng gói!`
+      text: `Đơn hàng ${code} đang được giao đến địa chỉ nhận!`
     }
 
     orderCode.value = ''
@@ -238,32 +256,34 @@ const initCurrentMonth = () => {
 
 const loadRecentOrders = async () => {
   try {
-    const res = await orderApi.getOrders({ limit: 10, sort: 'desc' })
+    const res = await orderApi.getOrders({
+      limit: 20,
+      sort: 'desc',
+      status: 'shipping'
+    })
 
     const data = res.data.data || []
 
-    // 🔥 Sắp xếp mới nhất trước (nếu có created_at)
-    data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-    // 🔥 Lấy 10 đơn gần nhất
-    const latestOrders = data.slice(0, 10)
-
-    // 🔥 Map sang UI
-    recentPacks.value = latestOrders.map(o => ({
-      id: o._id || o.id,
-      customer: o.shipping_fullname || 'Unknown',
-      order: o.order_number,
-      time: new Date(o.created_at).toLocaleTimeString('vi-VN'),
-      timestamp: o.created_at ? new Date(o.created_at).getTime() : Date.now()
-    }))
+    recentPacks.value = data
+      .filter(o => o.status === 'shipping')
+      .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
+      .slice(0, 10)
+      .map(o => ({
+        id: o._id || o.id,
+        customer: o.shipping_fullname || 'Unknown',
+        order: o.order_number,
+        status: 'Đang giao',
+        time: new Date(o.updated_at || o.created_at).toLocaleString('vi-VN'),
+        timestamp: new Date(o.updated_at || o.created_at).getTime()
+      }))
 
   } catch (err) {
-    console.error('❌ Load recent orders lỗi:', err)
+    console.error('❌ Load shipping orders lỗi:', err)
   }
 }
 
 onMounted(() => {
   initCurrentMonth()
-  loadRecentOrders();
+  loadRecentOrders()
 })
 </script>
