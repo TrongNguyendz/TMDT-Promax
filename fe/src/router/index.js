@@ -43,7 +43,7 @@ const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 const AdminProfile = () => import('../pages/admin/Profile.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
-const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
 const StaffOrders = () => import('../pages/Staff/Orders.vue');
 // const StaffEvents = () => import('../pages/Staff/Events.vue');
 const StaffSupport = () => import('../pages/Staff/Support.vue');
