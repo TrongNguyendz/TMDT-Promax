@@ -1,47 +1,64 @@
 <template>
-  <!-- THAY ĐỔI 1: Thêm max-w-3xl (rộng hơn) và mx-auto (căn giữa), tăng khoảng cách space-y-8 -->
-  <div class="max-w-3xl mx-auto w-full space-y-8 px-4 md:px-0">
+  <div class="max-w-xl mx-auto w-full space-y-6 px-4 md:px-0 py-8">
     
-    <!-- Header Thành công -->
-    <!-- THAY ĐỔI 2: Tăng py-8 lên py-12 để khung cao hơn -->
-    <div class="text-center py-12 rounded-xl border-2 border-green-500 bg-green-50 dark:bg-green-950/20 dark:border-green-600">
-      <div class="flex justify-center mb-6">
-        <!-- Tăng kích thước vòng tròn icon -->
-        <div class="rounded-full bg-green-100 p-4 dark:bg-green-900/30">
-          <!-- Tăng kích thước icon lên h-16 w-16 -->
-          <svg class="h-16 w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+    <div class="text-center space-y-4">
+      <div class="flex justify-center">
+        <div class="rounded-full bg-green-100 p-5 shadow-lg shadow-green-100/50 dark:bg-green-900/30 dark:shadow-green-900/20">
+          <svg class="h-14 w-14 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
-      <h2 class="text-4xl font-bold text-green-700 dark:text-green-400 mb-3">Đặt hàng thành công!</h2>
-      <p class="text-gray-700 dark:text-gray-300 text-lg">
-        Mã đơn hàng: <span class="font-mono font-bold text-xl">{{ order?.order_number || 'N/A' }}</span>
-      </p>
-    </div>
-
-    <!-- Tóm tắt đơn hàng -->
-    <!-- THAY ĐỔI 3: Tăng padding p-6 lên p-10 -->
-    <div class="rounded-xl border p-10 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-      <!-- Dòng tổng tiền -->
-      <div class="flex flex-col sm:flex-row justify-between items-center">
-        <span class="text-gray-600 dark:text-gray-400 font-medium text-xl">Tổng giá trị đơn hàng</span>
-        <span class="text-3xl font-bold text-blue-600 mt-2 sm:mt-0">
-          {{ formatCurrency(order?.final_amount || 0) }}
-        </span>
+      
+      <div>
+        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">Đặt hàng thành công!</h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm md:text-base">
+          Cảm ơn bạn đã mua sắm. Chúng tôi đã gửi email xác nhận đến bạn.
+        </p>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex flex-col sm:flex-row gap-4">
-      <!-- Tăng padding nút bấm py-4 -->
-      <RouterLink :to="`/orders/${order.id}`" class="flex-1 text-center bg-blue-600 text-white py-4 text-lg rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-gray-900 shadow-sm">
+      
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Mã đơn hàng</p>
+          <p class="font-mono font-semibold text-gray-900 dark:text-white">
+            #{{ order?.order_number || 'N/A' }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Phương thức</p>
+          <p class="font-medium text-gray-900 dark:text-white truncate">
+            {{ order?.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 'Đã thanh toán (Chuyển khoản)' }}
+          </p>
+        </div>
+      </div>
+
+      <hr class="border-dashed border-gray-200 dark:border-gray-700 mb-6">
+
+      <div class="flex items-end justify-between">
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Tổng thanh toán</p>
+        </div>
+        <div class="text-right">
+          <span class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            {{ formatCurrency(order?.final_amount || 0) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <RouterLink :to="`/orders/${order.id}`" class="flex-1 text-center bg-blue-600 text-white py-3.5 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
         Xem chi tiết đơn hàng
       </RouterLink>
-      <RouterLink to="/" class="flex-1 text-center bg-gray-900 text-white py-4 text-lg rounded-xl font-semibold hover:bg-gray-800 dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200 transition-colors shadow-lg">
+      
+      <RouterLink to="/" class="flex-1 text-center bg-white border-2 border-gray-200 text-gray-700 py-3.5 px-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 transition-all">
         Tiếp tục mua sắm
       </RouterLink>
     </div>
+    
   </div>
 </template>
 

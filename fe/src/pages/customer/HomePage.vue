@@ -240,6 +240,7 @@ async function loadBanners() {
 }
 
 const productsList = computed(() => {
+<<<<<<< HEAD
   const items = productsStore.products || [];
   return items.map((p) => {
     let imageUrl = "https://via.placeholder.com/400x400?text=No+Image";
@@ -263,6 +264,24 @@ const productsList = computed(() => {
       category_id: p.category_id,
     };
   });
+=======
+    const items = productsStore.products || [];
+    console.log('Raw products from store:', items);
+    return items.map((p) => {
+    
+        let imageUrl = 'https://via.placeholder.com/400x400?text=No+Image';
+        if (p.images && p.images.length > 0) {
+            const primary = p.images.find(img => img.is_primary);
+            imageUrl = primary ? primary.image_url : p.images[0].image_url;
+        }
+
+        return {
+            id: p.id, name: p.name, price: p.price, brand: p.category_name || 'Fashion', rating: p.rating || 0, reviews: p.review_count || 0,
+            image: imageUrl, discount: p.discount_percent, attributes: p.attributes || [], images: p.images || [], stock_quantity: p.stock_quantity
+
+        };
+    });
+>>>>>>> 6ee99f448e166f5d9782e9f2403998de5d89952e
 });
 
 const totalPages = computed(() => {

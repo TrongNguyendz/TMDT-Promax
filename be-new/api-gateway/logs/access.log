@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ::1 - - [23/Mar/2026:09:28:58 +0000] "POST /api/v1/staff HTTP/1.1" 500 140 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [23/Mar/2026:09:28:59 +0000] "POST /api/v1/staff HTTP/1.1" 500 140 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [23/Mar/2026:09:29:31 +0000] "GET /api/v1/staff HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
@@ -1162,3 +1163,5 @@
 ::1 - - [07/Apr/2026:05:55:39 +0000] "GET /api/v1/products/69d3cfd239ec2d80c1f6edb9/reviews HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [07/Apr/2026:05:55:40 +0000] "GET /api/v1/products/69d3cfd239ec2d80c1f6edb9 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [07/Apr/2026:05:55:40 +0000] "GET /api/v1/products/69d3cfd239ec2d80c1f6edb9/reviews HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+=======
+>>>>>>> 6ee99f448e166f5d9782e9f2403998de5d89952e
