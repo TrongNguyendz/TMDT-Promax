@@ -63,9 +63,13 @@
                 </button>
               </div>
 
-              <button type="submit" class="w-full py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-100 transition shadow-lg text-sm tracking-wide">
-                ĐĂNG NHẬP
-              </button>
+              <button 
+              type="submit"
+              :disabled="isSubmitting"
+              class="w-full py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-100 transition shadow-lg text-sm tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {{ isSubmitting ? 'ĐANG ĐĂNG NHẬP...' : 'ĐĂNG NHẬP' }}
+            </button>
             </form>
 
             <!-- Form Register -->
@@ -81,9 +85,13 @@
                 <input v-model="registerForm.confirm" type="password" placeholder="Nhập lại mật khẩu" class="w-full px-5 py-3 bg-white/20 border border-white/40 rounded-2xl text-white placeholder-white/70 focus:ring-4 focus:ring-white/60 outline-none transition text-sm backdrop-blur-md shadow-inner" required />
               </div>
 
-              <button type="submit" class="w-full py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-100 transition shadow-lg text-sm tracking-wide">
-                TẠO TÀI KHOẢN
-              </button>
+              <button 
+              type="submit"
+              :disabled="isSubmitting"
+              class="w-full py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-100 transition shadow-lg text-sm tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {{ isSubmitting ? 'ĐANG TẠO TÀI KHOẢN...' : 'TẠO TÀI KHOẢN' }}
+            </button>
             </form>
  
             <form 
@@ -123,15 +131,15 @@
   </div>
 
   <!-- Button -->
-  <button 
-    type="submit"
-    :disabled="isVerifying"
-    class="w-full py-4 bg-white text-black font-semibold rounded-2xl 
-           hover:bg-gray-100 active:scale-[0.985] transition-all duration-200
-           disabled:opacity-70 disabled:cursor-not-allowed shadow-xl shadow-black/10"
-  >
-    {{ isVerifying ? 'Đang xác thực...' : 'XÁC THỰC TÀI KHOẢN' }}
-  </button>
+ <button 
+  type="submit"
+  :disabled="isSubmitting"
+  class="w-full py-4 bg-white text-black font-semibold rounded-2xl 
+         hover:bg-gray-100 active:scale-[0.985] transition-all duration-200
+         disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
+>
+  {{ isSubmitting ? 'ĐANG XÁC THỰC...' : 'XÁC THỰC TÀI KHOẢN' }}
+</button>
 
   <!-- Resend OTP -->
   <div class="text-center">
@@ -205,101 +213,93 @@
 
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
-import { Login, Register, ForgotPassword, VerifyOTP, ResendOTP } from '../../utils/user_service_api';
+import { Login, Register, VerifyOTP, ResendOTP, ForgotPassword } from '../../utils/user_service_api';
 import bgImage from '../../assets/auth.jpg';
-import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
 const user = useUserStore();
 const ui = useUIStore();
 
-
+// ==================== STATE ====================
 const currentStep = ref('login');        // 'login' | 'register' | 'verify'
 const isLogin = ref(true);
-const loginForm = reactive({ username: '', password: '' });
-const registerForm = reactive({
-	fullName: '',
-	username: '',
-	email: '',
-	phone: '',
-	password: '',
-	confirm: '',
-	avatar_url: 'heheheh',
-	role: 'customer',
-	status: 'active'
-});
 
-const showForgot = ref(false);
-const forgotEmail = ref('');
-const isLoading = ref(false); // <-- Thêm biến loading
-
-
-const otpInput = ref('');
-const isVerifying = ref(false);
+const isSubmitting = ref(false);         // ← Loading chính cho nút submit
 const isResending = ref(false);
 
-// Toggle giữa Login và Register
+const loginForm = reactive({ username: '', password: '' });
+const registerForm = reactive({
+  fullName: '',
+  username: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirm: '',
+});
+
+const otpInput = ref('');
+const showForgot = ref(false);
+const forgotEmail = ref('');
+const isLoadingForgot = ref(false);
+
+// Biến hỗ trợ UX khi chuyển từ login sang verify vì chưa kích hoạt
+const cameFromUnactivatedLogin = ref(false);
+
+// ==================== METHODS ====================
+
 const toggleMode = () => {
   isLogin.value = !isLogin.value;
-  if (isLogin.value) currentStep.value = 'login';
-  else currentStep.value = 'register';
+  currentStep.value = isLogin.value ? 'login' : 'register';
+  resetForms();
 };
 
+const resetForms = () => {
+  loginForm.username = '';
+  loginForm.password = '';
+  otpInput.value = '';
+};
+
+// ==================== LOGIN ====================
 const handleLogin = async () => {
-  // 1. Trim các trường nhập liệu
-  loginForm.username = loginForm.username.trim();
-  loginForm.password = loginForm.password.trim();   // ← Bổ sung trim password
-  if (loginForm.username && /[^\x00-\x7F]/.test(loginForm.username)) {
-    ui.pushToast({ type: 'error', message: 'Vui lòng nhập tên đăng nhập không dấu' });
-    return;
-  }
-  // 2. Kiểm tra bắt buộc (early return)
-  if (!loginForm.username || !loginForm.password) {
+  if (isSubmitting.value) return;
+
+  // Validate
+  const username = loginForm.username.trim();
+  const password = loginForm.password.trim();
+
+  if (!username || !password) {
     ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
     return;
   }
-
-  // Bổ sung: Không cho phép khoảng trắng trong mật khẩu
-  if (loginForm.password.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Mật khẩu không được chứa khoảng trắng (space)',
-    });
+  if (password.includes(' ')) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu không được chứa khoảng trắng' });
+    return;
+  }
+  if (username.includes(' ')) {
+    ui.pushToast({ type: 'error', message: 'Tên đăng nhập không được chứa khoảng trắng' });
     return;
   }
 
-  // Bổ sung: Username không nên chứa khoảng trắng (phổ biến khi login bằng username)
-  if (loginForm.username.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Tên đăng nhập không được chứa khoảng trắng',
-    });
-    return;
-  }
+  isSubmitting.value = true;
 
   try {
-    const res = await Login({
-      username: loginForm.username,
-      email: loginForm.username,     // giữ nguyên logic cũ (hỗ trợ login bằng username hoặc email)
-      password: loginForm.password,  // đã trim
-    });
-
+    const res = await Login({ email: username, password });
     const result = res.data;
 
-    // Kiểm tra success rõ ràng hơn
     if (result.success && result.data?.token && result.data?.user) {
+      // Đăng nhập thành công
       user.login({
         token: result.data.token,
         profile: {
           id: result.data.user.id,
           username: result.data.user.username,
           email: result.data.user.email,
-          fullname: result.data.user.full_name,   // chú ý key là fullname (không phải fullName)
+          fullname: result.data.user.full_name,
           phone: result.data.user.phone,
           avatar_url: result.data.user.avatar_url,
           role: result.data.user.role,
@@ -307,191 +307,178 @@ const handleLogin = async () => {
         role: result.data.user.role,
       });
 
-      ui.pushToast({
-        type: 'success',
-        message: result.message || 'Đăng nhập thành công!',
-      });
+      ui.pushToast({ type: 'success', message: 'Đăng nhập thành công!' });
 
-      // Reset form
-      loginForm.username = '';
-      loginForm.password = '';
-
-      // Xử lý redirect
       const redirect = route.query.redirect || '/';
+      router.replace(result.data.user.role === 'admin' ? '/admin/welcome' : redirect);
+    } 
+    else if (result.message?.toLowerCase().includes('kích hoạt') || 
+             result.message?.toLowerCase().includes('chưa được kích hoạt')) {
+      
+      // Chuyển sang màn hình xác thực OTP
+      registerForm.email = username;
+      cameFromUnactivatedLogin.value = true;
+      currentStep.value = 'verify';
 
-      if (result.data.user.role === 'admin') {
-        router.replace('/admin/welcome');
-      } else {
-        router.replace(redirect);
-      }
-    } else {
-      // Server trả success = false
       ui.pushToast({
-        type: 'error',
-        message: result.message || 'Đăng nhập thất bại',
+        type: 'warning',
+        message: 'Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP đã gửi đến email.'
       });
+    } 
+    else {
+      ui.pushToast({ type: 'error', message: result.message || 'Đăng nhập thất bại' });
     }
   } catch (err) {
     console.error('Login error:', err);
 
-    let errorMsg = 'Lỗi kết nối đến server, vui lòng thử lại sau';
+    const msg = err.response?.data?.message || 'Đăng nhập thất bại, vui lòng thử lại';
 
-    if (err.response?.data?.message) {
-      errorMsg = err.response.data.message;
-    } else if (err.response?.status === 401) {
-      errorMsg = 'Tên đăng nhập hoặc mật khẩu không đúng';
-    } else if (err.response?.status === 400) {
-      errorMsg = 'Dữ liệu gửi lên không hợp lệ';
-    } else if (err.response?.status === 429) {
-      errorMsg = 'Quá nhiều lần thử, vui lòng thử lại sau vài phút';
+    if (msg.toLowerCase().includes('kích hoạt')) {
+      registerForm.email = username;
+      cameFromUnactivatedLogin.value = true;
+      currentStep.value = 'verify';
+      ui.pushToast({ type: 'warning', message: 'Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP.' });
+    } else {
+      ui.pushToast({ type: 'error', message: msg });
     }
-
-    ui.pushToast({ type: 'error', message: errorMsg });
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
+// ==================== REGISTER ====================
+// ==================== REGISTER ====================
 const handleRegister = async () => {
-  // 1. Trim tất cả các trường (bao gồm password và confirm)
-  registerForm.username  = registerForm.username.trim();
-  registerForm.email     = registerForm.email.trim();
-  registerForm.phone     = registerForm.phone.trim();
-  registerForm.fullName  = registerForm.fullName.trim();
-  registerForm.password  = registerForm.password.trim();
-  registerForm.confirm   = registerForm.confirm.trim();
+  if (isSubmitting.value) return;
 
-  // 2. Kiểm tra các điều kiện (early return để code dễ đọc)
-  if (!registerForm.fullName ||
-      !registerForm.username ||
-      !registerForm.email ||
-      !registerForm.phone ||
-      !registerForm.password ||
-      !registerForm.confirm) {
-    ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
+  // Trim tất cả
+  registerForm.fullName = registerForm.fullName.trim();
+  registerForm.username = registerForm.username.trim();
+  registerForm.email = registerForm.email.trim();
+  registerForm.phone = registerForm.phone.trim();
+  registerForm.password = registerForm.password.trim();
+  registerForm.confirm = registerForm.confirm.trim();
+
+  // ==================== VALIDATION ====================
+
+  // 1. Họ tên
+  if (!registerForm.fullName || registerForm.fullName.length < 2) {
+    ui.pushToast({ type: 'error', message: 'Họ tên phải có ít nhất 2 ký tự' });
+    return;
+  }
+  if (registerForm.fullName.length > 100) {
+    ui.pushToast({ type: 'error', message: 'Họ tên không được vượt quá 100 ký tự' });
     return;
   }
 
+  // 2. Username
+  if (!registerForm.username || registerForm.username.length < 4) {
+    ui.pushToast({ type: 'error', message: 'Username phải có ít nhất 4 ký tự' });
+    return;
+  }
+  if (registerForm.username.length > 30) {
+    ui.pushToast({ type: 'error', message: 'Username không được vượt quá 30 ký tự' });
+    return;
+  }
+  const usernameRegex = /^[a-zA-Z0-9._]+$/;
+  if (!usernameRegex.test(registerForm.username)) {
+    ui.pushToast({ type: 'error', message: 'Username chỉ được chứa chữ cái, số, dấu chấm và dấu gạch dưới' });
+    return;
+  }
+  if (/^[._]/.test(registerForm.username) || /[._]$/.test(registerForm.username)) {
+    ui.pushToast({ type: 'error', message: 'Username không được bắt đầu hoặc kết thúc bằng dấu chấm hoặc gạch dưới' });
+    return;
+  }
+
+  // 3. Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!registerForm.email || !emailRegex.test(registerForm.email)) {
+    ui.pushToast({ type: 'error', message: 'Email không đúng định dạng' });
+    return;
+  }
+  if (registerForm.email.length > 100) {
+    ui.pushToast({ type: 'error', message: 'Email quá dài' });
+    return;
+  }
+
+  // 4. Số điện thoại (Việt Nam)
+  const phoneRegex = /^(0|\+84)[3|5|7|8|9]\d{8}$/;
+  if (!registerForm.phone || !phoneRegex.test(registerForm.phone.replace(/\s/g, ''))) {
+    ui.pushToast({ type: 'error', message: 'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)' });
+    return;
+  }
+
+  // 5. Mật khẩu
+  if (!registerForm.password || registerForm.password.length < 8) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu phải có ít nhất 8 ký tự' });
+    return;
+  }
+  if (registerForm.password.length > 100) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu quá dài' });
+    return;
+  }
+  if (registerForm.password.includes(' ')) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu không được chứa khoảng trắng' });
+    return;
+  }
+
+  // Kiểm tra độ mạnh mật khẩu (tùy chọn nhưng khuyến khích)
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+  if (!passwordRegex.test(registerForm.password)) {
+    ui.pushToast({ 
+      type: 'error', 
+      message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số' 
+    });
+    return;
+  }
+
+  // 6. Xác nhận mật khẩu
   if (registerForm.password !== registerForm.confirm) {
     ui.pushToast({ type: 'error', message: 'Mật khẩu xác nhận không khớp' });
     return;
   }
 
-  if (registerForm.password.length < 6) {
-    ui.pushToast({ type: 'error', message: 'Mật khẩu phải từ 6 ký tự trở lên' });
-    return;
-  }
-
-  // Bổ sung: Không cho phép khoảng trắng (space) trong mật khẩu
-  if (registerForm.password.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Mật khẩu không được chứa khoảng trắng (space)',
-    });
-    return;
-  }
-  if (registerForm.username.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Tên đăng nhập không được chứa khoảng trắng',
-    });
-    return;
-  }
-  if (registerForm.email.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Email không được chứa khoảng trắng',
-    });
-    return;
-  }
-  if (registerForm.phone.includes(' ') && registerForm.phone.length != 10) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Số điện thoại không đuợc chứa khoảng trắng và phải đủ 10 số',
-    });
-    return;
-  }
-
-  // Optional: Nếu muốn cấm mọi loại whitespace (tab, xuống dòng, v.v.)
-  // if (/\s/.test(registerForm.password)) {
-  //   ui.pushToast({ type: 'error', message: 'Mật khẩu không được chứa khoảng trắng hoặc ký tự trắng' });
-  //   return;
-  // }
-
-  // Optional: Kiểm tra username không chứa space (rất phổ biến)
-  if (registerForm.username.includes(' ')) {
-    ui.pushToast({
-      type: 'error',
-      message: 'Tên đăng nhập không được chứa khoảng trắng',
-    });
-    return;
-  }
+  // ==================== GỌI API ====================
+  isSubmitting.value = true;
 
   try {
     const res = await Register({
       username: registerForm.username,
       email: registerForm.email,
-      password: registerForm.password,      // đã trim
+      password: registerForm.password,
       full_name: registerForm.fullName,
       phone: registerForm.phone,
-      
     });
 
     const result = res.data;
-    console.log('Register response:', result);
-    if (result.success && result.data) {
-      ui.pushToast({ type: 'success', message: 'Đăng ký thành công! Vui lòng kiểm tra email để nhập mã OTP.' });
+
+    if (result.success) {
+      ui.pushToast({ 
+        type: 'success', 
+        message: 'Đăng ký thành công! Vui lòng kiểm tra email để nhập mã OTP.' 
+      });
+
+      cameFromUnactivatedLogin.value = false;
       currentStep.value = 'verify';
-
-      // user.login({
-      //   token: result.data.token,
-      //   profile: {
-      //     id: result.data.user.id,
-      //     username: result.data.user.username,
-      //     email: result.data.user.email,
-      //     name: result.data.user.full_name,
-      //     phone: result.data.user.phone,
-      //     avatar: result.data.user.avatar_url,
-      //     role: result.data.user.role,
-      //   },
-      //   role: result.data.user.role,
-      // });
-
-      // Reset form
-      // registerForm.fullName = '';
-      // registerForm.username = '';
-      // registerForm.email    = '';
-      // registerForm.phone    = '';
-      // registerForm.password = '';
-      // registerForm.confirm  = '';
-    
-      // router.replace('/');
+    } else {
+      ui.pushToast({ type: 'error', message: result.message || 'Đăng ký thất bại' });
     }
-    // } else {
-    //   // Trường hợp server trả success = false nhưng không throw error
-    //   ui.pushToast({
-    //     type: 'error',
-    //     message: result.message || 'Đăng ký thất bại, vui lòng thử lại',
-    //   });
-    // }
   } catch (err) {
-    console.error('Lỗi đăng ký:', err);
-    
-    const errorMessage =
-      err.response?.data?.message ||
-      err.message ||
-      'Đăng ký thất bại, vui lòng thử lại';
-
-    ui.pushToast({ type: 'error', message: errorMessage });
+    const errorMsg = err.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại';
+    ui.pushToast({ type: 'error', message: errorMsg });
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
-// ====================== XÁC THỰC OTP ======================
+// ==================== VERIFY OTP ====================
 const handleVerifyOTP = async () => {
   if (otpInput.value.length !== 6) {
     ui.pushToast({ type: 'error', message: 'Mã OTP phải đủ 6 số' });
     return;
   }
 
-  isVerifying.value = true;
+  isSubmitting.value = true;
 
   try {
     const res = await VerifyOTP({
@@ -500,13 +487,13 @@ const handleVerifyOTP = async () => {
     });
 
     if (res.data.success) {
-      ui.pushToast({ type: 'success', message: 'Tài khoản đã được kích hoạt thành công!' });
+      ui.pushToast({ type: 'success', message: 'Xác thực tài khoản thành công! Bạn có thể đăng nhập ngay.' });
 
-      // Tự động chuyển về form login
+      // Quay về màn hình login
       currentStep.value = 'login';
+      isLogin.value = true;
       otpInput.value = '';
-      
-      // Optional: thông báo người dùng có thể đăng nhập
+      cameFromUnactivatedLogin.value = false;
     }
   } catch (err) {
     ui.pushToast({
@@ -514,46 +501,48 @@ const handleVerifyOTP = async () => {
       message: err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn'
     });
   } finally {
-    isVerifying.value = false;
+    isSubmitting.value = false;
   }
 };
 
-// ====================== GỬI LẠI OTP ======================
+// ==================== RESEND OTP ====================
 const resendOTP = async () => {
-  isResending.value = true;
+  if (isResending.value) return;
 
+  isResending.value = true;
   try {
     await ResendOTP({ email: registerForm.email });
     ui.pushToast({ type: 'success', message: 'Đã gửi lại mã OTP' });
   } catch (err) {
-    ui.pushToast({ type: 'error', message: 'Gửi lại OTP thất bại, vui lòng thử sau' });
+    ui.pushToast({ type: 'error', message: 'Gửi lại OTP thất bại' });
   } finally {
     isResending.value = false;
   }
 };
 
-
+// ==================== FORGOT PASSWORD ====================
 const handleForgotPassword = async () => {
-	const email = String(forgotEmail.value || '').trim();
-	if (!email) {
-		ui.pushToast({ type: 'error', message: 'Vui lòng nhập email' });
-		return;
-	}
-    isLoading.value = true; // Bắt đầu loading
-	try {
-		// Attempt to call backend forgot-password endpoint; if backend not available this will fail silently
-		const res =  await ForgotPassword({ email });
-		if (res.data && res.data.success) {
-			ui.pushToast({ type: 'success', message: res.data.message || 'Yêu cầu đặt lại mật khẩu đã được gửi (kiểm tra email)' });
-		} else {
-			throw new Error(res.data.message || 'Không thể gửi yêu cầu, vui lòng thử lại sau');
-		}
-		showForgot.value = false;
-		forgotEmail.value = '';
-	} catch (err) {
-		console.error('Forgot password error:', err);
-		const msg = err.response?.data?.message || 'Không thể gửi yêu cầu, vui lòng thử lại sau';
-		ui.pushToast({ type: 'error', message: msg });
-	}
+  const email = forgotEmail.value.trim();
+  if (!email) {
+    ui.pushToast({ type: 'error', message: 'Vui lòng nhập email' });
+    return;
+  }
+
+  isLoadingForgot.value = true;
+  try {
+    const res = await ForgotPassword({ email });
+    if (res.data?.success) {
+      ui.pushToast({ type: 'success', message: 'Link đặt lại mật khẩu đã được gửi đến email của bạn' });
+      showForgot.value = false;
+      forgotEmail.value = '';
+    }
+  } catch (err) {
+    ui.pushToast({
+      type: 'error',
+      message: err.response?.data?.message || 'Không thể gửi yêu cầu, vui lòng thử lại'
+    });
+  } finally {
+    isLoadingForgot.value = false;
+  }
 };
 </script>
