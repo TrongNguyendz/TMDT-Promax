@@ -93,8 +93,9 @@
 >
   <div class="text-center space-y-4">
     <p class="text-white/80 text-sm">
-      Chúng tôi đã gửi mã OTP 6 số đến email:
+      Chúng tôi đã gửi mã OTP 6 số đến email của Bro:
     </p>
+    
     <p class="text-white font-medium">
       {{ registerForm.email }}
     </p>
@@ -253,7 +254,10 @@ const handleLogin = async () => {
   // 1. Trim các trường nhập liệu
   loginForm.username = loginForm.username.trim();
   loginForm.password = loginForm.password.trim();   // ← Bổ sung trim password
-
+  if (loginForm.username && /[^\x00-\x7F]/.test(loginForm.username)) {
+    ui.pushToast({ type: 'error', message: 'Vui lòng nhập tên đăng nhập không dấu' });
+    return;
+  }
   // 2. Kiểm tra bắt buộc (early return)
   if (!loginForm.username || !loginForm.password) {
     ui.pushToast({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin' });
@@ -381,6 +385,27 @@ const handleRegister = async () => {
     ui.pushToast({
       type: 'error',
       message: 'Mật khẩu không được chứa khoảng trắng (space)',
+    });
+    return;
+  }
+  if (registerForm.username.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Tên đăng nhập không được chứa khoảng trắng',
+    });
+    return;
+  }
+  if (registerForm.email.includes(' ')) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Email không được chứa khoảng trắng',
+    });
+    return;
+  }
+  if (registerForm.phone.includes(' ') && registerForm.phone.length != 10) {
+    ui.pushToast({
+      type: 'error',
+      message: 'Số điện thoại không đuợc chứa khoảng trắng và phải đủ 10 số',
     });
     return;
   }
