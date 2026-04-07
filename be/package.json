@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "E-commerce Microservices Architecture",
   "scripts": {
-    "start:all": "concurrently \"npm run start:gateway\"  \"npm run start:order\" \"npm run start:payment\" \"npm run start:notification\" \"npm run start:admin\"",
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:user\" \"npm run start:product\" \"npm run start:order\" \"npm run start:payment\" \"npm run start:notification\" \"npm run start:admin\"",
     "start:gateway": "cd api-gateway && node server.js",
     "start:user": "cd user-service && node server.js",
     "start:product": "cd product-service && node server.js",

@@ -38,7 +38,7 @@
 
       <div class="mt-4 flex items-center justify-between gap-3">
         <RouterLink
-          to="/so-sanh"
+          to="/compare"
           class="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg hover:bg-blue-500 transition"
         >
           So sánh ngay

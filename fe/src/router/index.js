@@ -57,7 +57,7 @@ const StaffComment = () => import('../pages/Staff/comment.vue');
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
-	// { path: '/compare', component: CompareProductPage },
+	{ path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage, meta: { requiresAuth: true } },
 	{ path: '/checkout', component: CheckoutPage, meta: { requiresAuth: true } },

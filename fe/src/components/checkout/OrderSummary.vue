@@ -9,7 +9,7 @@
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Tổng tiền hàng:</span>
-        <span class="font-medium">{{ formatCurrency(subtotal) }}</span>
+        <span class="font-medium">{{ formatCurrency(props.subtotal) }}</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Vận chuyển:</span>
