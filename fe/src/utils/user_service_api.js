@@ -91,14 +91,14 @@ export const UpdateUserAvatar = async (userId, file, token) => {
 export const getavartar = async (url) => {
     // if (!token) throw new Error('Token is required');   
     return await axios.get(
-        `http://localhost:3001${url}`
+        `https://tmdt-promax-api-gateway.onrender.com${url}`
     );
 }   
 
 export const VerifyOTP = async (data) => {
-    return await axios.post('http://localhost:3000/api/v1/users/verify-otp', data);
+    return await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/users/verify-otp', data);
 }
 
 export const ResendOTP = async (data) => {
-    return await axios.post('http://localhost:3000/api/v1/users/resend-otp', data);
+    return await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/users/resend-otp', data);
 }

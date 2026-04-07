@@ -53,12 +53,12 @@ productApi.interceptors.response.use(
 
 export const getlistproduct = async () => {
     // if (!token) throw new Error('Token is required');
-    return await axios.get('http://localhost:3000/api/v1/products');
+    return await axios.get('https://tmdt-promax-api-gateway.onrender.com/api/v1/products');
 }
 
 export const getmainimagebySKU = async (sku) => {
     // if (!token) throw new Error('Token is required');
-    return await axios.get(`http://localhost:3000/api/v1/products/sku/${sku}/primary-image`);
+    return await axios.get(`https://tmdt-promax-api-gateway.onrender.com/api/v1/products/sku/${sku}/primary-image`);
 }
 
 export default productApi;
