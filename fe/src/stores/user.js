@@ -1,3 +1,4 @@
+// src/stores/user.js
 import { defineStore } from 'pinia';
 import { useWishlistStore } from './wishlist';
 import { useCartStore } from './cart';

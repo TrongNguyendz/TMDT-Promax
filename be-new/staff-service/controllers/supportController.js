@@ -97,88 +97,118 @@ exports.listTickets = async (req, res) => {
 //         res.status(500).json({ success: false, message: error.message });
 //     }
 // };
+
 // ====================== GET ONE TICKET + MESSAGES (phiên bản đơn giản, không populate) ======================
 exports.getTicket = async (req, res) => {
     try {
-        const ticketId = req.params.id;
+        const ticket = await SupportTicket.findById(req.params.id);
+        if (!ticket) return res.status(404).json({ success: false, message: 'Ticket không tồn tại' });
 
-        // Chỉ lấy ticket cơ bản, không populate gì cả
-        const ticket = await SupportTicket.findById(ticketId).lean();
+        // Phải query riêng mảng messages
+        const messages = await SupportMessage.find({ ticket_id: ticket._id }).sort({ created_at: 1 });
 
-        if (!ticket) {
-            return res.status(404).json({
-                success: false,
-                message: 'Ticket không tồn tại'
-            });
-        }
-
-        // Lấy tất cả message của ticket, sắp xếp theo thời gian tăng dần
-        const messages = await SupportMessage.find({ ticket_id: ticketId })
-            .sort({ created_at: 1 })
-            .lean();
-
-        // Trả về response tối giản
-        res.json({
-            success: true,
-            data: {
-                ticket: ticket,
-                messages: messages
-            }
-        });
+        res.json({ success: true, data: { ticket, messages } });
     } catch (error) {
-        console.error('Lỗi khi lấy ticket + messages:', error);
-
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Lỗi server khi lấy thông tin ticket'
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 // ====================== CREATE TICKET ======================
 exports.createTicket = async (req, res) => {
     try {
-        const ticket = new SupportTicket(req.body);
-        await ticket.save();
-        res.status(201).json({ success: true, data: ticket });
+        const { user_id, subject, customer_name } = req.body; 
+
+        if (!user_id) {
+            return res.status(400).json({ success: false, message: "Thiếu user_id" });
+        }
+
+        const ticket = new SupportTicket({
+            user_id: Number(user_id),
+            customer_name: customer_name || `Khách hàng #${user_id}`, // Lưu tên thật vào DB
+            subject: subject || "Hỗ trợ khách hàng",
+            status: 'open',
+            last_message_at: new Date()
+        });
+
+        const savedTicket = await ticket.save();
+        
+        // Bắn Socket báo cho Admin biết có Ticket mới tinh vừa được tạo
+        if (req.app.get('io')) {
+             req.app.get('io').emit('global_ticket_update', { type: 'new_ticket' });
+        }
+
+        res.status(201).json({ success: true, data: savedTicket });
     } catch (error) {
+        console.error("Lỗi tạo ticket:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
 // ====================== SEND MESSAGE ======================
 exports.sendMessage = async (req, res) => {
     try {
-        const { sender_type, sender_id, content, message_type = 'text' } = req.body;
-        const ticket_id = req.params.id;
-        const ticket = await SupportTicket.findById(ticket_id);
-        if (!ticket) return res.status(404).json({ success: false, message: 'Ticket không tồn tại' });
-        const message = new SupportMessage({
-            ticket_id,
+        const { id } = req.params; // ticket_id
+        const { content, sender_type, sender_id, message_type, file_url } = req.body;
+
+        const ticket = await SupportTicket.findById(id);
+        if (!ticket) return res.status(404).json({ success: false, message: 'Không tìm thấy Ticket' });
+
+        // TẠO DOCUMENT MỚI (Thay vì ticket.messages.push)
+        const newMessage = new SupportMessage({
+            ticket_id: id,
             sender_type,
             sender_id,
-            content,
-            message_type
+            content: content || '',
+            message_type: message_type || 'text',
+            file_url: file_url || null
         });
 
-        await message.save();
+        const savedMessage = await newMessage.save(); // Khi save, Mongoose Middleware ở trên sẽ tự chạy
 
-        res.status(201).json({ success: true, data: message });
+        // Phần Socket giữ nguyên...
+        const io = req.app.get('io');
+        if (io) {
+            io.to(id).emit('receive_message', { ...savedMessage.toObject(), ticket_id: id });
+            io.emit('global_ticket_update', { ...savedMessage.toObject(), ticket_id: id });
+        }
+
+        res.json({ success: true, data: savedMessage });
+    } catch (error) {
+        console.error("LỖI TẠI SENDMESSAGE:", error); // hiện lỗi trên ter
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+// ====================== MARK AS READ ======================
+exports.markAsRead = async (req, res) => {
+    try {
+        const ticketId = req.params.id;
+        
+        await SupportMessage.updateMany(
+            { ticket_id: ticketId, sender_type: 'customer', is_read: false },
+            { is_read: true }
+        );
+
+        await SupportTicket.findByIdAndUpdate(ticketId, { unread_count_staff: 0 });
+
+        // 🔥 Real-time: Thông báo cho bên kia biết tin nhắn đã được đọc (nếu cần UI update)
+        const io = req.app.get('io');
+        if (io) {
+            io.to(ticketId).emit('messages_marked_read', { ticketId });
+        }
+
+        res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// ====================== MARK AS READ ======================
-exports.markAsRead = async (req, res) => {
+exports.getTicketsByUserId = async (req, res) => {
     try {
-        await SupportMessage.updateMany(
-            { ticket_id: req.params.id, sender_type: 'customer', is_read: false },
-            { is_read: true }
-        );
-
-        await SupportTicket.findByIdAndUpdate(req.params.id, { unread_count_staff: 0 });
-
-        res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
+        const userId = Number(req.params.userId); 
+        // Tìm ticket mới nhất của user này
+        const tickets = await SupportTicket.find({ user_id: userId })
+            .sort({ createdAt: -1 })
+            .lean();
+        
+        res.json({ success: true, data: tickets });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

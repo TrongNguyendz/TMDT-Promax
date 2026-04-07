@@ -1,14 +1,14 @@
+// middlewares/auth.js
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
-  // Bỏ qua authentication cho các route public
   const publicRoutes = [
     '/health',
     '/api/v1/users/register',
     '/api/v1/users/login',
     '/api/v1/products',
     '/api/v1/products/:id'
-  ];
+    ];
 
   // Check exact path or regex pattern
   const isPublicRoute = publicRoutes.some(route => {
@@ -28,7 +28,7 @@ const authMiddleware = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
-      message: 'Unauthorized: lỗi xác thực'
+      message: 'Unauthorized: Thiếu hoặc sai định dạng Token'
     });
   }
 

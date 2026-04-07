@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 // Rate limiting: 100 requests per minute
 const rateLimitMiddleware = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 50, // Limit each IP to 50 requests per windowMs
+  max: 100000, // Limit each IP to 50 requests per windowMs
   message: {
     success: false,
     message: 'bro làm ơn đừng spam request nữa = ))))'
@@ -21,4 +21,5 @@ const rateLimitMiddleware = rateLimit({
 });
 
 module.exports = rateLimitMiddleware;
+
 

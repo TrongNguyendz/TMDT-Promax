@@ -109,6 +109,8 @@ exports.getProductById = async (id) => {
   const doc = product.toObject();
   doc.id = doc._id;
   doc.category_name = doc.category_id?.name;
+  
+  doc.category_id = doc.category_id?._id ? doc.category_id._id.toString() : doc.category_id;
   delete doc._id;
   return doc;
 };
@@ -226,7 +228,10 @@ exports.deleteProduct = async (id) => {
   // Xóa ảnh trên cloud
   const publicIds = product.images.map(img => img.public_id).filter(Boolean);
   if (publicIds.length) await deleteCloudinaryImages(publicIds);
-
+  // Xóa review liên quan
+  const Review = mongoose.model('Review');
+  await Review.deleteMany({ product_id: id });
+  // Xóa sản phẩm
   await Product.findByIdAndDelete(id);
   return true;
 };
@@ -234,4 +239,25 @@ exports.deleteProduct = async (id) => {
 exports.updateStock = async (id, qty) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   return await Product.findByIdAndUpdate(id, { stock_quantity: qty }, { new: true });
+};
+exports.getPrimaryImageBySku = async (sku) => {
+  // Tìm sản phẩm dựa trên SKU
+  const product = await Product.findOne({ sku });
+
+  if (!product || !product.images || product.images.length === 0) {
+    return null;
+  }
+
+  // Vì trong logic update/create bạn đã gán sort_order và is_primary,
+  // chúng ta có thể tìm ảnh có is_primary: true hoặc đơn giản là lấy ảnh đầu tiên
+  const primaryImage = product.images.find(img => img.is_primary) || product.images[0];
+
+  return {
+    image_url: primaryImage.image_url,
+    public_id: primaryImage.public_id,
+    color: primaryImage.color,
+    alt_text: primaryImage.alt_text, // Lưu ý: Schema của bạn chưa có field này, hãy thêm nếu cần
+    is_primary: primaryImage.is_primary,
+    sort_order: primaryImage.sort_order
+  };
 };

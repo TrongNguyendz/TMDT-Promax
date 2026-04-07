@@ -1,18 +1,22 @@
+// routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
 const reviewController = require('../controllers/reviewController'); 
 const upload = require('../functions/upload'); 
-const { verifyToken, requireAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, requireAdmin, requireStaffOrAdmin } = require('../middleware/authMiddleware');
 
+
+// Thêm dòng mới: lấy ảnh đại diện theo SKU
+router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);
 // --- 1. PUBLIC ---
+router.get('/reviews', verifyToken, requireStaffOrAdmin, reviewController.listAllReviews);
 router.get('/health', productController.healthCheck);
 router.get('/', productController.listProducts);
 router.get('/:id', productController.getProductById);
 router.get('/:id/download', productController.downloadProductImage);
-// Thêm dòng mới: lấy ảnh đại diện theo SKU
-router.get('/sku/:sku/primary-image', productController.getPrimaryImageBySku);
+
 // --- 2. AUTHENTICATED (Cần đăng nhập) ---
 router.put('/:id/stock',  productController.updateStock);
 
@@ -21,7 +25,7 @@ if (reviewController) {
     router.get('/:productId/reviews', reviewController.listReviews);
     router.post('/:productId/reviews', verifyToken, reviewController.createReview);
     router.delete('/reviews/:reviewId', verifyToken, reviewController.deleteReview);
-    router.put('/reviews/:reviewId/reply', verifyToken, requireAdmin, reviewController.replyReview);
+    router.put('/reviews/:reviewId/reply', verifyToken, reviewController.replyReview);
 }
 
 // --- 3. ADMIN ONLY ---

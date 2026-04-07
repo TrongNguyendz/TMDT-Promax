@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
-require('./config/database');
+const connectDB = require('./config/connectdata');
+connectDB();
 
 const bannerRoutes = require('./routes/bannerRoutes');
 // const searchHistoryRoutes = require('./routes/searchHistoryRoutes');

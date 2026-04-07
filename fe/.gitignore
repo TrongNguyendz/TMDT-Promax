@@ -10,10 +10,10 @@ build/
 # Misc
 .DS_Store
 *.pem
-
+xa
 .env.local
 .env.*.local
-
+*.log
 # Logs
 logs/
 *.log

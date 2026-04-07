@@ -12,8 +12,11 @@
     "@google/genai": "^1.32.0",
     "@vuepic/vue-datepicker": "^12.1.0",
     "axios": "^1.7.7",
-    "html2pdf.js": "^0.12.1",
+    "chart.js": "^4.5.1",
+    "fuse.js": "^7.3.0",
+    "html2pdf.js": "^0.14.0",
     "iobuffer": "^6.0.1",
+    "jwt-decode": "^4.0.0",
     "pinia": "^2.2.6",
     "pinia-plugin-persistedstate": "^3.2.3",
     "qrcode.vue": "^3.6.0",
@@ -21,15 +24,16 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "vue": "^3.5.12",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.9",
-    "@vitejs/plugin-vue": "^5.1.4",
+    "@vitejs/plugin-vue": "^6.0.5",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
-    "vite": "^5.4.10"
+    "vite": "^6.4.1"
   },
   "description": "A complete, course-ready Frontend for an E-commerce website implementing the full user flow: browse → cart → checkout → order history, plus an Admin area. Built with Vue 3, Vite, Tailwind, Pinia (persist), Vue Router, and Axios (with interceptors).",
   "main": "vite.config.js",

@@ -88,50 +88,34 @@ exports.getBannerById = async (req, res) => {
 //   }
 // };
 // Tạo banner mới + upload file
+// admin-service/controllers/bannerController.js
 exports.createBanner = async (req, res) => {
   try {
-    // Nếu không có file và không có image_url trong body → lỗi
-    if (!req.file && !req.body.image_url) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng upload file hoặc cung cấp image_url'
-      });
-    }
-
     const mediaUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image_url;
 
+    //  Trích xuất dữ liệu an toàn (Dùng dấu ?. để tránh lỗi undefined)
     const payload = {
-      title: req.body.title || null,
-      description: req.body.description || null,
-      image_url: mediaUrl, // giờ đây là ảnh hoặc video
-      link: req.body.link || null,
-      link_type: req.body.link_type || 'none',
-      status: req.body.status || 'active',
-      display_position: req.body.display_position || 'homepage_hero',
-      sort_order: Number(req.body.sort_order) || 0,
-      start_date: req.body.start_date || null,
-      end_date: req.body.end_date || null,
+      title: req.body?.title || '',
+      description: req.body?.description || '',
+      image_url: mediaUrl || '',
+      link: req.body?.link || '',
+      link_type: req.body?.link_type || 'none',
+      status: req.body?.status || 'active',
+      display_position: req.body?.display_position || 'homepage_hero',
+      sort_order: Number(req.body?.sort_order) || 0,
+      start_date: req.body?.start_date || null,
+      end_date: req.body?.end_date || null
     };
 
+    //  Gọi Model
     const banner = await BannerModel.createBanner(payload);
-    res.status(201).json({
-      success: true,
-      message: 'Tạo banner thành công',
-      data: banner
-    });
+    
+    res.status(201).json({ success: true, data: banner });
   } catch (error) {
-    // Nếu upload lỗi nhưng file đã lưu → xóa đi
-    if (req.file) {
-      deleteFile(`/uploads/${req.file.filename}`);
-    }
-    res.status(500).json({
-      success: false,
-      message: 'Không thể tạo banner',
-      error: error.message
-    });
+    console.error("Lỗi Controller:", error);
+    res.status(400).json({ success: false, message: error.message });
   }
 };
-
 // Cập nhật banner (có thể thay ảnh/video mới)
 exports.updateBanner = async (req, res) => {
   try {

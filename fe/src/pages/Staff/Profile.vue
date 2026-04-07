@@ -1,60 +1,273 @@
-<!-- views/staff/Profile.vue -->
 <template>
-  <div class="space-y-8 max-w-3xl mx-auto">
-    <h1 class="text-2xl lg:text-3xl font-black text-gray-900 dark:text-white">Thông tin cá nhân</h1>
+  <!-- Tăng padding top để thay thế khoảng trống của nút quay lại -->
+  <section class="mx-auto max-w-6xl px-4 py-12 lg:py-20">
+    <div class="grid gap-10 lg:grid-cols-12 lg:items-start">
+      
+      <!-- Cột trái: Profile Card (Staff Style) -->
+      <div class="lg:col-span-4 lg:sticky lg:top-10">
+        <div class="overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="flex flex-col items-center text-center">
+            <h2 class="mb-8 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">STAFF PROFILE</h2>
+            
+            <div class="relative group">
+              <!-- Avatar Frame -->
+              <div class="relative h-44 w-44 overflow-hidden rounded-3xl border-4 border-white p-1 shadow-2xl ring-2 ring-emerald-100 dark:border-gray-800 dark:ring-emerald-900">
+                <img
+                  :src="avatarPreview"
+                  alt="Staff Avatar"
+                  class="h-full w-full rounded-3xl object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              </div>
 
-    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-8 border border-gray-200 dark:border-gray-800">
-      <div class="flex flex-col md:flex-row gap-8 items-start">
-        <div class="flex-shrink-0">
-          <div class="h-32 w-32 rounded-full bg-teal-600 flex items-center justify-center text-white text-5xl font-bold">
-            {{ user.username?.charAt(0).toUpperCase() || 'S' }}
-          </div>
-          <button class="mt-4 w-full py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200">
-            Thay đổi ảnh
-          </button>
-        </div>
+              <!-- Nút thay đổi ảnh -->
+              <label
+                class="absolute inset-0 flex cursor-pointer items-center justify-center rounded-3xl bg-black/50 opacity-0 backdrop-blur-md transition-all duration-300 group-hover:opacity-100"
+              >
+                <div class="text-center text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-7 w-7 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  </svg>
+                  <span class="text-xs font-bold uppercase tracking-widest">Cập nhật ảnh</span>
+                </div>
+                <input type="file" accept="image/*" @change="onFileChange" class="hidden" />
+              </label>
 
-        <div class="flex-1 space-y-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ & tên</label>
-            <input v-model="user.fullName" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800" />
-          </div>
+              <!-- Loading -->
+              <div v-if="isUpdatingAvatar" class="absolute inset-0 flex items-center justify-center rounded-3xl bg-white/70 dark:bg-gray-900/70">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên đăng nhập</label>
-            <input v-model="user.username" disabled class="w-full px-4 py-3 rounded-xl border bg-gray-100 dark:bg-gray-800 cursor-not-allowed" />
-          </div>
+            <div class="mt-8">
+              <h3 class="text-3xl font-black tracking-tighter text-gray-900 dark:text-white">
+                {{ form.fullName || user.profile?.username }}
+              </h3>
+              <p class="text-sm font-medium text-gray-500">{{ form.email }}</p>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input v-model="user.email" type="email" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800" />
-          </div>
+            <!-- Staff Badges -->
+            <div class="mt-8 flex w-full flex-col gap-3 border-t border-gray-100 pt-8 dark:border-gray-800">
+              <div class="flex items-center justify-between rounded-2xl bg-emerald-50 px-5 py-3.5 dark:bg-emerald-950/30">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Vai trò</span>
+                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                  Staff
+                </span>
+              </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-            <input v-model="user.phone" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800" />
-          </div>
+              <div class="flex items-center justify-between rounded-2xl bg-gray-50 px-5 py-3.5 dark:bg-gray-800/50">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Trạng thái</span>
+                <span class="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
+                  <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  Hoạt động
+                </span>
+              </div>
 
-          <div class="pt-6 border-t dark:border-gray-800">
-            <button class="w-full py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition">
-              Cập nhật thông tin
-            </button>
+              <div class="flex items-center justify-between rounded-2xl bg-gray-50 px-5 py-3.5 dark:bg-gray-800/50">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Tham gia</span>
+                <span class="text-xs font-bold text-gray-600 dark:text-gray-300">Tháng 01/2025</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Cột phải: Form cài đặt chi tiết -->
+      <div class="lg:col-span-8">
+        <div class="rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:p-12">
+          <div class="mb-10">
+            <h1 class="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Cài đặt Nhân viên</h1>
+            <p class="mt-2 text-gray-500">Quản lý thông tin tài khoản nhân viên và quyền hạn được giao.</p>
+          </div>
+          
+          <form @submit.prevent="handleupdate" class="space-y-8">
+            <!-- Nhóm thông tin cơ bản -->
+            <div class="grid gap-8 md:grid-cols-2">
+              <div class="space-y-3">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Username</label>
+                <InputField v-model="form.name" />
+              </div>
+              <div class="space-y-3">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Email</label>
+                <InputField v-model="form.email" type="email" />
+              </div>
+            </div>
+
+            <!-- Nhóm thông tin cá nhân -->
+            <div class="grid gap-8 md:grid-cols-2">
+              <div class="space-y-3">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Họ và tên</label>
+                <InputField v-model="form.fullName" />
+              </div>
+              <div class="space-y-3">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Số điện thoại</label>
+                <InputField v-model="form.phone" type="tel" />
+              </div>
+            </div>
+
+            <!-- Nhóm quyền hạn (Staff specific) -->
+            <div class="rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 p-6 dark:from-emerald-950/30 dark:to-teal-950/30">
+              <label class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1 mb-4 block">Quyền được giao</label>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" checked disabled class="h-4 w-4 accent-emerald-600" />
+                  <span class="text-gray-700 dark:text-gray-300">Quản lý nội dung</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" checked disabled class="h-4 w-4 accent-emerald-600" />
+                  <span class="text-gray-700 dark:text-gray-300">Xem báo cáo cơ bản</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" :checked="false" disabled class="h-4 w-4 accent-emerald-600" />
+                  <span class="text-gray-700 dark:text-gray-300">Quản lý người dùng</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" :checked="false" disabled class="h-4 w-4 accent-emerald-600" />
+                  <span class="text-gray-700 dark:text-gray-300">Quản lý hệ thống</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nhóm bảo mật -->
+            <div class="space-y-3 rounded-3xl bg-gray-50/70 p-6 dark:bg-gray-800/30">
+              <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Mật khẩu mới</label>
+              <InputField 
+                v-model="form.password" 
+                type="password" 
+                placeholder="••••••••" 
+              />
+              <p class="text-[10px] italic text-gray-400 ml-1">Để trống nếu không muốn thay đổi mật khẩu.</p>
+            </div>
+
+            <!-- Nút Lưu -->
+            <div class="pt-6">
+              <button
+                type="submit"
+                class="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 py-4 text-sm font-bold tracking-widest text-white transition-all hover:brightness-110 hover:shadow-2xl hover:shadow-emerald-500/30 active:scale-[0.97] disabled:opacity-70"
+                :disabled="isUpdating"
+              >
+                <svg v-if="isUpdating" class="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ isUpdating ? 'ĐANG CẬP NHẬT...' : 'LƯU THÔNG TIN NHÂN VIÊN' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useUserStore } from '../../stores/user';
+import { reactive, ref, computed } from "vue";
+import { useUserStore } from "../../stores/user";
+import { useUIStore } from "../../stores/ui";
+import { useRouter } from "vue-router";
+import InputField from "../../components/forms/InputField.vue";
+import { UpdateProfile, UpdateUserAvatar } from "../../utils/user_service_api";
 
-const userStore = useUserStore();
-const user = ref({
-  username: userStore.profile?.username || 'ko có dữ liệu bro ơi',
-  fullName: userStore.profile?.fullName || 'ko có dữ liệu bro ơi',
-  email: userStore.profile?.email || 'ko có dữ liệu bro ơi',
-  phone: userStore.profile?.phone || 'ko có dữ liệu bro ơi',
+// Avatar mặc định
+import defaultAvatar from "@/assets/default_user.jpg"; 
+
+const user = useUserStore();
+const ui = useUIStore();
+const router = useRouter();
+
+const isUpdating = ref(false);
+const isUpdatingAvatar = ref(false);
+
+const avatarPreview = computed(() => {
+  if (!user.profile?.avatar_url) return defaultAvatar;
+  return `http://localhost:3001${user.profile.avatar_url}`;
 });
+
+const avatarFile = ref(null);
+
+const form = reactive({
+  name: user.profile?.username ?? "",
+  email: user.profile?.email ?? "",
+  fullName: user.profile?.fullname ?? "",
+  phone: user.profile?.phone ?? "",
+  password: "",
+});
+
+const onFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    avatarFile.value = file;
+    // Tạm thời hiển thị preview (sẽ được cập nhật lại sau khi upload)
+    const previewUrl = URL.createObjectURL(file);
+    // Lưu ý: Vì avatarPreview là computed, bạn có thể cần một ref riêng cho preview khi đang chỉnh sửa
+    // Ở đây giữ nguyên logic như file Admin của bạn
+    avatarPreview.value = previewUrl; // Lưu ý: computed không gán được trực tiếp, nhưng code gốc của bạn cũng vậy
+  }
+  uploadAvatar();
+};
+
+const uploadAvatar = async () => {
+  if (!avatarFile.value) return;
+
+  isUpdatingAvatar.value = true;
+  try {
+    const res = await UpdateUserAvatar(user.profile.id, avatarFile.value, user.token);
+
+    if (res.data.success) {
+      user.updateProfile({
+        avatar_url: res.data.data.avatar_url
+      });
+      ui.pushToast({ type: "success", message: "Đổi ảnh đại diện thành công!" });
+    }
+  } catch (err) {
+    ui.pushToast({
+      type: "error",
+      message: err.response?.data?.message || "Đổi ảnh thất bại"
+    });
+  } finally {
+    isUpdatingAvatar.value = false;
+    avatarFile.value = null;
+  }
+};
+
+const handleupdate = async () => {
+  isUpdating.value = true;
+  try {
+    const formData = new FormData();
+    formData.append("username", form.name);
+    formData.append("email", form.email);
+    formData.append("full_name", form.fullName);
+    formData.append("phone", form.phone);
+
+    if (form.password && form.password.trim() !== '') {
+      formData.append("password", form.password);
+    }
+
+    const res = await UpdateProfile(user.profile.id, formData, user.token);
+    const result = res.data;
+
+    if (result.success) {
+      user.updateProfile({
+        username: result.data.username,
+        email: result.data.email,
+        fullname: result.data.full_name,
+        phone: result.data.phone,
+        avatar_url: result.data.avatar_url,
+      });
+
+      avatarFile.value = null;
+      ui.pushToast({ type: "success", message: "Cập nhật hồ sơ Nhân viên thành công!" });
+    } else {
+      ui.pushToast({ type: "error", message: result.message || "Cập nhật thất bại" });
+    }
+  } catch (error) {
+    console.error("Lỗi cập nhật:", error);
+    ui.pushToast({ type: "error", message: "Có lỗi xảy ra, vui lòng thử lại" });
+  } finally {
+    isUpdating.value = false;
+  }
+};
 </script>
+
+<style scoped>
+/* Có thể thêm style riêng cho Staff nếu cần */
+</style>

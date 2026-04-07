@@ -7,65 +7,59 @@ import { useUIStore } from './ui';
 
 export const useCheckoutStore = defineStore('checkout', () => {
     // --- STATE ---
-    const currentStep = ref(1); // 1: Review, 2: Shipping, 3: Payment, 4: Success
+    const currentStep = ref(1); 
 
     const shippingInfo = ref({
-        fullName: '',
-        email: '',
-        phone: '',
-        address: '',
-        ward: '',
-        district: '',
-        province: '',
-        note: ''
+        fullName: '', email: '', phone: '', address: '',
+        ward: '', district: '', province: '', note: ''
     });
     
-    const paymentMethod = ref('cod'); // cod | vnpay | momo
+    const paymentMethod = ref('cod'); 
     const processing = ref(false);
+    
     // Voucher state
     const voucherCode = ref('');
-    const appliedVoucher = ref(null); // { code, type, value, minOrder, expiry }
+    const appliedVoucher = ref(null); 
     const discountAmount = ref(0);
+    const shippingFee = ref(0);
+    
+    //  State Mua ngay
+    const isDirectBuy = ref(false);
+    const directBuyItem = ref(null);
 
     // --- ACTIONS ---
 
-    // Chuyển bước
     const nextStep = () => { if (currentStep.value < 3) currentStep.value++; };
     const previousStep = () => { if (currentStep.value > 1) currentStep.value--; };
     const goToStep = (step) => { currentStep.value = step; };
 
-    // Reset form
     const reset = () => {
         currentStep.value = 1;
         paymentMethod.value = 'cod';
         voucherCode.value = '';
         appliedVoucher.value = null;
         discountAmount.value = 0;
-        // Có thể reset shippingInfo nếu muốn, hoặc giữ lại nhờ persist
+        shippingFee.value = 0;
     };
 
-    // Voucher helpers
-    const applyVoucher = async (code, cartTotal, availableVouchers = []) => {
-        // Normalize and guards
+    const applyVoucher = async (code, cartTotal, availableVouchers =[]) => {
         if (!code) return { success: false, message: 'Vui lòng nhập mã' };
         const found = availableVouchers.find(v => v.code.toLowerCase() === code.toLowerCase());
         if (!found) return { success: false, message: 'Mã không tồn tại' };
-        // Check expiry
         if (found.expiry && new Date(found.expiry) < new Date()) return { success: false, message: 'Mã đã hết hạn' };
-        // Ensure numbers
+        
         const couponValue = Number(found.value ?? found.discountValue ?? 0);
         const total = Number(cartTotal ?? 0);
         if (isNaN(couponValue) || couponValue <= 0) return { success: false, message: 'Giá trị mã không hợp lệ' };
-        // Check min order
         if (found.minOrder && total < Number(found.minOrder)) return { success: false, message: `Đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(found.minOrder)} ₫` };
-        // Calculate discount amount
+        
         let discount = 0;
         if (found.type === 'percentage' || found.type === 'Percentage') {
             discount = Math.round((couponValue / 100) * total);
         } else {
             discount = Math.min(Number(couponValue), total);
         }
-        // Ensure discount is non-negative integer and not larger than total
+        
         discount = Number.isFinite(discount) ? Math.max(0, Math.round(discount)) : 0;
         voucherCode.value = code;
         appliedVoucher.value = found;
@@ -79,6 +73,17 @@ export const useCheckoutStore = defineStore('checkout', () => {
         discountAmount.value = 0;
     };
 
+    // Mua ngay
+    const setDirectBuy = (item) => {
+        isDirectBuy.value = true;
+        directBuyItem.value = item;
+    };
+
+    const clearDirectBuy = () => {
+        isDirectBuy.value = false;
+        directBuyItem.value = null;
+    };
+
     // 🟢 HÀM QUAN TRỌNG: Gửi đơn hàng xuống Backend
     const submitOrder = async () => {
         const cartStore = useCartStore();
@@ -86,19 +91,25 @@ export const useCheckoutStore = defineStore('checkout', () => {
         const orderStore = useOrderStore();
         const uiStore = useUIStore();
         
-        // 1. Kiểm tra đăng nhập (Sử dụng profile.id như đã sửa ở user store)
-        if (!userStore.profile?.id) {
+        const userId = userStore.profile?.id;
+        const userEmail = userStore.profile?.email;
+
+        if (!userStore.token || !userId) {
             uiStore.pushToast({ type: 'error', message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' });
             return false;
         }
 
-        // 2. Kiểm tra giỏ hàng
-        if (cartStore.items.length === 0) {
-            uiStore.pushToast({ type: 'warning', message: 'Giỏ hàng đang trống' });
+        // Mua ngay hay Mua từ giỏ
+        const sourceItems = (isDirectBuy.value && directBuyItem.value) 
+            ? [directBuyItem.value] 
+            : cartStore.items;
+
+        //  Kiểm tra dựa trên sourceItems
+        if (sourceItems.length === 0) {
+            uiStore.pushToast({ type: 'warning', message: 'Không có sản phẩm để thanh toán' });
             return false;
         }
 
-        // 3. Validate thông tin giao hàng
         const info = shippingInfo.value;
         if (!info.fullName || !info.phone || !info.address || !info.province) {
             uiStore.pushToast({ type: 'warning', message: 'Vui lòng điền đầy đủ thông tin giao hàng' });
@@ -108,30 +119,28 @@ export const useCheckoutStore = defineStore('checkout', () => {
         processing.value = true;
 
         try {
-            // 4. Chuẩn bị dữ liệu (Payload) gửi đi
-            // Map từ Cart Item (LocalStorage) sang Order Item (Backend DB)
-            const orderItems = cartStore.items.map(item => ({
-                product_id: Number(item.product_id), // Đảm bảo là số
+            // Lấy dữ liệu từ sourceItems thay vì cartStore.items
+            const orderItems = sourceItems.map(item => ({
+                product_id: item.product_id || item.id,
                 quantity: Number(item.quantity),
-                
-                // Snapshot dữ liệu (Lưu cứng tên, giá, ảnh lúc mua)
                 product_name: item.product_name || item.name, 
                 product_image: item.product_image || item.image,
                 unit_price: Number(item.price),
-                
-                // Biến thể (nếu có)
-                color: item.color || null,
-                size: item.size || null
+                color: item.color || item.selectedColor || null, // Hỗ trợ cả 2 tên biến
+                size: item.size || item.selectedSize || null
             }));
 
-            // Tạo chuỗi địa chỉ đầy đủ
             const fullAddressString = `${info.address}, ${info.ward}, ${info.district}, ${info.province}`;
 
+            // Tính tiền dựa trên nguồn hàng
+            const currentSubtotal = (isDirectBuy.value && directBuyItem.value)
+                ? (Number(directBuyItem.value.price) * Number(directBuyItem.value.quantity))
+                : (Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0));
+
             const payload = {
-                user_id: userStore.profile.id, 
-                email_user : userStore.profile.email,
-                notification_type : "invoice",
-                
+                user_id: userId, 
+                email_user: userEmail,
+                notification_type: "invoice",
                 items: orderItems,
                 shipping_address: {
                     full_name: info.fullName,
@@ -140,27 +149,29 @@ export const useCheckoutStore = defineStore('checkout', () => {
                     city: info.province
                 },
                 payment_method: paymentMethod.value,
-                shipping_fee: 0, // Tính phí ship sau nếu cần
+                shipping_fee: Number(shippingFee.value || 0), 
                 notes: info.note,
                 voucher: appliedVoucher.value ? appliedVoucher.value.code : null,
                 discount_amount: discountAmount.value || 0,
-                // Backend có thể cần final_amount để tính toán thanh toán
-                // make sure subtotal is a number (cartStore.subtotal may be a computed ref)
-                final_amount: Math.round((Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0)) - (Number(discountAmount.value) || 0))
+                
+                
+                final_amount: Math.max(0, Math.round(currentSubtotal + Number(shippingFee.value || 0) - (Number(discountAmount.value) || 0)))
             };
-            console.log('dữ liệu được truyền đi là ',payload) ;
-            // 5. Gọi Order Store để bắn API
-            console.log('DEBUG submitOrder payload', { payload, discountAmount: discountAmount.value, appliedVoucher: appliedVoucher.value });
+
             const newOrder = await orderStore.createOrder(payload);
-            console.log('DEBUG submitOrder response', newOrder);
 
             if (newOrder) {
-                // Thành công -> Trả về object đơn hàng để CheckoutPage xử lý tiếp (ví dụ: gọi VNPay)
+                // // Chỉ xóa giỏ hàng nếu MUA TỪ GIỎ
+                // if (!isDirectBuy.value) {
+                //     cartStore.clearCart();
+                // }
+                // // Luôn tắt chế độ Mua ngay sau khi xong
+                // clearDirectBuy();
+
                 return newOrder; 
             }
         } catch (error) {
-            console.error("Lỗi submitOrder:", error);
-            // Lỗi chi tiết đã được axios interceptor hiển thị toast
+            console.error("❌ Lỗi submitOrder:", error);
             return false;
         } finally {
             processing.value = false;
@@ -175,17 +186,25 @@ export const useCheckoutStore = defineStore('checkout', () => {
         voucherCode,
         appliedVoucher,
         discountAmount,
+        shippingFee,
+        
+        // 👇 [CHANGE] Bắt buộc export các biến/hàm này ra ngoài
+        isDirectBuy,
+        directBuyItem,
+        setDirectBuy,
+        clearDirectBuy,
+        
         nextStep,
         previousStep,
         goToStep,
         reset,
         applyVoucher,
         removeVoucher,
-        submitOrder // 👈 ĐÃ CÓ HÀM NÀY
+        submitOrder 
     };
 }, {
-    // Lưu lại thông tin nhập liệu để F5 không mất
     persist: {
-        paths: ['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount']
+        // 👇 [CHANGE] Thêm 2 biến này vào persist để lỡ User F5 trang Checkout thì món hàng Mua Ngay không bị mất
+        paths:['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount', 'shippingFee', 'isDirectBuy', 'directBuyItem']
     }
 });

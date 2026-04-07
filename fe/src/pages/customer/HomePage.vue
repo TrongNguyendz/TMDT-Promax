@@ -34,8 +34,9 @@
         </h2>
         
         <!-- Trong template của HomePage.vue -->
-        <Chatbot :products="productsStore.products" />
 
+        <Chatbot :products="productsStore.products" />
+        
         <!-- Loading -->
 
         <div v-if="productsStore.loading" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -67,7 +68,6 @@
 import { onMounted, ref, computed, watch } from 'vue';
 import ProductCard from '../../components/common/ProductCard.vue';
 import BannerCarousel from '../../components/common/BannerCarousel.vue';
-
 
 import Chatbot from '../../components/common/chatbot.vue';
 import { useCartStore } from '../../stores/cart';
@@ -116,8 +116,9 @@ async function loadBanners() {
 
 const productsList = computed(() => {
     const items = productsStore.products || [];
+    console.log('Raw products from store:', items);
     return items.map((p) => {
-
+    
         let imageUrl = 'https://via.placeholder.com/400x400?text=No+Image';
         if (p.images && p.images.length > 0) {
             const primary = p.images.find(img => img.is_primary);

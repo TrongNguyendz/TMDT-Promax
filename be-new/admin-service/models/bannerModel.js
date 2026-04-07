@@ -1,137 +1,121 @@
-const db = require('./db');
+const mongoose = require('mongoose');
 
-const buildFilters = (filters = {}) => {
-  let clause = 'WHERE 1 = 1';
-  const params = [];
+const bannerSchema = new mongoose.Schema({
+    title: { type: String },
+    description: { type: String },
+    image_url: { type: String, required: true },
+    link: { type: String },
+    link_type: { 
+        type: String, 
+        default: 'none',
+        enum: ['product', 'category', 'external', 'none', 'image', 'video']
+    },
+    status: { 
+        type: String, 
+        default: 'active',
+        enum: ['active', 'inactive']
+    },
+    display_position: { 
+        type: String, 
+        default: 'homepage_hero' 
+    },
+    sort_order: { type: Number, default: 0 },
+    start_date: { type: Date },
+    end_date: { type: Date }
+}, {
+    // Tự động tạo created_at và updated_at
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+});
 
-  if (filters.status) {
-    clause += ' AND status = ?';
-    params.push(filters.status);
-  }
-  if (filters.display_position) {
-    clause += ' AND display_position = ?';
-    params.push(filters.display_position);
-  }
-
-  return { clause, params };
-};
-
-exports.listBanners = async (filters = {}) => {
-  const { clause, params } = buildFilters(filters);
-  const limit = Number(filters.limit) || 20;
-  const page = Number(filters.page) || 1;
-  const offset = (page - 1) * limit;
-
-  const rows = await db.all(
-    `SELECT * FROM banners ${clause} ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
-  );
-  const totalRow = await db.get(
-    `SELECT COUNT(*) as total FROM banners ${clause}`,
-    params
-  );
-
-  return {
-    data: rows,
-    pagination: {
-      total: totalRow?.total || 0,
-      page,
-      limit,
-      pages: Math.ceil((totalRow?.total || 0) / limit) || 1
+// Chuyển _id thành id khi trả về JSON để Frontend không bị lỗi
+bannerSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: function (doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
     }
-  };
+});
+
+// Tạo Model nội bộ
+const Banner = mongoose.model('Banner', bannerSchema);
+
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+// --- 1. Lấy danh sách (Có lọc & Phân trang) ---
+exports.listBanners = async (filters = {}) => {
+    const query = {};
+    if (filters.status) query.status = filters.status;
+    if (filters.display_position) query.display_position = filters.display_position;
+
+    const limit = Number(filters.limit) || 20;
+    const page = Number(filters.page) || 1;
+    const skip = (page - 1) * limit;
+
+    // Chạy song song đếm tổng và lấy dữ liệu
+    const [banners, total] = await Promise.all([
+        Banner.find(query)
+            .sort({ sort_order: 1, created_at: -1 }) 
+            .skip(skip)
+            .limit(limit),
+        Banner.countDocuments(query)
+    ]);
+
+    return {
+        data: banners,
+        pagination: {
+            total: total,
+            page,
+            limit,
+            pages: Math.ceil(total / limit) || 1
+        }
+    };
 };
 
-exports.findById = (id) => db.get('SELECT * FROM banners WHERE id = ?', [id]);
+// --- 2. Tìm theo ID ---
+exports.findById = async (id) => {
+    if (!isValidId(id)) return null;
+    return await Banner.findById(id);
+};
 
+// --- 3. Tạo mới ---
 exports.createBanner = async (payload) => {
-  const now = new Date().toISOString();
-  const result = await db.run(
-    `INSERT INTO banners
-      (title, description, image_url, link, link_type, status, display_position, sort_order, start_date, end_date, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      payload.title || null,
-      payload.description || null,
-      payload.image_url,
-      payload.link || null,
-      payload.link_type || 'none',
-      payload.status || 'active',
-      payload.display_position || 'homepage_hero',
-      Number(payload.sort_order) || 0,
-      payload.start_date || null,
-      payload.end_date || null,
-      now,
-      now
-    ]
-  );
+    // Kiểm tra payload
+    if (!payload) throw new Error("Dữ liệu payload không tồn tại");
 
-  return exports.findById(result.lastID);
+    const data = {
+        title: payload.title,
+        description: payload.description,
+        image_url: payload.image_url,
+        link: payload.link,
+        link_type: payload.link_type,
+        status: payload.status || 'active', // Đảm bảo luôn có giá trị
+        display_position: payload.display_position || 'homepage_hero',
+        sort_order: Number(payload.sort_order) || 0,
+        start_date: payload.start_date,
+        end_date: payload.end_date
+    };
+
+    return await Banner.create(data);
 };
 
+// --- 4. Cập nhật ---
 exports.updateBanner = async (id, payload) => {
-  const existing = await exports.findById(id);
-  if (!existing) return null;
+    if (!isValidId(id)) return null;
 
-  const now = new Date().toISOString();
-  const fields = [];
-  const params = [];
+    // Mongoose tự động chỉ update các trường có trong payload
+    // { new: true } -> Trả về dữ liệu mới sau update
+    const updatedBanner = await Banner.findByIdAndUpdate(id, payload, { 
+        new: true,
+        runValidators: true 
+    });
 
-  if (typeof payload.title !== 'undefined') {
-    fields.push('title = ?');
-    params.push(payload.title);
-  }
-  if (typeof payload.description !== 'undefined') {
-    fields.push('description = ?');
-    params.push(payload.description);
-  }
-  if (typeof payload.image_url !== 'undefined') {
-    fields.push('image_url = ?');
-    params.push(payload.image_url);
-  }
-  if (typeof payload.link !== 'undefined') {
-    fields.push('link = ?');
-    params.push(payload.link);
-  }
-  if (typeof payload.link_type !== 'undefined') {
-    fields.push('link_type = ?');
-    params.push(payload.link_type);
-  }
-  if (typeof payload.status !== 'undefined') {
-    fields.push('status = ?');
-    params.push(payload.status);
-  }
-  if (typeof payload.display_position !== 'undefined') {
-    fields.push('display_position = ?');
-    params.push(payload.display_position);
-  }
-  if (typeof payload.sort_order !== 'undefined') {
-    fields.push('sort_order = ?');
-    params.push(Number(payload.sort_order));
-  }
-  if (typeof payload.start_date !== 'undefined') {
-    fields.push('start_date = ?');
-    params.push(payload.start_date || null);
-  }
-  if (typeof payload.end_date !== 'undefined') {
-    fields.push('end_date = ?');
-    params.push(payload.end_date || null);
-  }
-
-  if (fields.length === 0) return existing;
-
-  fields.push('updated_at = ?');
-  params.push(now, id);
-
-  await db.run(
-    `UPDATE banners SET ${fields.join(', ')} WHERE id = ?`,
-    params
-  );
-
-  return exports.findById(id);
+    return updatedBanner;
 };
 
+// --- 5. Xóa ---
 exports.deleteBanner = async (id) => {
-  const result = await db.run('DELETE FROM banners WHERE id = ?', [id]);
-  return result.changes > 0;
+    if (!isValidId(id)) return false;
+    const result = await Banner.findByIdAndDelete(id);
+    return !!result; // Trả về true nếu xóa thành công, false nếu không tìm thấy
 };

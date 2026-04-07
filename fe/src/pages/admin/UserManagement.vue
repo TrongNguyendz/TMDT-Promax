@@ -21,8 +21,12 @@
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </span>
-      <input type="text" placeholder="Tìm kiếm người dùng..."
-        class="w-full rounded-2xl border border-gray-100 bg-white py-3 pl-11 pr-4 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:border-white shadow-sm" />
+      <input 
+  v-model="filters.searchTerm" 
+  type="text" 
+  placeholder="Tìm kiếm người dùng..."
+  class="w-full rounded-2xl border border-gray-100 bg-white py-3 pl-11 pr-4 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:focus:border-white shadow-sm" 
+/>
     </div>
 
     <!-- 3. Main Data Table -->
@@ -36,6 +40,7 @@
     <div v-else
       class="overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div class="overflow-x-auto">
+        
         <table class="min-w-full text-sm">
           <thead
             class="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:bg-gray-800/50 border-b border-gray-50 dark:border-gray-800">
@@ -50,12 +55,12 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-            <tr v-for="u in users" :key="u.id"
+            <tr v-for="u in filteredUsers" :key="u._id"
               class="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
 
               <!-- ID: Kiểu font Mono tạo cảm giác hệ thống -->
               <td class="px-8 py-5 font-mono text-xs font-bold text-gray-400">
-                #{{ u.id.toString().padStart(4, '0') }}
+                #{{ u?._id?.slice(0,10) }}
               </td>
               <!-- User Name: Làm đậm để thay thế cho ảnh làm điểm nhấn -->
               <td class="px-8 py-5">
@@ -126,7 +131,7 @@
           <div class="grid gap-4 sm:grid-cols-2">
             <div>
               <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">ID</p>
-              <p class="font-mono font-bold mt-1 text-gray-900 dark:text-white">#{{ (currentUser?.id || 0).toString().padStart(4, '0') }}</p>
+              <p class="font-mono font-bold mt-1 text-gray-900 dark:text-white">#{{ (currentUser?._id || 0).slice(0,10) }}</p>
             </div>
             <div>
               <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Vai trò</p>
@@ -187,17 +192,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; // ← Chỉ import 1 lần
+import { ref,reactive, onMounted, computed } from 'vue'; // ← Chỉ import 1 lần
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
 import { getlistuser } from '../../utils/user_service_api.js';
 import { updateUserRole, deleteUser } from '../../utils/user_service_api.js';
 const ui = useUIStore();
 const userStore = useUserStore();
+// 1. Cập nhật filters
+const filters = reactive({
+  searchTerm: '', 
+  role: ''
+});
 
+// 2. Cập nhật computed để lọc cho chuẩn
+const filteredUsers = computed(() => {
+  return users.value.filter(u => {
+    const term = filters.searchTerm.toLowerCase();
+    
+    // Kiểm khớp tên, email
+    const matchSearch = term === '' || 
+                        (u.full_name?.toLowerCase().includes(term)) || 
+                        (u.username?.toLowerCase().includes(term)) || 
+                        (u.email?.toLowerCase().includes(term));
+    
+    // Kiểm role
+    const matchRole = filters.role === '' || u.role === filters.role;
+    
+    return matchSearch && matchRole;
+  });
+});
 // Khai báo state
 const users = ref([]);
-const loading = ref(true); // ← Thêm loading để UX đẹp hơn
+const loading = ref(true); 
 
 // Detail modal state
 const showDetailModal = ref(false);
@@ -227,12 +254,6 @@ onMounted(() => {
   ListUser();
 });
 
-// Tạm thời chỉ đổi trên frontend (sau này sẽ gọi API thật)
-// function promote(u) {
-
-//   ui.pushToast({ type: 'success', message: `Đã thăng cấp ${u.full_name || u.username} thành Admin` });
-// }
-
 const handlePromote = async (user) => {
   try {
     const res = await updateUserRole(user.id, { role: "admin" }, userStore.token);
@@ -247,9 +268,6 @@ const handlePromote = async (user) => {
   }
 };
 
-// function deleteUser(u) {
-//   ui.pushToast({ type: 'success', message: `Đã xóa ${u.full_name || u.username}` });
-// }
 const handleDelete = async (user) => {
   try {
     const res = await deleteUser(user.id, userStore.token);

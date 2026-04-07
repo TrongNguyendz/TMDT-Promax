@@ -17,10 +17,22 @@ const UserSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
   temp_password: { type: String },
-  temp_password_expires: { type: Date }
+  temp_password_expires: { type: Date },
+  verification_otp: { type: String, default: null },
+  verification_otp_expires: { type: Date, default: null }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
+
+// 👇[CHANGE] THÊM ĐOẠN NÀY VÀO ĐỂ LÀM SẠCH DỮ LIỆU TRẢ VỀ 👇
+UserSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false, // Ẩn trường __v
+  transform: function (doc, ret) {
+    delete ret._id;  // Ẩn trường _id gốc của Mongo, chỉ giữ lại 'id' số của bạn
+  }
+});
+// 👆 HẾT PHẦN THÊM 👆
 
 // Index
 UserSchema.index({ id: 1 });
@@ -52,11 +64,17 @@ const User = mongoose.model('User', UserSchema);
 // Helper functions
 const sanitizeUser = (user) => {
   if (!user) return null;
-  const obj = user.toObject ? user.toObject() : user;
-  const { _id, password_hash, temp_password, temp_password_expires, ...safe } = obj;
+  const obj = typeof user.toJSON === 'function' ? user.toJSON() : user;
+  const { 
+    password_hash, 
+    temp_password, 
+    temp_password_expires,
+    verification_otp,
+    verification_otp_expires,
+    ...safe 
+  } = obj;
   return safe;
 };
-
 exports.sanitizeUser = sanitizeUser;
 
 exports.findById = async (id) => {
@@ -79,7 +97,7 @@ exports.listUsers = async (filters = {}) => {
   if (filters.role) query.role = filters.role;
   if (filters.status) query.status = filters.status;
   if (filters.search) {
-    query.$or = [
+    query.$or =[
       { full_name: { $regex: filters.search, $options: 'i' } },
       { email: { $regex: filters.search, $options: 'i' } },
     ];
@@ -172,4 +190,70 @@ exports.createStaff = async (payload) => {
   const user = new User(staffData);
   await user.save();
   return user;
+};
+
+// ==================== EMAIL VERIFICATION OTP ====================
+
+// Tạo OTP 6 số
+exports.generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 100000 - 999999
+};
+
+// Lưu OTP vào user
+exports.setVerificationOTP = async (userId, otp, expiresInMinutes = 15) => {
+  const numericId = Number(userId);
+  if (isNaN(numericId)) return null;
+
+  const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+
+  return User.findOneAndUpdate(
+    { id: numericId },
+    { 
+      verification_otp: otp, 
+      verification_otp_expires: expiresAt,
+      status: 'inactive'
+    },
+    { new: true }
+  );
+};
+
+// Xác thực OTP và kích hoạt tài khoản
+exports.verifyOTP = async (email, otp) => {
+  if (!email || !otp) return null;
+
+  const user = await User.findOne({
+    email: email.toLowerCase().trim(),
+    verification_otp: otp,
+    verification_otp_expires: { $gt: new Date() }
+  });
+
+  if (!user) return null;
+
+  // Kích hoạt tài khoản
+  const updatedUser = await User.findOneAndUpdate(
+    { id: user.id },
+    { 
+      status: 'active',
+      verification_otp: null,
+      verification_otp_expires: null,
+      updated_at: Date.now()
+    },
+    { new: true }
+  );
+
+  return updatedUser;
+};
+
+// Gửi lại OTP
+exports.resendOTP = async (userId) => {
+  const numericId = Number(userId);
+  if (isNaN(numericId)) return null;
+
+  const user = await User.findOne({ id: numericId });
+  if (!user || user.status === 'active') return null;
+
+  const newOtp = exports.generateOTP();
+  await exports.setVerificationOTP(user.id, newOtp, 15);
+
+  return { user, otp: newOtp };
 };

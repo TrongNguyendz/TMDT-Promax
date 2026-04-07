@@ -6,6 +6,7 @@ const validate = require('../middlewares/validate').validate;
 const schemas = require('../middlewares/validate').schemas;
 const { cacheMiddleware } = require('../middlewares/cache');
 const authorize = require('../middlewares/authorize');
+const authorizeAdmin = require('../middlewares/authorizeAdmin');
 // Proxy helper for body forwarding
 const proxyHelper = {
   onProxyReq: (proxyReq, req, res) => {
@@ -81,15 +82,28 @@ router.post('/forgot-password', (req, res, next) => {
   next();
 }, authProxy);
 
+router.post('/verify-otp', (req, res, next) => {
+  console.log('[User Route] Verify OTP request received:', req.path, req.method, req.url);
+  console.log('[User Route] Request body:', req.body);
+  next();
+}, authProxy);
+
+router.post('/resend-otp', (req, res, next) => {
+  console.log('[User Route] Resend OTP request received:', req.path, req.method, req.url);
+  console.log('[User Route] Request body:', req.body);
+  next();
+}, authProxy);
+
+
 // Protected routes - User data endpoints (apply auth middleware only to protected routes)
 router.get('/', authMiddleware, cacheMiddleware(60), userDataProxy);
 // router.get('/me', authMiddleware, cacheMiddleware(60), userDataProxy);
 router.get('/:id', authMiddleware,authorize , cacheMiddleware(60), userDataProxy);
 router.put('/:id', authMiddleware, authorize, userDataProxy);
 router.delete('/:id', authMiddleware, authorize, userDataProxy);
-router.put('/:id/role', authMiddleware, userDataProxy);
-router.put('/:id/avatar', authMiddleware, avatarProxy);
-router.put('/:id/avatar/multiple', authMiddleware, avatarProxy);
+router.put('/:id/role', authMiddleware, authorizeAdmin, userDataProxy);
+router.put('/:id/avatar', authMiddleware,authorize, avatarProxy);
+router.put('/:id/avatar/multiple', authMiddleware, authorize, avatarProxy);
 // router.get('/:id/profile', authMiddleware, cacheMiddleware(60), userDataProxy);
 // router.put('/:id/profile', authMiddleware,cacheMiddleware(60), userDataProxy);
 

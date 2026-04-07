@@ -18,10 +18,68 @@ exports.healthCheck = (_req, res) => {
   });
 };
 
+// exports.register = async (req, res) => {
+//   const requiredFields = ['username', 'email', 'password', 'full_name'];
+//   const missing = requiredFields.filter((field) => !req.body[field]);
+//   const emailCheck = await verifyEmailExists(req.body.email);
+//   if (missing.length) {
+//     return res.status(400).json({
+//       success: false,
+//       message: `Thiếu các trường bắt buộc: ${missing.join(', ')}`
+//     });
+//   }
+
+//   if (!emailCheck.valid) {
+//     return res.status(400).json({
+//       success: false,
+//       message: emailCheck.reason
+//     });
+//   }
+//   try {
+//     const existingEmail = await UserModel.findByEmail(req.body.email);
+//     if (existingEmail) {
+//       return res.status(400).json({ success: false, message: 'Email đã tồn tại' });
+//     }
+
+//     const existingUsername = await UserModel.findByUsername(req.body.username);
+//     if (existingUsername) {
+//       return res.status(400).json({ success: false, message: 'Username đã tồn tại' });
+//     }
+
+//     const password_hash = await hashPassword(req.body.password);
+//     const user = await UserModel.createUser({
+//       username: req.body.username,
+//       email: req.body.email,
+//       password_hash,
+//       full_name: req.body.full_name,
+//       phone: req.body.phone,
+//       avatar_url: req.body.avatar_url,
+//       role: 'customer',
+//       status: 'active'
+//     });
+
+//     const sanitized = UserModel.sanitizeUser(user);
+//     const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Đăng ký thành công',
+//       data: { user: sanitized, token }
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: 'Không thể đăng ký người dùng',
+//       error: error.message
+//     });
+//   }
+// };
+
 exports.register = async (req, res) => {
   const requiredFields = ['username', 'email', 'password', 'full_name'];
   const missing = requiredFields.filter((field) => !req.body[field]);
   const emailCheck = await verifyEmailExists(req.body.email);
+
   if (missing.length) {
     return res.status(400).json({
       success: false,
@@ -35,6 +93,7 @@ exports.register = async (req, res) => {
       message: emailCheck.reason
     });
   }
+
   try {
     const existingEmail = await UserModel.findByEmail(req.body.email);
     if (existingEmail) {
@@ -47,6 +106,8 @@ exports.register = async (req, res) => {
     }
 
     const password_hash = await hashPassword(req.body.password);
+
+    // Tạo user với status inactive
     const user = await UserModel.createUser({
       username: req.body.username,
       email: req.body.email,
@@ -55,18 +116,44 @@ exports.register = async (req, res) => {
       phone: req.body.phone,
       avatar_url: req.body.avatar_url,
       role: 'customer',
-      status: 'active'
+      status: 'inactive'
     });
 
+    // Tạo OTP 6 số
+    const otp = UserModel.generateOTP();
+    console.log(`mã OTP cho user_id=${user.id}:`, otp);
+
+    // Lưu OTP và thời gian hết hạn vào DB
+    await UserModel.setVerificationOTP(user.id, otp, 15); // hết hạn 15 phút
+
     const sanitized = UserModel.sanitizeUser(user);
-    const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+
+    // Gửi OTP qua notification service
+    try {
+      await axios.post('http://localhost:3005/api/notifications', {
+        user_id: user.id,
+        notification_type: 'email_verification_otp',
+        email_user: user.email,
+        data: {
+          otp: otp,
+          full_name: user.full_name,
+          expires_in: 15
+        }
+      });
+    } catch (notifyError) {
+      console.error('Gửi OTP thất bại:', notifyError.message);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Đăng ký thành công',
-      data: { user: sanitized, token }
+      message: 'Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP kích hoạt tài khoản.',
+      data: { 
+        user: sanitized,
+        // Không trả token ngay
+      }
     });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({
       success: false,
       message: 'Không thể đăng ký người dùng',
@@ -75,52 +162,98 @@ exports.register = async (req, res) => {
   }
 };
 
+// Kích hoạt tài khoản bằng OTP
+exports.verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
 
-// exports.login = async (req, res) => {
-//   const { email, password } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Vui lòng cung cấp email và mã OTP' 
+    });
+  }
 
-//   if (!email || !password) {
-//     return res
-//       .status(400)
-//       .json({ success: false, message: 'Vui lòng cung cấp email và mật khẩu' });
-//   }
+  try {
+    const user = await UserModel.verifyOTP(email, otp);
 
-//   try {
-//     const user = await UserModel.findByEmail(email);
-//     if (!user) {
-//       return res.status(401).json({ success: false, message: 'Thông tin đăng nhập không hợp lệ' });
-//     }
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Mã OTP không đúng hoặc đã hết hạn' 
+      });
+    }
 
-//     const isValid = await comparePassword(password, user.password_hash);
-//     if (!isValid) {
-//       return res.status(401).json({ success: false, message: 'Thông tin đăng nhập không hợp lệ' });
-//     }
+    const sanitized = UserModel.sanitizeUser(user);
 
-//     const sanitized = UserModel.sanitizeUser(user);
-//     const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+    res.json({
+      success: true,
+      message: 'Tài khoản đã được kích hoạt thành công. Bạn có thể đăng nhập ngay bây giờ.',
+      data: { user: sanitized }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Có lỗi xảy ra khi kích hoạt tài khoản',
+      error: error.message
+    });
+  }
+};
 
-//     res.status(200).json({
-//       success: true,
-//       message: 'Đăng nhập thành công',
-//       data: { user: sanitized, token }
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: 'Không thể đăng nhập',
-//       error: error.message
-//     });
-//   }
-// };
+// Gửi lại mã OTP
+exports.resendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email' });
+  }
+
+  try {
+    const user = await UserModel.findByEmail(email);
+    if (!user) {
+      return res.json({ 
+        success: true, 
+        message: 'Nếu email tồn tại, chúng tôi đã gửi lại mã OTP.' 
+      });
+    }
+
+    if (user.status === 'active') {
+      return res.json({ success: true, message: 'Tài khoản này đã được kích hoạt.' });
+    }
+
+    const { user: updatedUser, otp } = await UserModel.resendOTP(user.id) || {};
+
+    if (!otp) {
+      return res.status(400).json({ success: false, message: 'Không thể gửi lại OTP.' });
+    }
+
+    // Gửi OTP mới
+    await axios.post('http://localhost:3005/api/notifications', {
+      user_id: user.id,
+      notification_type: 'email_verification_otp',
+      email_user: user.email,
+      data: {
+        otp: otp,
+        full_name: user.full_name,
+        expires_in: 15
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Đã gửi lại mã OTP. Vui lòng kiểm tra email (và thư rác).'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Có lỗi xảy ra khi gửi lại OTP' });
+  }
+};
+
 
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-
     return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email và mật khẩu' });
-
   }
 
   try {
@@ -139,45 +272,55 @@ exports.login = async (req, res) => {
 
       if (now < expires && password === user.temp_password) {
         isValid = true;
-        // Xóa mật khẩu phụ sau khi dùng thành công
-        await UserModel.clearTempPassword(user.id);
+        await UserModel.clearTempPassword(user.id || user._id);
 
-        // Có thể trả về flag để frontend biết là dùng mật khẩu phụ → bắt buộc đổi mật khẩu
         const sanitized = UserModel.sanitizeUser(user);
-        const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+        const userId = user.id || user._id; // Lấy ID an toàn
+
+        const token = signToken({ id: userId, email: sanitized.email, role: sanitized.role });
 
         return res.status(200).json({
           success: true,
           message: 'Đăng nhập thành công bằng mật khẩu phụ. Vui lòng đổi mật khẩu mới ngay!',
           data: { 
-            user: sanitized, 
+            user: { ...sanitized, id: userId }, // Ép ID vào để chắc chắn có
             token,
-            require_password_change: true  // flag quan trọng
+            require_password_change: true  
           }
         });
       }
     }
-
+    
+    if (user.status !== 'active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhập mã OTP để kích hoạt.'
+      });
+    }
 
     if (!isValid) {
       return res.status(401).json({ success: false, message: 'Thông tin đăng nhập không hợp lệ' });
     }
 
-
     // Đăng nhập thành công bình thường
-    await UserModel.clearTempPassword(user.id); // xóa temp nếu có
-
+    await UserModel.clearTempPassword(user.id || user._id); 
 
     const sanitized = UserModel.sanitizeUser(user);
-    const token = signToken({ id: sanitized.id, email: sanitized.email, role: sanitized.role });
+    const userId = user.id || user._id; // Lấy ID an toàn
+
+    const token = signToken({ id: userId, email: sanitized.email, role: sanitized.role });
 
     res.status(200).json({
       success: true,
       message: 'Đăng nhập thành công',
-      data: { user: sanitized, token }
+      data: { 
+        user: { ...sanitized, id: userId }, // 👇 Ép ID vào object user trả về Frontend
+        token 
+      }
     });
 
   } catch (error) {
+    console.error("Login Error:", error);
     res.status(500).json({
       success: false,
       message: 'Không thể đăng nhập',
@@ -187,61 +330,7 @@ exports.login = async (req, res) => {
 };
 
 
-// exports.forgotPassword = async (req, res) => {
-//   const { email } = req.body;
 
-//   if (!email) {
-//     return res.status(400).json({
-//       success: false,
-//       message: 'Vui lòng cung cấp email'
-//     });
-//   }
-
-//   try {
-//     const user = await UserModel.findByEmailWithTemp(email);
-//     console.log('User found for forgot password:', user);
-//     if (!user) {
-//       // Không tiết lộ là email không tồn tại (bảo mật)
-//       return res.json({
-//         success: true,
-//         message: 'Nếu email tồn tại, mật khẩu phụ đã được gửi'
-//       });
-//     }
-
-//     // Tạo mật khẩu phụ
-//     const tempPassword = generateTempPassword(6); // ví dụ: "A7K9P2" hoặc "483920"
-
-//     // Lưu vào DB
-//     await UserModel.setTempPassword(user.id, tempPassword, 30); // hết hạn sau 30 phút
-
-//     // Gửi thông báo qua notification service
-//     try {
-//       await axios.post('http://localhost:3005/api/notifications', {
-//         user_id: user.id,
-//         notification_type: "password_reset",
-//         email_user: user.email,
-//         data: {
-//           password: tempPassword
-//         }
-//       });
-//     } catch (notifyError) {
-//       console.error('Gửi thông báo thất bại:', notifyError.message);
-//       // Không fail request nếu notification service lỗi
-//     }
-
-//     res.json({
-//       success: true,
-//       message: 'Nếu email tồn tại, mật khẩu phụ đã được gửi'
-//     });
-
-//   } catch (error) {
-//     console.error('Forgot password error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Có lỗi xảy ra, vui lòng thử lại sau'
-//     });
-//   }
-// };
 
 exports.forgotPassword = async (req, res) => {
   console.log('========== BẮT ĐẦU FORGOT PASSWORD ==========');
@@ -398,29 +487,29 @@ exports.createStaff = async (req, res) => {
     console.log('[DEBUG] Staff đã được tạo:', staff.id);
 
     // gửi notification
-    // try {
-    //   console.log('[DEBUG] Gọi notification-service');
+    try {
+      console.log('[DEBUG] Gọi notification-service');
 
-    //   const notifyRes = await axios.post(
-    //     'http://localhost:3005/api/notifications',
-    //     {
-    //       user_id: staff.id,
-    //       notification_type: 'staff_created',
-    //       email_user: staff.email,
-    //       data: {
-    //         password: tempPassword
-    //       }
-    //     }
-    //   );
+      const notifyRes = await axios.post(
+        'http://localhost:3005/api/notifications',
+        {
+          user_id: staff.id,
+          notification_type: 'staff_created',
+          email_user: staff.email,
+          data: {
+            password: tempPassword
+          }
+        }
+      );
 
-    //   console.log(
-    //     '[DEBUG] Notification gửi thành công',
-    //     notifyRes.status
-    //   );
+      console.log(
+        '[DEBUG] Notification gửi thành công',
+        notifyRes.status
+      );
 
-    // } catch (notifyError) {
-    //   console.error('[LỖI] Gửi notification thất bại:', notifyError.message);
-    // }
+    } catch (notifyError) {
+      console.error('[LỖI] Gửi notification thất bại:', notifyError.message);
+    }
 
     const sanitized = UserModel.sanitizeUser(staff);
 

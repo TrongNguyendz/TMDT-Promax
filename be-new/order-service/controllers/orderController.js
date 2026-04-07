@@ -170,11 +170,11 @@ exports.createOrder = async (req, res) => {
                 invoiceNumber,
                 date: today.toLocaleDateString('vi-VN'), // 30/12/2025
                 company: {
-                    name: "UNQILO Fashion",
+                    name: "GOGHEVENT Fashion",
                     slogan: "Thời trang hiện đại - Phong cách riêng",
                     address: "127 tổ 9 Nhân Trạch Phú Lương Hà Đông",
                     phone: "0912 260 352",
-                    website: "https://unqilo.vn",
+                    website: "https://goghievent.vn",
                     taxCode: "0101234567"
                 },
                 customer: {
@@ -191,7 +191,7 @@ exports.createOrder = async (req, res) => {
                 total: finalTotal,
                 notes: req.body.notes 
                     ? `Ghi chú: ${req.body.notes}. ` 
-                    : '' + `Phương thức thanh toán: ${payment_method.toUpperCase()}. Cảm ơn quý khách đã mua sắm tại UNQILO Fashion!`
+                    : '' + `Phương thức thanh toán: ${payment_method.toUpperCase()}. Cảm ơn quý khách đã mua sắm tại GOGHEVENT Fashion!`
             };
 
             // Payload gửi sang Notification Service
@@ -233,8 +233,17 @@ exports.createOrder = async (req, res) => {
 
 exports.listOrders = async (req, res) => {
     try {
-        const userId = req.query.user_id; 
-        const data = await OrderModel.listOrders(userId);
+        const currentUserId = req.headers['x-user-id'];
+        const currentUserRole = req.headers['x-user-role'];
+        
+        let targetUserId = req.query.user_id;
+
+        // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
+        if (currentUserRole !== 'admin') {
+            targetUserId = currentUserId;
+        }
+        
+        const data = await OrderModel.listOrders(targetUserId);
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -243,8 +252,17 @@ exports.listOrders = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
     try {
+        const currentUserId = req.headers['x-user-id'];
+        const currentUserRole = req.headers['x-user-role'];
+
         const data = await OrderModel.getOrderById(req.params.id);
         if (!data) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+
+        // Bảo mật: Nếu không phải admin và ID người mua khác ID người đang login -> Cút!
+        if (currentUserRole !== 'admin' && String(data.user_id) !== String(currentUserId)) {
+            return res.status(403).json({ success: false, message: 'Không có quyền truy cập đơn hàng này' });
+        }
+
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -274,14 +292,16 @@ exports.updateOrderStatus = async (req, res) => {
 // Hủy đơn hàng (User/Admin) + Hoàn kho
 exports.cancelOrder = async (req, res) => {
     try {
+        const currentUserId = req.headers['x-user-id'];
+        const currentUserRole = req.headers['x-user-role'];
         const { id } = req.params;
-        const { user_id } = req.body;
 
         const order = await OrderModel.getOrderById(id);
-        if (!order) return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+        if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy' });
 
-        if (user_id && Number(order.user_id) !== Number(user_id)) {
-             return res.status(403).json({ success: false, message: 'Không có quyền hủy' });
+        // Bảo mật: Chặn quyền
+        if (currentUserRole !== 'admin' && String(order.user_id) !== String(currentUserId)) {
+             return res.status(403).json({ success: false, message: 'Không có quyền hủy đơn này' });
         }
 
         if (!['pending', 'processing', 'unpaid'].includes(order.status)) {
@@ -331,7 +351,6 @@ exports.deleteOrder = async (req, res) => {
     }
 };
 
-//CHANGE
 exports.getReportStats = async (req, res) => {
     try {
         const stats = await OrderModel.getStats();
@@ -340,17 +359,16 @@ exports.getReportStats = async (req, res) => {
         const filledRevenue = [];
         const today = new Date();
         
-        // Vòng lặp tạo 6 tháng gần nhất (từ quá khứ -> hiện tại)
+        // Vòng lặp tạo 6 tháng gần nhất 
         for (let i = 5; i >= 0; i--) {
             const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
             const monthStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
             
-            // Tìm xem trong DB có tháng này không
             const found = stats.revenueByMonth.find(item => item.name === monthStr);
             
             filledRevenue.push({
                 name: monthStr,
-                value: found ? found.value : 0 // Nếu không có thì là 0
+                value: found ? found.value : 0 
             });
         }
 

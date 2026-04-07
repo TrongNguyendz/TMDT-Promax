@@ -72,22 +72,17 @@ const StaffSchema = new mongoose.Schema({
 // ============================
 
 // Tự động sinh id tăng dần khi tạo mới
-StaffSchema.pre('save', async function (next) {
+StaffSchema.pre('save', async function () {
   if (!this.isNew) {
-    return next();
+    return;
   }
 
-  try {
-    const lastUser = await this.constructor.findOne()
-      .sort({ id: -1 })
-      .select('id')
-      .lean();
+  const lastUser = await this.constructor.findOne()
+    .sort({ id: -1 })
+    .select('id')
+    .lean();
 
-    this.id = lastUser && lastUser.id ? lastUser.id + 1 : 2000; // Bắt đầu từ 2000 để tránh trùng với user_id
-    next();
-  } catch (err) {
-    next(err);
-  }
+  this.id = lastUser && lastUser.id ? lastUser.id + 1 : 2000;
 });
 
 

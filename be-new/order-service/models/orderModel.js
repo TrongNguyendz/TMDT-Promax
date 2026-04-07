@@ -3,7 +3,7 @@ const generateOrderNumber = require('../functions/orderNumber');
 
 // Định nghĩa Schema cho Item 
 const OrderItemSchema = new mongoose.Schema({
-    product_id: { type: Number, required: true },
+    product_id: { type: String, required: true },
     product_name: String,
     product_image: String,
     unit_price: Number,
@@ -16,7 +16,7 @@ const OrderItemSchema = new mongoose.Schema({
 //  Định nghĩa Schema cho Order
 const OrderSchema = new mongoose.Schema({
     order_number: { type: String, unique: true },
-    user_id: { type: Number, required: true },
+    user_id: { type: String, required: true },
     
     // Snapshot Address
     shipping_fullname: String,
@@ -126,31 +126,37 @@ module.exports = {
 
     // BÁO CÁO THỐNG KÊ
     getStats: async () => {
-        const now = new Date();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(now.getDate() - 6);
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 6);
 
-        // 1. KPI Tổng
-        const kpi = await Order.aggregate([
+    const [
+        kpi,
+        revenueWeek,
+        uniqueBuyers,
+        revenueByMonth,
+        topProducts,
+        orderStatus
+    ] = await Promise.all([
+
+        // 1. KPI Tổng (chỉ tính delivered)
+        Order.aggregate([
+            { $match: { status: "delivered" } },
             {
                 $group: {
                     _id: null,
                     total_orders: { $sum: 1 },
-                    total_revenue: { 
-                        $sum: { 
-                            $cond: [{ $ne: ["$status", "cancelled"] }, "$final_amount", 0] 
-                        } 
-                    },
-                    total_products: { $sum: { $size: "$items" } } // Đếm số item trong mảng
+                    total_revenue: { $sum: "$final_amount" },
+                    total_products: { $sum: { $size: "$items" } }
                 }
             }
-        ]);
+        ]),
 
-        // 2. Doanh thu tuần này
-        const revenueWeek = await Order.aggregate([
+        // 2. Doanh thu tuần
+        Order.aggregate([
             {
                 $match: {
-                    status: { $ne: "cancelled" },
+                    status: "delivered",
                     created_at: { $gte: sevenDaysAgo }
                 }
             },
@@ -160,26 +166,35 @@ module.exports = {
                     value: { $sum: "$final_amount" }
                 }
             }
-        ]);
+        ]),
 
-        // 3. Người mua (Distinct user_id)
-        const uniqueBuyers = await Order.distinct("user_id", { status: { $ne: "cancelled" } });
+        // 3. Người mua (distinct)
+        Order.distinct("user_id", {
+            status: "delivered"
+        }),
 
-        // 4. Doanh thu theo tháng (Format %m/%Y)
-        const revenueByMonth = await Order.aggregate([
-            { $match: { status: { $ne: "cancelled" } } },
+        // 4. Doanh thu theo tháng
+        Order.aggregate([
+            { $match: { status: "delivered" } },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%m/%Y", date: "$created_at", timezone: "+07:00" } },
+                    _id: {
+                        $dateToString: {
+                            format: "%m/%Y",
+                            date: "$created_at",
+                            timezone: "+07:00"
+                        }
+                    },
                     value: { $sum: "$final_amount" }
                 }
             },
-            { $sort: { "_id": -1 } }, 
+            { $sort: { "_id": -1 } },
             { $limit: 6 }
-        ]);
+        ]),
 
         // 5. Top sản phẩm
-        const topProducts = await Order.aggregate([
+        Order.aggregate([
+            { $match: { status: "delivered" } },
             { $unwind: "$items" },
             {
                 $group: {
@@ -191,10 +206,10 @@ module.exports = {
             },
             { $sort: { quantity: -1 } },
             { $limit: 5 }
-        ]);
+        ]),
 
-        // 6. Trạng thái đơn hàng
-        const orderStatus = await Order.aggregate([
+        // 6. Trạng thái đơn hàng (GIỮ NGUYÊN - không filter)
+        Order.aggregate([
             {
                 $group: {
                     _id: "$status",
@@ -202,15 +217,22 @@ module.exports = {
                     count: { $sum: 1 }
                 }
             }
-        ]);
+        ])
+    ]);
 
-        return {
-            kpi: kpi[0] || { total_orders: 0, total_revenue: 0, total_products_sold: 0 },
-            revenueWeek: revenueWeek[0]?.value || 0,
-            payingUsers: uniqueBuyers.length,
-            revenueByMonth: revenueByMonth.map(m => ({ name: m._id, value: m.value })).reverse(),
-            topProducts,
-            orderStatus
-        };
-    }
+    return {
+        kpi: kpi[0] || {
+            total_orders: 0,
+            total_revenue: 0,
+            total_products: 0
+        },
+        revenueWeek: revenueWeek[0]?.value || 0,
+        payingUsers: uniqueBuyers.length,
+        revenueByMonth: revenueByMonth
+            .map(m => ({ name: m._id, value: m.value }))
+            .reverse(),
+        topProducts,
+        orderStatus
+    };
+}
 };

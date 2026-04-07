@@ -11,49 +11,11 @@ exports.healthCheck = (_req, res) => {
   });
 }
 
-// Cập nhật avatar người dùng (1 ảnh)
-// exports.updateAvatar = async (req, res) => {
-//   try {
-//     const userId = req.params.id;
-
-//     const user = await UserModel.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Không tìm thấy người dùng'
-//       });
-//     }
-
-//     if (!req.file) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Vui lòng upload file avatar'
-//       });
-//     }
-
-//     const avatarUrl = `/uploads/${req.file.filename}`;
-
-//     const updatedUser = await UserModel.updateUser(userId, { avatar_url: avatarUrl });
-
-//     res.json({
-//       success: true,
-//       message: 'Cập nhật avatar thành công',
-//       data: UserModel.sanitizeUser(updatedUser)
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: 'Không thể cập nhật avatar',
-//       error: error.message
-//     });
-//   }
-// };
-
-// Cập nhật avatar (1 ảnh)
 exports.updateAvatar = async (req, res) => {
   try {
-    const userId = req.params.id;
-    const user = await UserModel.findById(userId);
+    const userId = Number(req.params.id); // giữ string, helper sẽ Number() bên trong
+
+    const user = await UserModel.findById(userId);   // ← ĐÚNG cách
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -70,12 +32,15 @@ exports.updateAvatar = async (req, res) => {
 
     const newAvatarUrl = `/uploads/${req.file.filename}`;
 
-    // XÓA ẢNH CŨ NẾU CÓ
     if (user.avatar_url) {
       deleteOldAvatar(user.avatar_url);
     }
 
     const updatedUser = await UserModel.updateUser(userId, { avatar_url: newAvatarUrl });
+
+    if (!updatedUser) {
+      return res.status(500).json({ success: false, message: 'Cập nhật thất bại' });
+    }
 
     res.json({
       success: true,
@@ -83,7 +48,7 @@ exports.updateAvatar = async (req, res) => {
       data: UserModel.sanitizeUser(updatedUser)
     });
   } catch (error) {
-    console.error(error);
+    console.error('Update avatar error:', error);
     res.status(500).json({
       success: false,
       message: 'Không thể cập nhật avatar',
@@ -235,8 +200,6 @@ exports.updateUser = async (req, res) => {
       full_name: req.body.full_name,
       phone: req.body.phone,
       avatar_url: req.body.avatar_url,
-
-
     };
 
     if (req.body.password) {

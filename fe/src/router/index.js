@@ -20,6 +20,9 @@ const OrderHistory = () => import('../pages/customer/OrderHistory.vue');
 const OrderDetail = () => import('../pages/customer/OrderDetail.vue');
 const OrderTracking = () => import('../pages/customer/OrderTracking.vue');
 const Invoice = () => import('../pages/customer/Invoice.vue');
+const TotalAmountSpent = () => import('../pages/customer/TotalAmount.vue');
+const SupportPage = () => import('../pages/customer/support.vue');
+const CompareProductPage = () => import('../pages/customer/CompareProductPage.vue');
 
 // Admin pages
 const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
@@ -36,6 +39,8 @@ const TryOnClothesWithAI = () => import('../pages/customer/TryOnClothesWithAIPag
 const StaffManagement = () => import('../pages/admin/StaffManagement.vue');
 const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
+const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
+
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
 const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
@@ -52,16 +57,19 @@ const StaffComment = () => import('../pages/Staff/Comment.vue')
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
+	// { path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
-	{ path: '/cart', component: CartPage },
-	{ path: '/checkout', component: CheckoutPage },
+	{ path: '/cart', component: CartPage, meta: { requiresAuth: true } },
+	{ path: '/checkout', component: CheckoutPage, meta: { requiresAuth: true } },
 	{ path: '/auth', component: AuthPage, meta: { publicOnly: true } },
-	{ path: '/wishlist', component: WishlistPage },
+	{ path: '/wishlist', component: WishlistPage, meta: { requiresAuth: true } },
 	{ path: '/search', component: SearchResults },
 	{ path: '/about', component: AboutPage },
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
 	{ path: '/try-on/:id', component: TryOnClothesWithAI },
+	{ path: '/total-amount', component: TotalAmountSpent },
+	{ path: '/support', component: SupportPage },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },
@@ -83,6 +91,7 @@ const routes = [
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
     { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
     { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },
+    { path: '/admin/support', component: AdminSupport, meta: { requiresAdmin: true } },
 
 	// Staff routes (can be added similarly to admin routes if needed)
 	{ path: '/staff/welcome', component: StaffWelcome, meta: { requiresStaff: true } },
@@ -111,19 +120,29 @@ const router = createRouter({
 	}
 });
 
-// router.beforeEach((to) => {
-// 	const user = useUserStore();
-// 	if (to.meta?.requiresAuth && !user.isAuthenticated) {
-// 		return { path: '/auth', query: { redirect: to.fullPath } };
-// 	}
-// 	if (to.meta?.publicOnly && user.isAuthenticated) {
-// 		return { path: '/' };
-// 	}
-// 	if (to.meta?.requiresAdmin && (!user.isAuthenticated || user.role !== 'admin')) {
-// 		return { path: '/' };
-// 	}
-// 	return true;
-// });
+
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    const isAuth = userStore.token && userStore.token !== 'null' && userStore.token !== 'undefined';
+    const role = userStore.profile?.role || 'guest';
+
+    // 1. Chặn người dùng chưa đăng nhập vào trang cá nhân
+    if (to.meta?.requiresAuth && !isAuth) {
+        return next({ path: '/auth', query: { redirect: to.fullPath } });
+    }
+
+    // 2. Chặn người dùng đã đăng nhập vào lại trang Login/Register
+    if (to.meta?.publicOnly && isAuth) {
+        return next({ path: '/' });
+    }
+
+    // 3. Chặn người dùng thường vào trang Admin
+    if (to.meta?.requiresAdmin && (!isAuth || role !== 'admin')) {
+        return next({ path: '/' });
+    }
+
+    next();
+});
 
 export default router;
 

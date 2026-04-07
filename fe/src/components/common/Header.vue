@@ -87,6 +87,12 @@
                   <RouterLink to="/wishlist" @click="isDropdownOpen = false" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
                     Yêu thích
                   </RouterLink>
+                  <RouterLink to="/total-amount" @click="isDropdownOpen = false" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+                    tổng chi tiêu 
+                  </RouterLink>
+                  <RouterLink to="/support" @click="isDropdownOpen = false" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+                    hỗ trợ khách hàng
+                  </RouterLink>
                 </div>
                 <div class="py-1">
                   <button @click="logoutAndClose" class="flex w-full items-center gap-3 px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
@@ -180,6 +186,7 @@ async function logout() {
 function logoutAndClose() {
   isDropdownOpen.value = false;
   logout();
+  localStorage.removeItem('support_ticket_id');
 }
 </script>
 
