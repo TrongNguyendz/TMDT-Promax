@@ -1,7 +1,7 @@
 // fe/src/utils/socketService.js
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = 'https://tmdt-promax-api-gateway.onrender.com';
+const SOCKET_URL = 'https://tmdt-promax-staff-service.onrender.com';
 
 class SocketService {
   constructor() {

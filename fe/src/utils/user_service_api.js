@@ -77,7 +77,7 @@ export const UpdateUserAvatar = async (userId, file, token) => {
     formData.append("avatar", file);
 
     return await axios.put(
-        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users/${userId}/avatar`,
+        `http://localhost:3001/api/v1/users/${userId}/avatar`,
         formData,
         {
             headers: {
@@ -91,7 +91,7 @@ export const UpdateUserAvatar = async (userId, file, token) => {
 export const getavartar = async (url) => {
     // if (!token) throw new Error('Token is required');   
     return await axios.get(
-        `https://tmdt-promax-api-gateway.onrender.com${url}`
+        `http://localhost:3001${url}`
     );
 }   
 
