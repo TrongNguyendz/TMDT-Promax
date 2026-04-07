@@ -29,3 +29,6 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+be-new/api-gateway/logs/access.log
+# hoặc ignore toàn bộ thư mục logs nếu muốn:
+be-new/api-gateway/logs/
