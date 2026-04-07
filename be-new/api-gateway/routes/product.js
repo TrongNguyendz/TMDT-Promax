@@ -86,6 +86,11 @@ router.delete('/categories/:id', authMiddleware, (req, res, next) => {
   next();
 }, productServiceProxy);
 
+router.post('/products/increase-sold', authMiddleware, (req, res, next) => {
+  clearCache('/api/v1/products');
+  next();
+}, productServiceProxy);
+
 router.put('/products/:id/stock', authMiddleware, (req, res, next) => {
 clearCache('/api/v1/products'); // Xóa cache sản phẩm để cập nhật số lượng mới
   next();

@@ -8,11 +8,18 @@
     "test": "mocha --exit test/**/*.test.js"
   },
   "dependencies": {
+<<<<<<< HEAD:be/user-service(Trọng)/package.json
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.22.1",
+=======
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+>>>>>>> 406bd0b4e49b17da309d3078395a9cb8df6a6198:be/user-service/package.json
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^5.1.7"

@@ -51,14 +51,19 @@ productApi.interceptors.response.use(
   }
 );
 
-export const getlistproduct = async () => {
+export const getListProducts = async () => {
     // if (!token) throw new Error('Token is required');
-    return await axios.get('http://localhost:3000/api/v1/products');
+    return productApi.get('/products');
 }
 
 export const getmainimagebySKU = async (sku) => {
     // if (!token) throw new Error('Token is required');
     return await axios.get(`http://localhost:3000/api/v1/products/sku/${sku}/primary-image`);
+}
+
+export const getTopProducts = async () => {
+    // if (!token) throw new Error('Token is required');
+    return await productApi.get('http://localhost:3000/api/v1/products/top');
 }
 
 export default productApi;

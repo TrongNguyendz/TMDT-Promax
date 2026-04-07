@@ -383,12 +383,12 @@ const donutSeries = computed(() => {
     filteredInvoices.value.forEach(inv => {
         if (counts[inv.status] !== undefined) counts[inv.status]++;
     });
-    return [counts.pending, counts.confirmed, counts.shipped, counts.delivered, counts.cancelled];
+    return [counts.pending, counts.confirmed, counts.packed, counts.shipping, counts.delivered, counts.cancelled];
 });
 
 const donutOptions = ref({
-    labels: ['Chờ xác nhận', 'Đã xác nhận', 'Đang giao', 'Đã giao', 'Đã hủy'],
-    colors: ['#FBBF24', '#3B82F6', '#8B5CF6', '#10B981', '#EF4444'],
+    labels: ['Chờ xác nhận', 'Đã xác nhận', 'Đã đóng gói', 'Đang giao', 'Đã giao', 'Đã hủy'],
+    colors: ['#FBBF24', '#3B82F6', '#8B5CF6', '#ff7f17', '#10B981', '#EF4444'],
     chart: { fontFamily: 'inherit', background: 'transparent' },
     stroke: { show: false },
     dataLabels: { enabled: false },
@@ -443,7 +443,7 @@ function formatDate(date) {
 }
 
 function getStatusLabel(status) {
-    const labels = { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', shipped: 'Đang giao', delivered: 'Đã giao', cancelled: 'Đã hủy' };
+    const labels = { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', packed: 'Đã đóng gói', shipping: 'Đang giao', delivered: 'Đã giao', cancelled: 'Đã hủy' };
     return labels[status] || status;
 }
 

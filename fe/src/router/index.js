@@ -43,7 +43,7 @@ const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
-const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
 const StaffOrders = () => import('../pages/Staff/Orders.vue');
 // const StaffEvents = () => import('../pages/Staff/Events.vue');
 const StaffSupport = () => import('../pages/Staff/Support.vue');
@@ -68,8 +68,8 @@ const routes = [
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
 	{ path: '/try-on/:id', component: TryOnClothesWithAI },
-	{ path: '/total-amount', component: TotalAmountSpent },
-	{ path: '/support', component: SupportPage },
+	// { path: '/total-amount', component: TotalAmountSpent },
+	// { path: '/support', component: SupportPage },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },

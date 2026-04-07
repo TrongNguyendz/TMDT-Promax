@@ -248,11 +248,12 @@ function formatDate(date) {
 
 function getStatusLabel(status) {
 	const labels = {
-		pending: '⏳ Chờ xác nhận',
-		confirmed: '✓ Đã xác nhận',
-		shipped: '📦 Đang giao',
-		delivered: '✓ Đã giao',
-		cancelled: '✗ Đã hủy'
+		pending: 'Chờ xác nhận',
+		confirmed: 'Đã xác nhận',
+		packed: 'Đã đóng gói',
+		shipping: 'Đang giao',
+		delivered: 'Đã giao',
+		cancelled: 'Đã hủy'
 	};
 	return labels[status] || status;
 }

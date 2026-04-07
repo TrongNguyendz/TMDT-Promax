@@ -185,9 +185,12 @@ const conversionRate = computed(() => {
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
 
 const getStatusClass = (status) => {
+  if (status === 'pending') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+  if (status === 'confirmed') return 'bg-blue-100 text-blue-700 border-blue-200';
+  if (status === 'packed') return 'bg-purple-100 text-purple-700 border-purple-200';
+  if (status === 'shipping') return 'bg-orange-100 text-orange-700 border-orange-200';
   if (status === 'delivered') return 'bg-green-100 text-green-700 border-green-200';
   if (status === 'cancelled') return 'bg-red-100 text-red-700 border-red-200';
-  if (status === 'shipping') return 'bg-blue-100 text-blue-700 border-blue-200';
   return 'bg-yellow-100 text-yellow-700 border-yellow-200';
 };
 

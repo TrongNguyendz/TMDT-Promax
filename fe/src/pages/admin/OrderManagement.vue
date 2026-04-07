@@ -91,7 +91,7 @@
                   </span>
                 </button>
 
-                <div v-else-if="order.status === 'deliver'" class="flex items-center gap-1 text-green-500 font-black text-[10px] uppercase italic">
+                <div v-else-if="order.status === 'delivered'" class="flex items-center gap-1 text-green-500 font-black text-[10px] uppercase italic">
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                   </svg>
@@ -129,8 +129,11 @@ let refreshTimer = null;
 const statusOptions = [
   { value: "all", label: "Tất cả" },
   { value: "pending", label: "Chờ xác nhận" },
-  { value: "takepacking", label: "Chờ lấy hàng" },
-  { value: "deliver", label: "Đã giao vận" }
+  { value: "packed", label: "Đã đóng gói" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "shipping", label: "Đang giao" },
+  { value: "delivered", label: "Đã giao" },
+  { value: "cancelled", label: "Đã hủy" }
 ];
 
 const orders = computed(() => orderStore.orders);
@@ -160,11 +163,17 @@ const handleNextStep = async (order) => {
   let msg = '';
 
   if (order.status === 'pending') {
-    nextStatus = 'takepacking';
+    nextStatus = 'confirmed';
     msg = `Xác nhận Duyệt đơn #${order.order_number}?`;
-  } else if (order.status === 'takepacking') {
-    nextStatus = 'deliver';
-    msg = `Xác nhận đơn #${order.order_number} đã giao cho vận chuyển?`;
+  } else if (order.status === 'confirmed') {
+    nextStatus = 'packed';
+    msg = `Xác nhận đơn #${order.order_number} đã được đóng gói?`;
+  } else if (order.status === 'packed') {
+    nextStatus = 'shipping';
+    msg = `Xác nhận đơn #${order.order_number} đang được giao?`;
+  } else if (order.status === 'shipping') {
+    nextStatus = 'delivered';
+    msg = `Xác nhận đơn #${order.order_number} đã giao thành công?`;
   }
 
   if (nextStatus && confirm(msg)) {
@@ -196,18 +205,22 @@ onUnmounted(() => {
 const statusBadgeClass = (s) => {
   const map = {
     pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500",
-    takepacking: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
-    deliver: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500",
-    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500",
+    confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
+    packed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
+    shipping: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500",
+    delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500",
+    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500"
   };
-  return map[s] || "bg-gray-100 text-gray-600";
+  return map[s] || "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500";
 };
 
 const getStatusLabel = (s) => {
   const map = {
     pending: "Chờ xác nhận",
-    takepacking: "Chờ lấy hàng",
-    deliver: "Đã giao vận",
+    confirmed: "Đã xác nhận",
+    packed: "Đã đóng gói",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
     cancelled: "Đã hủy"
   };
   return map[s] || s;

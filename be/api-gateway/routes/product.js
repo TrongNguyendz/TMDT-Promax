@@ -8,6 +8,10 @@ const { cacheMiddleware, clearCache } = require('../middlewares/cache');
 const proxyHelper = {
   onProxyReq: (proxyReq, req, res) => {
     const contentType = req.headers['content-type'];
+
+    // ❌ BỎ QUA nếu là GET
+    if (req.method === 'GET') return;
+    
     // Nếu là upload ảnh -> Để nguyên stream
     if (contentType && contentType.includes('multipart/form-data')) return;
     
@@ -22,7 +26,7 @@ const proxyHelper = {
   onError: (err, req, res) => {
     if (!res.headersSent) res.status(503).json({ message: 'Product Service Unavailable' });
   }
-};
+}; 
 
 const productServiceProxy = createProxyMiddleware({
   target: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002',
@@ -41,6 +45,7 @@ router.get('/products/:id', cacheMiddleware(300), productServiceProxy);
 router.get('/categories', cacheMiddleware(300), productServiceProxy);
 router.get('/products/:id/download', productServiceProxy); 
 router.get('/products/:id/reviews', productServiceProxy); 
+router.get('/products/top', cacheMiddleware(300), productServiceProxy);
 router.get('/products/sku/:sku/primary-image', cacheMiddleware(300), productServiceProxy);
 // --- CAN XAC THUC ---
 router.post('/products', authMiddleware, (req, res, next) => {
