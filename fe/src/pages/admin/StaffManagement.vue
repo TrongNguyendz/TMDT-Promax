@@ -20,7 +20,7 @@
       </button>
     </div>
 
-    <!-- Tabs -->
+  <!-- Tabs -->
     <div class="flex border-b border-gray-100 dark:border-gray-800">
       <button
         @click="activeTab = 'management'"
