@@ -55,7 +55,7 @@ exports.recordCategoryClick = async (req, res) => {
 // Lấy danh sách category_id mà user hay click nhất (dùng để recommend)
 exports.getRecentCategories = async (req, res) => {
   try {
-    const userId = Number(req.user?.id || req.params.userId || req.body.userId);
+    const userId = Number(req.user?.id || req.query.userId || req.params.userId);
 
     if (!userId || isNaN(userId)) {
       return res.status(400).json({
