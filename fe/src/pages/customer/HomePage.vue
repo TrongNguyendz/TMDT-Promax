@@ -219,10 +219,6 @@ async function loadBanners() {
     }
   } catch (err) {
     bannerData.value = [
-<<<<<<< HEAD
-      { type: 'image', src: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?q=80&w=2070&auto=format&fit=crop', title: 'Mùa hè', subtitle: 'Giảm giá đặc biệt.' },
-      { type: 'image', src: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop', title: 'Cuối tuần', subtitle: 'Ưu đãi tuyệt vời.' },
-=======
       { type: "image", src: bannerUrl, title: "", subtitle: "" },
       {
         type: "image",
@@ -237,7 +233,6 @@ async function loadBanners() {
         subtitle: "Ưu đãi tuyệt vời.",
       },
       { type: "image", src: bannerUrl, title: "", subtitle: "" },
->>>>>>> 0e6853b324a2f8311963d6da46181ea8c6a50460
     ];
   } finally {
     bannerLoading.value = false;
