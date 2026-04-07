@@ -167,7 +167,7 @@ const displayOrders = computed(() => {
   return [
     { id: 1, order_number: 'ORD-1001', status: 'delivered', final_amount: 1500000, created_at: new Date(now.getFullYear(), now.getMonth(), 5).toISOString(), items: [{}, {}] },
     { id: 2, order_number: 'ORD-1002', status: 'delivered', final_amount: 3200000, created_at: new Date(now.getFullYear(), now.getMonth() - 1, 15).toISOString(), items: [{}, {}, {}] },
-    { id: 3, order_number: 'ORD-1003', status: 'processing', final_amount: 850000, created_at: new Date(now.getFullYear(), now.getMonth() - 2, 20).toISOString(), items: [{}] },
+    { id: 3, order_number: 'ORD-1003', status: 'shipping', final_amount: 850000, created_at: new Date(now.getFullYear(), now.getMonth() - 2, 20).toISOString(), items: [{}] },
     { id: 4, order_number: 'ORD-1004', status: 'delivered', final_amount: 2100000, created_at: new Date(now.getFullYear(), now.getMonth() - 3, 10).toISOString(), items: [{}, {}] },
     { id: 5, order_number: 'ORD-1005', status: 'delivered', final_amount: 4500000, created_at: new Date(now.getFullYear(), now.getMonth() - 4, 5).toISOString(), items: [{}, {}, {}, {}] },
   ];
@@ -255,11 +255,11 @@ const chartData = computed(() => {
 const getStatusLabel = (status) => {
   const map = {
     pending: 'Chờ xác nhận',
-    processing: 'Đang xử lý',
-    shipping: 'Đang giao hàng',
-    delivered: 'Hoàn tất',
-    cancelled: 'Đã hủy',
-    unpaid: 'Chưa thanh toán'
+    confirmed: 'Đã xác nhận',
+    packed: 'Đã đóng gói',
+    shipping: 'Đang giao',
+    delivered: 'Đã giao',
+    cancelled: 'Đã hủy'
   };
   return map[status] || status;
 };

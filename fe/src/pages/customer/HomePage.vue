@@ -186,6 +186,7 @@ import { useUserStore } from "../../stores/user";
 
 const cart = useCartStore();
 const productsStore = useProductsStore();
+const bannerUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop';
 
 const userStore = useUserStore();
 const page = ref(1);

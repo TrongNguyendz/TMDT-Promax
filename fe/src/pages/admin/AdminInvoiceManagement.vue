@@ -20,8 +20,9 @@
 						class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
 						<option value="">Tất cả trạng thái</option>
 						<option value="pending">Chờ xác nhận</option>
+						<option value="packed">Đã đóng gói</option>
 						<option value="confirmed">Đã xác nhận</option>
-						<option value="shipped">Đang giao</option>
+						<option value="shipping">Đang giao</option>
 						<option value="delivered">Đã giao</option>
 						<option value="cancelled">Đã hủy</option>
 					</select>
@@ -255,7 +256,8 @@ function getStatusLabel(status) {
 	const labels = {
 		pending: 'Chờ xác nhận',
 		confirmed: 'Đã xác nhận',
-		shipped: 'Đang giao',
+		packed: 'Đã đóng gói',
+		shipping: 'Đang giao',
 		delivered: 'Đã giao',
 		cancelled: 'Đã hủy'
 	};

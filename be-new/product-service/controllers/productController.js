@@ -46,6 +46,46 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+exports.getTopProducts = async (req, res) => {
+  try {
+    const data = await ProductModel.getTopProducts();
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+exports.increaseSold = async (req, res) => {
+  try {
+    const { items } = req.body
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu items'
+      })
+    }
+
+    await ProductModel.increaseSold(items)
+
+    res.json({
+      success: true,
+      message: 'Đã cập nhật sold'
+    })
+  } catch (err) {
+    console.error('increaseSold error:', err)
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Lỗi cập nhật sold'
+    })
+  }
+}
+
 exports.createProduct = async (req, res) => {
   let payload;
   try {

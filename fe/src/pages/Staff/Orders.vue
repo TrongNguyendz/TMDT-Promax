@@ -8,6 +8,43 @@
         <h2 class="text-xl font-bold">Danh sách đơn hàng</h2>
       </div>
       <div class="overflow-x-auto">
+        <div class="p-6 border-b dark:border-gray-800 flex flex-col lg:flex-row gap-3">
+          <!-- search -->
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="Tìm mã đơn, khách hàng, sản phẩm..."
+            class="border rounded-lg px-3 py-2 flex-1 dark:bg-gray-800"
+          />
+
+          <!-- status -->
+          <select v-model="statusFilter" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Chờ xác nhận">Chờ xác nhận</option>
+            <option value="Đã xác nhận">Đã xác nhận</option>
+            <option value="Đã đóng gói">Đã đóng gói</option>
+            <option value="Đang giao">Đang giao</option>
+            <option value="Đã giao">Đã giao</option>
+            <option value="Đã hủy">Đã hủy</option>
+          </select>
+
+          <!-- quantity -->
+          <select v-model="quantityFilter" class="border rounded-lg px-3 py-2 w-full lg:w-40 dark:bg-gray-800">
+            <option value="">Số lượng</option>
+            <option value="1">1</option>
+            <option value="2">2+</option>
+            <option value="5">5+</option>
+          </select>
+
+          <!-- price -->
+          <select v-model="priceFilter" class="border rounded-lg px-3 py-2 w-full lg:w-48 dark:bg-gray-800">
+            <option value="">Giá tiền</option>
+            <option value="500000">≥ 500k</option>
+            <option value="1000000">≥ 1 triệu</option>
+            <option value="2000000">≥ 2 triệu</option>
+          </select>
+
+        </div>
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead class="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -21,8 +58,8 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            <tr v-for="order in orders" :key="order.id">
-              <td class="px-6 py-5 whitespace-nowrap text-sm font-medium">#{{ order.id }}</td>
+            <tr v-for="order in paginatedOrders" :key="order.id">
+              <td class="px-6 py-5 whitespace-nowrap text-sm font-medium">{{ order.id }}</td>
               <td class="px-6 py-5 whitespace-nowrap">{{ order.customer }}</td>
               <td class="px-6 py-5">{{ order.product }}</td>
               <td class="px-6 py-5 text-center">{{ order.quantity }}</td>
@@ -32,29 +69,221 @@
                   {{ order.status }}
                 </span>
               </td>
-              <td class="px-6 py-5 text-right">
-                <button class="text-teal-600 hover:text-teal-800 font-medium">Chi tiết</button>
+              <td class="px-6 py-5 text-right relative">
+                <div
+                  class="inline-block relative"
+                  @mouseenter="startPreview(order)"
+                  @mouseleave="stopPreview"
+                >
+                  <button class="text-teal-600 hover:text-teal-800 font-medium">
+                    Ảnh sản phẩm
+                  </button>
+
+                  <!-- Tooltip ảnh -->
+                  <div
+                    v-if="hoveredOrder?.id === order.id"
+                    class="absolute bottom-full right-0 mb-2 w-40 h-40 
+                          bg-white dark:bg-gray-900 
+                          border border-gray-200 dark:border-gray-700 
+                          rounded-xl shadow-xl 
+                          z-[9999] p-2 flex items-center justify-center"
+                  >
+                    <img
+                      v-if="imagesMap[order.id]?.length"
+                      :src="imagesMap[order.id][currentImageIndex]"
+                      class="w-full h-full object-cover rounded transition-opacity duration-500"
+                    />
+
+                    <!-- fallback -->
+                    <div
+                      v-else
+                      class="w-full h-full flex items-center justify-center text-gray-400 text-sm"
+                    >
+                      No Image
+                    </div>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
+        <div class="flex justify-center items-center gap-2 py-4">
+        <button
+          @click="changePage(currentPage-1)"
+          :disabled="currentPage === 1"
+          class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+        >
+          Prev
+        </button>
+
+        <button
+          v-for="page in totalPages"
+          :key="page"
+          @click="changePage(page)"
+          :class="[
+            'px-2 py-1 text-sm border rounded-md min-w-[32px]',
+            page === currentPage ? 'bg-teal-500 text-white border-teal-500' : ''
+          ]"
+        >
+          {{ page }}
+        </button>
+
+        <button
+          @click="changePage(currentPage+1)"
+          :disabled="currentPage === totalPages"
+          class="px-2 py-1 text-sm border rounded-md disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import orderApi from '@/utils/order_service_api';
 
-const orders = ref([
-  { id: 'ORD-0421', customer: 'Nguyễn Văn A', product: 'Áo thun oversize', quantity: 2, total: 1200000, status: 'Đã thanh toán' },
-  { id: 'ORD-0420', customer: 'Trần Thị B', product: 'Quần jeans slim', quantity: 1, total: 450000, status: 'Chờ xác nhận' },
-  { id: 'ORD-0419', customer: 'Lê Minh C', product: 'Váy maxi dài', quantity: 4, total: 2400000, status: 'Đã đóng gói 2/4' },
-]);
+const searchKeyword = ref('')
+const statusFilter = ref('')
+const quantityFilter = ref('')
+const priceFilter = ref('')
+
+const currentPage = ref(1)
+const perPage = 10
+
+const hoveredOrder = ref(null)
+const currentImageIndex = ref(0)
+let interval = null
+
+const orders = ref([])
+const imagesMap = ref({})
+
+const mapStatus = (status) => {
+  switch (status) {
+    case 'pending': return 'Chờ xác nhận'
+    case 'confirmed': return 'Đã xác nhận'
+    case 'packed': return 'Đã đóng gói'
+    case 'shipping': return 'Đang giao'
+    case 'delivered': return 'Đã giao'
+    case 'cancelled': return 'Đã hủy'
+    default: return status
+  }
+}
+
+const loadOrders = async () => {
+  try {
+    const res = await orderApi.getOrders()
+    const data = res.data.data || []
+    imagesMap.value = {}
+
+    orders.value = data.map(o => {
+    const images = (o.items || [])
+      .map(i => i.product_image)
+      .filter(Boolean)
+
+    imagesMap.value[o.order_number] = images
+
+    return {
+      id: o.order_number,
+      customer: o.shipping_fullname || '---',
+      product: o.items?.map(i => i.product_name).join(', '),
+      quantity: o.items?.reduce((sum, i) => sum + i.quantity, 0) || 0,
+      total: o.total_amount || 0,
+      status: mapStatus(o.status)
+    }
+  })
+} catch (err) {
+    console.error('❌ Load orders lỗi:', err)
+  }
+}
+
+const filteredOrders = computed(() => {
+  let data = [...orders.value]
+
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+
+    data = data.filter(o =>
+      o.id.toLowerCase().includes(keyword) ||
+      o.customer.toLowerCase().includes(keyword) ||
+      o.product.toLowerCase().includes(keyword)
+    )
+  }
+
+  if (statusFilter.value) {
+    data = data.filter(o =>
+      o.status.includes(statusFilter.value)
+    )
+  }
+
+  if (quantityFilter.value) {
+    const q = Number(quantityFilter.value)
+    data = data.filter(o => o.quantity >= q)
+  }
+
+  if (priceFilter.value) {
+    const price = Number(priceFilter.value)
+    data = data.filter(o => o.total >= price)
+  }
+
+  return data
+})
+
+const totalPages = computed(() =>
+  Math.ceil(filteredOrders.value.length / perPage)
+)
+
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * perPage
+  return filteredOrders.value.slice(start, start + perPage)
+})
+
+function changePage(page) {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const startPreview = (order) => {
+  hoveredOrder.value = order
+  currentImageIndex.value = 0
+
+  const images = imagesMap.value[order.id] || []
+
+  if (images.length <= 1) return
+
+  interval = setInterval(() => {
+    currentImageIndex.value =
+      (currentImageIndex.value + 1) % images.length
+  }, 1500) // đổi mỗi 1.5s
+}
+
+const stopPreview = () => {
+  hoveredOrder.value = null
+  currentImageIndex.value = 0
+
+  if (interval) {
+    clearInterval(interval)
+    interval = null
+  }
+}
 
 function getStatusClass(status) {
-  if (status === 'Đã thanh toán') return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
-  if (status === 'Chờ xác nhận') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+  switch (status) {
+    case 'Chờ xác nhận': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+    case 'Đã xác nhận': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    case 'Đã đóng gói': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+    case 'Đang giao': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+    case 'Đã giao': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+    case 'Đã hủy': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    default:
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+  }
 }
+
+onMounted(() => {
+  loadOrders()
+})
 </script>

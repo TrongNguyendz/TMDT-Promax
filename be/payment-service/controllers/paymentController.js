@@ -154,8 +154,8 @@ exports.vnpayIpn = async (req, res) => {
                     await axios.put(`http://localhost:3003/api/orders/${orderId}/status`, { 
                         status: 'processing',
                         payment_status: 'paid',        // ← THÊM DÒNG NÀY
-    paid_at: new Date().toISOString()  // Tùy chọn: thêm thời gian thanh toán
-});
+                        paid_at: new Date().toISOString()  // Tùy chọn: thêm thời gian thanh toán
+                    });
                     console.log(`   -> Đã cập nhật Order Service: ${orderId} sang PAID`);
                 } catch (orderErr) {
                     console.error("   -> Lỗi khi gọi Order Service:", orderErr.message);

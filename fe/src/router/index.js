@@ -67,8 +67,8 @@ const routes = [
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
 	{ path: '/try-on/:id', component: TryOnClothesWithAI },
-	{ path: '/total-amount', component: TotalAmountSpent },
-	{ path: '/support', component: SupportPage },
+	// { path: '/total-amount', component: TotalAmountSpent },
+	// { path: '/support', component: SupportPage },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },

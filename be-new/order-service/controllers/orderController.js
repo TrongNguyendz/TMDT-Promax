@@ -107,6 +107,18 @@ exports.createOrder = async (req, res) => {
                 throw new Error(stockError.message || 'Lỗi cập nhật tồn kho');
             }
         }
+
+        // Tăng sold
+        await axios.post(
+            `${GATEWAY_URL}/products/increase-sold`,
+            {
+                items: items
+            },
+            {
+                headers: { Authorization: token }
+            }
+        )
+
          // 👇 THÊM PHẦN NÀY SAU KHI TRỪ KHO THÀNH CÔNG (trước res.status(201).json)
         try {
             console.log('📧 Bắt đầu chuẩn bị gửi hóa đơn qua email...');
@@ -224,6 +236,10 @@ exports.createOrder = async (req, res) => {
 
     } catch (error) {
         console.error('🚨 Create Order Error:', error.message);
+        console.error('message:', error.message);
+    console.error('response data:', error.response?.data);
+    console.error('response status:', error.response?.status);
+    console.error('stack:', error.stack);
         res.status(500).json({ 
             success: false, 
             message: error.message || 'Lỗi server khi tạo đơn hàng' 
@@ -236,14 +252,12 @@ exports.listOrders = async (req, res) => {
         const currentUserId = req.headers['x-user-id'];
         const currentUserRole = req.headers['x-user-role'];
         
-        let targetUserId = req.query.user_id;
+        const canViewAll = ['admin', 'staff'].includes(currentUserRole);
 
-        // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
-        if (currentUserRole !== 'admin') {
-            targetUserId = currentUserId;
-        }
-        
-        const data = await OrderModel.listOrders(targetUserId);
+        const data = await OrderModel.listOrders(
+            canViewAll ? null : currentUserId
+        );
+
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -304,7 +318,7 @@ exports.cancelOrder = async (req, res) => {
              return res.status(403).json({ success: false, message: 'Không có quyền hủy đơn này' });
         }
 
-        if (!['pending', 'processing', 'unpaid'].includes(order.status)) {
+        if (!['pending', 'shipping', 'delivered', 'unpaid'].includes(order.status)) {
             return res.status(400).json({ success: false, message: 'Không thể hủy đơn hàng này' });
         }
 
@@ -374,12 +388,12 @@ exports.getReportStats = async (req, res) => {
 
         // --- 2. XỬ LÝ TRẠNG THÁI ĐƠN HÀNG (Gán màu & Label) ---
         const statusConfig = {
-            'pending': { label: 'Chờ xác nhận', color: '#FBBF24' },   
-            'processing': { label: 'Đang xử lý', color: '#3B82F6' }, 
-            'shipping': { label: 'Đang giao', color: '#8B5CF6' }, 
-            'delivered': { label: 'Hoàn tất', color: '#10B981' }, 
+            'pending': { label: 'Chờ xác nhận', color: '#FBBF24' }, 
+            'confirmed': { label: 'Đã xác nhận', color: '#3B82F6' }, 
+            'packed': { label: 'Đã đóng gói', color: '#8B5CF6' },
+            'shipping': { label: 'Đang giao', color: '#ff7f17' }, 
+            'delivered': { label: 'Đã giao', color: '#10B981' },
             'cancelled': { label: 'Đã hủy', color: '#EF4444' }, 
- 
         };
 
         // Tạo danh sách đầy đủ các trạng thái (để biểu đồ luôn đủ màu)
