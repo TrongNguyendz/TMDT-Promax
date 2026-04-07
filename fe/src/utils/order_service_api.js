@@ -4,7 +4,7 @@ import { useUIStore } from '../stores/ui';
 import { useUserStore } from '../stores/user';
 
 const orderApi = axios.create({
-  baseURL: 'http://localhost:3000/api/v1',
+  baseURL: 'https://tmdt-promax-api-gateway.onrender.com/api/v1',
   timeout: 15000,
 });
 

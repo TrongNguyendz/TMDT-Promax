@@ -287,8 +287,10 @@ const handleLogin = async () => {
 
   isSubmitting.value = true;
 
+  isSubmitting.value = true;
+
   try {
-    const res = await Login({ email: username, password });
+    const res = await Login({ username, email: username, password });
     const result = res.data;
 
     if (result.success && result.data?.token && result.data?.user) {

@@ -49,6 +49,7 @@
           </thead>
           
           <tbody class="divide-y dark:divide-gray-800">
+            <!-- Thương hiệu -->
             <tr v-show="!onlyDifference || !isSame('brand')">
               <td class="p-4 font-semibold text-sm text-gray-500 bg-gray-50/30 dark:bg-gray-800/30">Thương hiệu</td>
               <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800 text-gray-700 dark:text-gray-300">
@@ -56,6 +57,7 @@
               </td>
             </tr>
 
+            <!-- Tình trạng -->
             <tr v-show="!onlyDifference || !isSame('inStock')">
               <td class="p-4 font-semibold text-sm text-gray-500">Tình trạng</td>
               <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800">
@@ -68,33 +70,35 @@
               </td>
             </tr>
 
-            <tr v-show="!onlyDifference || !isSame('colors')">
-              <td class="p-4 font-semibold text-sm text-gray-500 bg-gray-50/30 dark:bg-gray-800/30">Màu sắc</td>
+            <!-- Mô tả sản phẩm -->
+            <tr v-show="!onlyDifference || !isSame('description')">
+              <td class="p-4 font-semibold text-sm text-gray-500 bg-gray-50/30 dark:bg-gray-800/30">Mô tả</td>
               <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30">
-                <div class="flex gap-2">
-                  <div v-for="color in p.colors || []" :key="color.hex" class="w-5 h-5 rounded-full border dark:border-gray-700 shadow-sm" :style="{ backgroundColor: color.hex }" :title="color.name"></div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {{ p.description || 'Chưa có mô tả' }}
                 </div>
               </td>
             </tr>
 
-            <tr v-show="!onlyDifference || !isSame('sizes')">
-              <td class="p-4 font-semibold text-sm text-gray-500">Kích cỡ hiện có</td>
+            <!-- Đánh giá -->
+            <tr v-show="!onlyDifference || !isSame('rating')">
+              <td class="p-4 font-semibold text-sm text-gray-500">Đánh giá</td>
               <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800">
-                <div class="flex flex-wrap gap-1">
-                  <span v-for="s in p.sizes || []" :key="s" class="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300 uppercase font-bold">
-                    {{ s }}
-                  </span>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td class="p-4 font-semibold text-sm text-gray-500 bg-gray-50/30 dark:bg-gray-800/30">Đánh giá</td>
-              <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30">
                 <div class="flex items-center text-yellow-400">
                   <span v-for="i in 5" :key="i">{{ i <= Math.round(p.rating) ? "★" : "☆" }}</span>
-                  <span class="ml-2 text-xs text-blue-600">({{ p.reviews }})</span>
+                  <span class="ml-2 text-xs text-blue-600">({{ p.reviews }} đánh giá)</span>
                 </div>
+              </td>
+            </tr>
+
+            <!-- Giảm giá (nếu có) -->
+            <tr v-if="hasDiscount" v-show="!onlyDifference || !isSame('discount')">
+              <td class="p-4 font-semibold text-sm text-gray-500 bg-gray-50/30 dark:bg-gray-800/30">Giảm giá</td>
+              <td v-for="p in compareProducts" :key="p.id" class="p-4 border-l dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30">
+                <span v-if="p.discount" class="text-green-600 dark:text-green-400 font-bold">
+                  -{{ p.discount }}%
+                </span>
+                <span v-else class="text-gray-400">Không giảm giá</span>
               </td>
             </tr>
           </tbody>
@@ -112,29 +116,51 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useCompareStore } from '../../stores/compare'
 
+// Định nghĩa interface cho Product
+interface Product {
+  id: number | string
+  name: string
+  price: number
+  image: string
+  brand: string
+  inStock: boolean
+  stock: number
+  description?: string          // Mô tả sản phẩm
+  rating: number
+  reviews: number
+  discount?: number             // Giảm giá %
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 const compareStore = useCompareStore()
 const onlyDifference = ref(false)
-const compareProducts = computed(() =>
-  compareStore.compareList.map((product) => ({
-    ...product,
-    colors: product.colors || [],
-    sizes: product.sizes || []
-  }))
-)
 
-const formatCurrency = (value) => {
+const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
 }
 
-const removeProduct = (id) => {
+const compareProducts = computed<Product[]>(() =>
+  compareStore.compareList.map((product) => ({
+    ...product,
+    description: product.description || 'Chưa có mô tả'
+  }))
+)
+
+// Kiểm tra xem có sản phẩm nào giảm giá không
+const hasDiscount = computed(() => {
+  return compareProducts.value.some(p => p.discount && p.discount > 0)
+})
+
+const removeProduct = (id: number | string): void => {
   compareStore.removeFromCompare(id)
 }
 
-const isSame = (key) => {
+const isSame = (key: keyof Product): boolean => {
   if (compareProducts.value.length < 2) return true
   const first = JSON.stringify(compareProducts.value[0][key])
   return compareProducts.value.every((p) => JSON.stringify(p[key]) === first)
@@ -146,5 +172,11 @@ const isSame = (key) => {
 .overflow-x-auto {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* Style cho phần mô tả */
+td .text-sm {
+  line-height: 1.6;
+  max-width: 300px;
 }
 </style>

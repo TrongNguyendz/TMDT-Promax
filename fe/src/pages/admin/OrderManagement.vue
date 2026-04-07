@@ -1,39 +1,80 @@
 <template>
   <div class="p-6">
-    <h1 class="mb-6 text-2xl font-black tracking-tight dark:text-white uppercase italic">
+    <h1
+      class="mb-6 text-2xl font-black tracking-tight dark:text-white uppercase italic"
+    >
       Quản lý đơn hàng
     </h1>
 
     <div class="mb-6 flex gap-4 flex-wrap items-end">
       <div class="min-w-[160px]">
-        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Trạng thái</label>
-        <select v-model="status"
-          class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:focus:border-white">
-          <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+        <label
+          class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1"
+          >Trạng thái</label
+        >
+        <select
+          v-model="status"
+          class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:focus:border-white"
+        >
+          <option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :value="opt.value"
+          >
             {{ opt.label }}
           </option>
         </select>
       </div>
 
       <div class="flex-1 min-w-[280px]">
-        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Tìm kiếm</label>
+        <label
+          class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1"
+          >Tìm kiếm</label
+        >
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </span>
-          <input v-model="searchQuery" type="text" placeholder="Mã đơn, tên khách hàng..."
-            class="w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:focus:border-white" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Mã đơn, tên khách hàng..."
+            class="w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm transition-all focus:border-black focus:ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:focus:border-white"
+          />
         </div>
       </div>
 
       <div class="flex flex-col">
         <span class="mb-2 h-4"></span>
-        <button @click="loadOrders"
-          class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold shadow-sm transition-all hover:bg-gray-50 active:scale-95 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900">
-          <svg :class="{ 'animate-spin': loading }" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <button
+          @click="loadOrders"
+          class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold shadow-sm transition-all hover:bg-gray-50 active:scale-95 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+        >
+          <svg
+            :class="{ 'animate-spin': loading }"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           Tải lại
         </button>
@@ -41,59 +82,126 @@
     </div>
 
     <div v-if="loading" class="text-center py-20">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
-      <p class="mt-4 text-gray-500 text-sm font-bold uppercase tracking-widest">Đang cập nhật dữ liệu...</p>
+      <div
+        class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"
+      ></div>
+      <p class="mt-4 text-gray-500 text-sm font-bold uppercase tracking-widest">
+        Đang cập nhật dữ liệu...
+      </p>
     </div>
 
-    <div v-else class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm">
+    <div
+      v-else
+      class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm"
+    >
       <table class="min-w-full text-sm">
-        <thead class="bg-gray-50/50 text-left dark:bg-gray-900/50 dark:text-gray-300 border-b dark:border-gray-800">
+        <thead
+          class="bg-gray-50/50 text-left dark:bg-gray-900/50 dark:text-gray-300 border-b dark:border-gray-800"
+        >
           <tr>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest">Mã đơn</th>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest">Ngày đặt</th>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest">Khách hàng</th>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest text-right">Tổng tiền</th>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest text-center">Trạng thái</th>
-            <th class="p-4 font-black uppercase text-[11px] tracking-widest text-center">Duyệt nhanh</th>
+            <th class="p-4 font-black uppercase text-[11px] tracking-widest">
+              Mã đơn
+            </th>
+            <th class="p-4 font-black uppercase text-[11px] tracking-widest">
+              Ngày đặt
+            </th>
+            <th class="p-4 font-black uppercase text-[11px] tracking-widest">
+              Khách hàng
+            </th>
+            <th
+              class="p-4 font-black uppercase text-[11px] tracking-widest text-right"
+            >
+              Tổng tiền
+            </th>
+            <th
+              class="p-4 font-black uppercase text-[11px] tracking-widest text-center"
+            >
+              Trạng thái
+            </th>
+            <th
+              class="p-4 font-black uppercase text-[11px] tracking-widest text-center"
+            >
+              Duyệt nhanh
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-800/50">
-          <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors">
-            <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">
-              <RouterLink :to="`/order-detail/${order.id}`">#{{ order.order_number }}</RouterLink>
+          <tr
+            v-for="order in filteredOrders"
+            :key="order.id"
+            class="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors"
+          >
+            <td
+              class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400"
+            >
+              <RouterLink :to="`/order-detail/${order.id}`"
+                >#{{ order.order_number }}</RouterLink
+              >
             </td>
-            <td class="p-4 text-gray-500">{{ new Date(order.created_at).toLocaleDateString("vi-VN") }}</td>
+            <td class="p-4 text-gray-500">
+              {{ new Date(order.created_at).toLocaleDateString("vi-VN") }}
+            </td>
             <td class="p-4">
-              <div class="font-bold text-gray-900 dark:text-white">{{ order.shipping_fullname }}</div>
-              <div class="text-[11px] text-gray-400 font-medium">{{ order.shipping_phone }}</div>
+              <div class="font-bold text-gray-900 dark:text-white">
+                {{ order.shipping_fullname }}
+              </div>
+              <div class="text-[11px] text-gray-400 font-medium">
+                {{ order.shipping_phone }}
+              </div>
             </td>
-            <td class="p-4 font-black text-right text-gray-900 dark:text-gray-100">
+            <td
+              class="p-4 font-black text-right text-gray-900 dark:text-gray-100"
+            >
               {{ formatCurrency(order.final_amount) }}
             </td>
             <td class="p-4 text-center">
-              <span :class="['px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', statusBadgeClass(order.status)]">
+              <span
+                :class="[
+                  'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter',
+                  statusBadgeClass(order.status),
+                ]"
+              >
                 {{ getStatusLabel(order.status) }}
               </span>
             </td>
-            
+
             <td class="p-4">
               <div class="flex items-center justify-center">
-                <button 
+                <button
                   v-if="['pending', 'takepacking'].includes(order.status)"
                   @click="handleNextStep(order)"
                   class="group relative flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-500/50"
                 >
-                  <svg class="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <svg
+                    class="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
                   </svg>
-                  <span class="absolute -top-9 hidden whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-[10px] font-bold text-white group-hover:block">
-                    {{ order.status === 'pending' ? 'Duyệt đơn' : 'Giao vận' }}
+                  <span
+                    class="absolute -top-9 hidden whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1 text-[10px] font-bold text-white group-hover:block"
+                  >
+                    {{ order.status === "pending" ? "Duyệt đơn" : "Giao vận" }}
                   </span>
                 </button>
 
-                <div v-else-if="order.status === 'delivered'" class="flex items-center gap-1 text-green-500 font-black text-[10px] uppercase italic">
+                <div
+                  v-else-if="order.status === 'deliver'"
+                  class="flex items-center gap-1 text-green-500 font-black text-[10px] uppercase italic"
+                >
                   <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                   Done
                 </div>
@@ -104,8 +212,13 @@
       </table>
     </div>
 
-    <div v-if="!loading && filteredOrders.length === 0" class="mt-20 text-center">
-      <p class="text-gray-400 font-medium uppercase tracking-widest text-sm">Không tìm thấy dữ liệu đơn hàng</p>
+    <div
+      v-if="!loading && filteredOrders.length === 0"
+      class="mt-20 text-center"
+    >
+      <p class="text-gray-400 font-medium uppercase tracking-widest text-sm">
+        Không tìm thấy dữ liệu đơn hàng
+      </p>
     </div>
   </div>
 </template>
@@ -129,23 +242,24 @@ let refreshTimer = null;
 const statusOptions = [
   { value: "all", label: "Tất cả" },
   { value: "pending", label: "Chờ xác nhận" },
-  { value: "packed", label: "Đã đóng gói" },
-  { value: "confirmed", label: "Đã xác nhận" },
-  { value: "shipping", label: "Đang giao" },
-  { value: "delivered", label: "Đã giao" },
-  { value: "cancelled", label: "Đã hủy" }
+  { value: "takepacking", label: "Chờ lấy hàng" },
+  { value: "deliver", label: "Đã giao" },
+  { value: "completed", label: "Đã hoàn thành" },
+  { value: "cancelled", label: "Đã hủy" },
 ];
 
 const orders = computed(() => orderStore.orders);
 
 const filteredOrders = computed(() => {
   let result = orders.value;
-  if (status.value !== "all") result = result.filter((o) => o.status === status.value);
+  if (status.value !== "all")
+    result = result.filter((o) => o.status === status.value);
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
-    result = result.filter(o => 
-      (o.order_number || "").toLowerCase().includes(q) ||
-      (o.shipping_fullname || "").toLowerCase().includes(q)
+    result = result.filter(
+      (o) =>
+        (o.order_number || "").toLowerCase().includes(q) ||
+        (o.shipping_fullname || "").toLowerCase().includes(q),
     );
   }
   return result;
@@ -159,28 +273,25 @@ const loadOrders = async () => {
 
 // Hàm Duyệt đơn theo luồng Pipeline
 const handleNextStep = async (order) => {
-  let nextStatus = '';
-  let msg = '';
+  let nextStatus = "";
+  let msg = "";
 
-  if (order.status === 'pending') {
-    nextStatus = 'confirmed';
+  if (order.status === "pending") {
+    nextStatus = "takepacking";
     msg = `Xác nhận Duyệt đơn #${order.order_number}?`;
-  } else if (order.status === 'confirmed') {
-    nextStatus = 'packed';
-    msg = `Xác nhận đơn #${order.order_number} đã được đóng gói?`;
-  } else if (order.status === 'packed') {
-    nextStatus = 'shipping';
-    msg = `Xác nhận đơn #${order.order_number} đang được giao?`;
-  } else if (order.status === 'shipping') {
-    nextStatus = 'delivered';
-    msg = `Xác nhận đơn #${order.order_number} đã giao thành công?`;
+  } else if (order.status === "takepacking") {
+    nextStatus = "deliver";
+    msg = `Xác nhận đơn #${order.order_number} đã giao cho vận chuyển?`;
   }
 
   if (nextStatus && confirm(msg)) {
     try {
       const res = await OrderAPI.updateOrderStatus(order.id, nextStatus);
       if (res.data.success) {
-        uiStore.pushToast({ type: "success", message: "Đã cập nhật trạng thái" });
+        uiStore.pushToast({
+          type: "success",
+          message: "Đã cập nhật trạng thái",
+        });
         order.status = nextStatus; // Update local state nhanh
       }
     } catch (e) {
@@ -204,12 +315,15 @@ onUnmounted(() => {
 
 const statusBadgeClass = (s) => {
   const map = {
-    pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500",
-    confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
-    packed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
-    shipping: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500",
-    delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500",
-    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500"
+    pending:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500",
+    takepacking:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
+    deliver:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
+    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500",
+    completed:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500"
   };
   return map[s] || "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500";
 };
@@ -217,11 +331,10 @@ const statusBadgeClass = (s) => {
 const getStatusLabel = (s) => {
   const map = {
     pending: "Chờ xác nhận",
-    confirmed: "Đã xác nhận",
-    packed: "Đã đóng gói",
-    shipping: "Đang giao",
-    delivered: "Đã giao",
-    cancelled: "Đã hủy"
+    takepacking: "Chờ lấy hàng",
+    deliver: "Đang giao",
+    completed: "Đã hoàn thành",
+    cancelled: "Đã hủy",
   };
   return map[s] || s;
 };

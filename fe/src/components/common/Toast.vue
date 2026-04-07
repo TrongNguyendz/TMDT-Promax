@@ -65,6 +65,6 @@ function remove(id) {
 
 /* Khi di chuyển vị trí trong danh sách (khi có toast mới thêm hoặc xóa) */
 .toast-move {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
