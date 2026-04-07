@@ -329,9 +329,6 @@ exports.login = async (req, res) => {
   }
 };
 
-
-
-
 exports.forgotPassword = async (req, res) => {
   console.log('========== BẮT ĐẦU FORGOT PASSWORD ==========');
   console.log('[DEBUG] Body nhận được từ client:', req.body);
