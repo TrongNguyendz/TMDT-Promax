@@ -118,6 +118,7 @@ const computeLocalShippingFee = () => {
 
   const qty = Number(cartStore.itemCount || 1);
   const extra = (qty > 1) ? (qty - 1) * 5000 : 0;
+  console.log('Tính phí local:', { province: info.province, qty, base, extra, total: base + extra });
   return Math.max(0, base + extra);
 };
 

@@ -39,7 +39,11 @@
         />
       </div>
 
-      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
+      <OrdersSummary
+        :itemCount="checkoutItems.length"
+        :subtotal="checkoutSubtotal"
+        :currentStep="checkout.currentStep"
+      />
     </div>
   </section>
 </template>

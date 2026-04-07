@@ -43,7 +43,7 @@ const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 const AdminProfile = () => import('../pages/admin/Profile.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
-const StaffDashboard = () => import('../pages/Staff/Dashboard.vue');
+const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
 const StaffOrders = () => import('../pages/Staff/Orders.vue');
 // const StaffEvents = () => import('../pages/Staff/Events.vue');
 const StaffSupport = () => import('../pages/Staff/Support.vue');
@@ -52,12 +52,12 @@ const StaffPacking = () => import('../pages/Staff/Packing.vue');
 const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
 const StaffIventory = () => import('../pages/Staff/Inventory.vue');
 const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
-const StaffComment = () => import('../pages/Staff/Comment.vue')	
+const StaffComment = () => import('../pages/Staff/comment.vue');
 
 const routes = [
 	{ path: '/', component: HomePage },
 	{ path: '/products', component: ProductList },
-	// { path: '/compare', component: CompareProductPage },
+	{ path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage, meta: { requiresAuth: true } },
 	{ path: '/checkout', component: CheckoutPage, meta: { requiresAuth: true } },
