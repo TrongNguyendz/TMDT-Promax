@@ -52,7 +52,7 @@ const StaffPacking = () => import('../pages/Staff/Packing.vue');
 const StaffWelcome = () => import('../pages/Staff/Welcome.vue');
 const StaffIventory = () => import('../pages/Staff/Inventory.vue');
 const StaffSchedule = () => import('../pages/Staff/Schedule.vue')
-const StaffComment = () => import('../pages/Staff/Comment.vue')	
+const StaffComment = () => import('../pages/Staff/comment.vue');
 
 const routes = [
 	{ path: '/', component: HomePage },
