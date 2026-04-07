@@ -3,7 +3,7 @@ import { useUIStore } from '../stores/ui';
 import { useUserStore } from '../stores/user';
 
 const supportApi = axios.create({
-  baseURL: 'http://localhost:3007/api/support',
+  baseURL: 'https://tmdt-promax-api-gateway.onrender.com/api/support',
   timeout: 15000,
 });
 

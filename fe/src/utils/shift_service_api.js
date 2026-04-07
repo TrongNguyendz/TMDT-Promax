@@ -9,7 +9,7 @@ export const getListShifts = async ( token) => {
     if (!token) throw new Error('Token is required');
 
     return await axios.get(
-        'http://localhost:3000/api/v1/shifts',
+        'https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts',
         {
             // params, // hỗ trợ query params: page, limit, staff_id, status, start_date, end_date, search,...
             headers: {
@@ -28,7 +28,7 @@ export const getShiftById = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.get(
-        `http://localhost:3000/api/v1/shifts/${id}`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -45,7 +45,7 @@ export const createShift = async (data, token) => {
     if (!token) throw new Error('Token is required');
 
     return await axios.post(
-        'http://localhost:3000/api/v1/shifts',
+        'https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts',
         data,
         {
             headers: {
@@ -65,7 +65,7 @@ export const updateShift = async (id, data, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.put(
-        `http://localhost:3000/api/v1/shifts/${id}`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
         data,
         {
             headers: {
@@ -85,7 +85,7 @@ export const deleteShift = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.delete(
-        `http://localhost:3000/api/v1/shifts/${id}`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -103,7 +103,7 @@ export const hardDeleteShift = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.delete(
-        `http://localhost:3000/api/v1/shifts/${id}/hard`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}/hard`,
         {
             headers: {
                 Authorization: `Bearer ${token}`

@@ -2,15 +2,15 @@ import axios from "axios";
 
 // đăng nhập
 export const Login = async(data) => {
-    return await axios.post('http://localhost:3000/api/v1/users/login' , data) ;
+    return await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/users/login' , data) ;
 }
 // đăng kí
 export const Register = async(data) => {
-    return await axios.post('http://localhost:3000/api/v1/users/register' , data) ;
+    return await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/users/register' , data) ;
 }
 
 export const ForgotPassword = async(data) => {
-    return await axios.post('http://localhost:3000/api/v1/users/forgot-password' , data) ;
+    return await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/users/forgot-password' , data) ;
 }
 
 // cập nhật hồ sơ người dùng
@@ -18,7 +18,7 @@ export const UpdateProfile = async (id, data, token) => {
     if (!token) throw new Error('Token is required');
 
     return await axios.put(
-        `http://localhost:3000/api/v1/users/${id}`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users/${id}`,
         data,
         {
             headers: {
@@ -32,7 +32,7 @@ export const UpdateProfile = async (id, data, token) => {
 export const getlistuser = async (token) => {
     if (!token) throw new Error('Token is required');   
     return await axios.get(
-        `http://localhost:3000/api/v1/users`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users`,
         {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -45,7 +45,7 @@ export const getlistuser = async (token) => {
 export const updateUserRole = async (id, data, token) => {
     if (!token) throw new Error('Token is required');
     return await axios.put(
-        `http://localhost:3000/api/v1/users/${id}/role`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users/${id}/role`,
         data,
         {
             headers: {
@@ -59,7 +59,7 @@ export const updateUserRole = async (id, data, token) => {
 export const deleteUser = async (id, token) => {
     if (!token) throw new Error('Token is required');
     return await axios.delete(
-        `http://localhost:3000/api/v1/users/${id}`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users/${id}`,
         {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -77,7 +77,7 @@ export const UpdateUserAvatar = async (userId, file, token) => {
     formData.append("avatar", file);
 
     return await axios.put(
-        `http://localhost:3001/api/v1/users/${userId}/avatar`,
+        `https://tmdt-promax-api-gateway.onrender.com/api/v1/users/${userId}/avatar`,
         formData,
         {
             headers: {
