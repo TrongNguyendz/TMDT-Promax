@@ -122,7 +122,7 @@ exports.createTicket = async (req, res) => {
         }
 
         const ticket = new SupportTicket({
-            user_id: Number(user_id),
+            user_id: String(user_id),
             customer_name: customer_name || `Khách hàng #${user_id}`, // Lưu tên thật vào DB
             subject: subject || "Hỗ trợ khách hàng",
             status: 'open',
@@ -151,7 +151,7 @@ exports.sendMessage = async (req, res) => {
         const ticket = await SupportTicket.findById(id);
         if (!ticket) return res.status(404).json({ success: false, message: 'Không tìm thấy Ticket' });
 
-        // TẠO DOCUMENT MỚI (Thay vì ticket.messages.push)
+        // Tạo tin nhắn mới và lưu vào DB
         const newMessage = new SupportMessage({
             ticket_id: id,
             sender_type,
@@ -161,7 +161,7 @@ exports.sendMessage = async (req, res) => {
             file_url: file_url || null
         });
 
-        const savedMessage = await newMessage.save(); // Khi save, Mongoose Middleware ở trên sẽ tự chạy
+        const savedMessage = await newMessage.save(); // Mongoose Middleware ở trên tự chạy
 
         // Phần Socket giữ nguyên...
         const io = req.app.get('io');
@@ -202,7 +202,7 @@ exports.markAsRead = async (req, res) => {
 
 exports.getTicketsByUserId = async (req, res) => {
     try {
-        const userId = Number(req.params.userId); 
+        const userId = req.params.userId; 
         // Tìm ticket mới nhất của user này
         const tickets = await SupportTicket.find({ user_id: userId })
             .sort({ createdAt: -1 })

@@ -6,7 +6,6 @@
         Hỗ trợ trực tuyến 
         <span v-if="isLoading" class="text-yellow-500 font-medium text-lg bg-yellow-50 dark:bg-yellow-900/30 px-3 py-1 rounded-full">(Đang khởi tạo...)</span>
         <span v-else-if="currentTicketId" class="text-green-500 font-medium text-lg bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full">(Sẵn sàng)</span>
-        <span v-else class="text-red-500 font-medium text-lg bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full">(Lỗi kết nối)</span>
       </h1>
       <p class="text-gray-500 mt-2 text-base">Chào bạn! Hãy cho chúng tôi biết bạn cần hỗ trợ gì hôm nay.</p>
     </div>
@@ -72,7 +71,6 @@ const initChat = async () => {
     let ticket = res.data.data?.[0]; 
 
     if (!ticket) {
-      // ✅ Gắn tên thật của khách hàng vào đây
       const createRes = await chatService.createTicket({ 
         user_id: userId, 
         customer_name: user.profile?.username || user.profile?.email || `Khách hàng #${userId}`,
@@ -82,7 +80,7 @@ const initChat = async () => {
     }
 
     const ticketId = ticket?._id || ticket?.id;
-    if (ticketId) {
+    if (ticketId && ticketId !== 'undefined') {
       currentTicketId.value = ticketId;
       const detailRes = await chatService.getTicketDetail(ticketId);
       const rawMsgs = detailRes.data.data?.messages || detailRes.data?.messages || [];
@@ -97,7 +95,7 @@ const initChat = async () => {
       });
       scrollToBottom();
     }
-  } catch (err) { console.error(err); } finally { isLoading.value = false; }
+  } catch (err) { console.error("Lỗi initChat: ",err); } finally { isLoading.value = false; }
 };
 
 const handleSend = async () => {

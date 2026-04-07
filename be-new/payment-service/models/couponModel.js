@@ -37,6 +37,11 @@ exports.createCoupon = async (payload) => {
   });
   return await newCoupon.save();
 };
+couponSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) { delete ret._id; }
+});
 
 exports.findById = async (id) => {
   // Lưu ý: id ở đây giờ là MongoDB ObjectId (chuỗi 24 ký tự)

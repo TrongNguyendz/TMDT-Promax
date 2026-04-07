@@ -13,7 +13,7 @@ exports.healthCheck = (_req, res) => {
 
 exports.updateAvatar = async (req, res) => {
   try {
-    const userId = Number(req.params.id); // giữ string, helper sẽ Number() bên trong
+    const userId = req.params.id; // giữ string, helper sẽ Number() bên trong
 
     const user = await UserModel.findById(userId);   // ← ĐÚNG cách
     if (!user) {

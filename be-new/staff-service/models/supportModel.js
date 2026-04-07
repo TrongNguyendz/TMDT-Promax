@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const SupportTicketSchema = new mongoose.Schema({
-    user_id: { type: Number, required: false },
+    user_id: { type: String, required: false },
     customer_name: { type: String, trim: true }, // Đổi từ guest_name -> customer_name cho bao quát
     guest_email: { type: String, lowercase: true, trim: true, sparse: true },
     order_id: { type: Number, ref: 'Order', required: false },
@@ -22,7 +22,7 @@ const SupportTicketSchema = new mongoose.Schema({
 const SupportMessageSchema = new mongoose.Schema({
     ticket_id: { type: mongoose.Schema.Types.ObjectId, ref: 'SupportTicket', required: true },
     sender_type: { type: String, enum: ['customer', 'staff', 'system'], required: true },
-    sender_id: { type: Number, required: true },
+    sender_id: { type: String, required: true },
     message_type: { type: String, enum: ['text', 'image', 'file'], default: 'text' },
     
     // Bỏ required: true để gửi ảnh không kèm chữ không bị lỗi

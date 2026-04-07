@@ -134,9 +134,9 @@ export const useCheckoutStore = defineStore('checkout', () => {
 
             // Tính tiền dựa trên nguồn hàng
             const currentSubtotal = (isDirectBuy.value && directBuyItem.value)
-                ? (Number(directBuyItem.value.price) * Number(directBuyItem.value.quantity))
+                 ? (Number(directBuyItem.value.price) * Number(directBuyItem.value.quantity))
                 : (Number(cartStore.subtotal?.value ?? cartStore.subtotal ?? 0));
-
+            
             const payload = {
                 user_id: userId, 
                 email_user: userEmail,
@@ -161,12 +161,6 @@ export const useCheckoutStore = defineStore('checkout', () => {
             const newOrder = await orderStore.createOrder(payload);
 
             if (newOrder) {
-                // // Chỉ xóa giỏ hàng nếu MUA TỪ GIỎ
-                // if (!isDirectBuy.value) {
-                //     cartStore.clearCart();
-                // }
-                // // Luôn tắt chế độ Mua ngay sau khi xong
-                // clearDirectBuy();
 
                 return newOrder; 
             }
@@ -187,8 +181,6 @@ export const useCheckoutStore = defineStore('checkout', () => {
         appliedVoucher,
         discountAmount,
         shippingFee,
-        
-        // 👇 [CHANGE] Bắt buộc export các biến/hàm này ra ngoài
         isDirectBuy,
         directBuyItem,
         setDirectBuy,
@@ -204,7 +196,6 @@ export const useCheckoutStore = defineStore('checkout', () => {
     };
 }, {
     persist: {
-        // 👇 [CHANGE] Thêm 2 biến này vào persist để lỡ User F5 trang Checkout thì món hàng Mua Ngay không bị mất
         paths:['shippingInfo', 'paymentMethod', 'voucherCode', 'appliedVoucher', 'discountAmount', 'shippingFee', 'isDirectBuy', 'directBuyItem']
     }
 });

@@ -4,8 +4,8 @@ const authorize = (req, res, next) => {
   const userIdFromParams = req.params.id;
   const userIdFromBody = req.body.user_id;
 
-const isOwner = Number(userIdFromToken) === Number(userIdFromParams);
-const isOwnerByBody = Number(userIdFromToken) === Number(userIdFromBody);
+const isOwner = String(userIdFromToken) === String(userIdFromParams);
+const isOwnerByBody = String(userIdFromToken) === String(userIdFromBody);
   const isAdmin = req.user.role === 'admin';  // hoặc array các role được phép
 
   if (isOwner || isOwnerByBody || isAdmin) {

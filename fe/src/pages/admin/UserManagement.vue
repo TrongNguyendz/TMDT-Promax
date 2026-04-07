@@ -221,7 +221,7 @@ const currentUser = ref(null);
 
 // --- PHÂN TRANG & TÌM KIẾM ---
 const currentPage = ref(1);
-const itemsPerPage = ref(10); // Đã sửa lại thành ref() để có reactivity
+const itemsPerPage = ref(10); 
 
 const filters = reactive({
   searchTerm: '', 
@@ -327,7 +327,7 @@ onMounted(() => {
 
 const handlePromote = async (user) => {
   if(!confirm(`Nâng cấp quyền Admin cho ${user.email}?`)) return;
-  const targetId = user.id || user._id;
+  const targetId = user._id;
   try {
     const res = await updateUserRole(targetId, { role: "admin" }, userStore.token);
     if (res.data.success) {
@@ -341,7 +341,7 @@ const handlePromote = async (user) => {
 
 const handleDelete = async (user) => {
   if(!confirm(`Xác nhận xóa tài khoản ${user.email}?`)) return;
-  const targetId = user.id || user._id;
+  const targetId = user._id;
   try {
     const res = await deleteUser(targetId, userStore.token);
     if (res.data.success) {
@@ -353,7 +353,6 @@ const handleDelete = async (user) => {
   }
 };
 
-// [CHANGE QUAN TRỌNG]: Đã thêm await fetchUserStats vào hàm openDetail
 const openDetail = async (user) => {
   currentUser.value = user;
   showDetailModal.value = true;

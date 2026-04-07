@@ -31,7 +31,7 @@
           :paymentMethod="checkout.paymentMethod"
           :qrData="qrCodeData"
           :checkoutUrl="checkoutUrl"
-          :total="cart.subtotal"
+          :total="checkoutSubtotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -39,8 +39,11 @@
         />
       </div>
 
-      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
-    </div>
+<OrdersSummary 
+        :itemCount="checkoutItemCount"
+        :subtotal="checkoutSubtotal"
+        :currentStep="checkout.currentStep" 
+      />    </div>
   </section>
 </template>
 
@@ -78,9 +81,7 @@ let socket = null;
 
 // 1. Lấy sản phẩm hiển thị
 const checkoutItems = computed(() => {
-    if (successOrder.value && successOrder.value.items) {
-        return successOrder.value.items;
-    }
+    
     
     if (checkout.isDirectBuy && checkout.directBuyItem) {
         return [checkout.directBuyItem]; 
@@ -90,9 +91,9 @@ const checkoutItems = computed(() => {
 
 // 2. Lấy tổng tiền
 const checkoutSubtotal = computed(() => {
-    if (successOrder.value) {
-        return successOrder.value.total_amount || successOrder.value.final_amount;
-    }
+    // if (successOrder.value) {
+    //     return successOrder.value.total_amount || successOrder.value.final_amount;
+    // }
     
     if (checkout.isDirectBuy && checkout.directBuyItem) {
         return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
@@ -100,6 +101,12 @@ const checkoutSubtotal = computed(() => {
     return cart.subtotal;
 });
 
+const checkoutItemCount = computed(() => {
+    if (checkout.isDirectBuy && checkout.directBuyItem) {
+        return Number(checkout.directBuyItem.quantity);
+    }
+    return cart.itemCount;
+});
 onMounted(() => {
   checkout.currentStep = 1;
 });
@@ -140,7 +147,8 @@ async function createPendingOrderAndGetQR() {
         const newOrder = await createOrderInDB();
         
         if (newOrder && newOrder.id) {
-            successOrder.value = newOrder; 
+            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
+            successOrder.value = fullOrder;  
             checkout.nextStep(); // Chuyển sang Step 3: Hiện QR Code
 
             // Gọi API PayOS
@@ -204,7 +212,8 @@ async function completeCODOrder() {
     try {
         const newOrder = await createOrderInDB();
         if (newOrder) {
-            successOrder.value = newOrder;
+            const fullOrder = await orderStore.fetchOrderById(newOrder.id);
+            successOrder.value = fullOrder;
             ui.pushToast({ type: 'success', message: 'Đặt hàng thành công, kiểm tra email để xem hóa đơn!' });
             finishSteps();
         }
@@ -227,24 +236,31 @@ function setupSocketListener(orderId) {
     socket.emit('join-order-room', `order_${orderId}`);
   });
 
-  socket.on('payment-success', (data) => {
+  socket.on('payment-success', async (data) => {
     console.log("🚀 TING TING! THANH TOÁN THÀNH CÔNG!", data);
     
     // Nếu ID trả về khớp với ID đang thanh toán
-    if (data.orderId === orderId && successOrder.value) {
-        successOrder.value.payment_status = 'paid';
-        successOrder.value.status = 'processing';
-        
+    try {
+        // Lấy lại đơn hàng để cập nhật trạng thái mới nhất từ DB
+        const fullOrder = await orderStore.fetchOrderById(orderId);
+        successOrder.value = fullOrder;
+    } catch (e) {
+        console.error("Lỗi tải lại đơn:", e);
+    } 
         ui.pushToast({ type: 'success', message: 'Thanh toán thành công! Đang hoàn tất đơn...' });
         finishSteps();
-    }
+    
   });
 }
 
 function finishSteps() {
+  const wasDirectBuy = checkout.isDirectBuy;
   checkout.currentStep = 4; // Nhảy sang Bước 4 (Thành công)
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  cart.clearCart(); 
+  if (!wasDirectBuy) {
+    cart.clearCart(); 
+  }
+  checkout.clearDirectBuy(); // Reset trạng thái Mua Ngay sau khi hoàn tất
   if (socket) socket.disconnect();
 }
 
