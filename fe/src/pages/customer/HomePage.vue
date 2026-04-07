@@ -117,8 +117,9 @@ async function loadBanners() {
 
 const productsList = computed(() => {
     const items = productsStore.products || [];
+    console.log('Raw products from store:', items);
     return items.map((p) => {
-
+    
         let imageUrl = 'https://via.placeholder.com/400x400?text=No+Image';
         if (p.images && p.images.length > 0) {
             const primary = p.images.find(img => img.is_primary);

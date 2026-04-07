@@ -98,6 +98,19 @@ exports.createNotification = async (req, res) => {
       await sendActivationOTP(email_user, otp);
       console.log('✅ Đã gửi OTP xác thực email đến:', email_user);
     }
+
+    else if (notification_type === 'staff_created') {
+      const password = req.body.password || data?.password;
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu mật khẩu để gửi email'
+        });
+      }
+
+      await sendPasswordEmail(email_user, password);
+      console.log('✅ Đã gửi mật khẩu đến :', email_user);
+    }
     // BƯỚC 2: Lưu record vào DB (chỉ lưu thông tin cơ bản - KHÔNG lưu data)
     const payloadForDB = {
       user_id,

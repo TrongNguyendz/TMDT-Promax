@@ -487,29 +487,29 @@ exports.createStaff = async (req, res) => {
     console.log('[DEBUG] Staff đã được tạo:', staff.id);
 
     // gửi notification
-    // try {
-    //   console.log('[DEBUG] Gọi notification-service');
+    try {
+      console.log('[DEBUG] Gọi notification-service');
 
-    //   const notifyRes = await axios.post(
-    //     'http://localhost:3005/api/notifications',
-    //     {
-    //       user_id: staff.id,
-    //       notification_type: 'staff_created',
-    //       email_user: staff.email,
-    //       data: {
-    //         password: tempPassword
-    //       }
-    //     }
-    //   );
+      const notifyRes = await axios.post(
+        'http://localhost:3005/api/notifications',
+        {
+          user_id: staff.id,
+          notification_type: 'staff_created',
+          email_user: staff.email,
+          data: {
+            password: tempPassword
+          }
+        }
+      );
 
-    //   console.log(
-    //     '[DEBUG] Notification gửi thành công',
-    //     notifyRes.status
-    //   );
+      console.log(
+        '[DEBUG] Notification gửi thành công',
+        notifyRes.status
+      );
 
-    // } catch (notifyError) {
-    //   console.error('[LỖI] Gửi notification thất bại:', notifyError.message);
-    // }
+    } catch (notifyError) {
+      console.error('[LỖI] Gửi notification thất bại:', notifyError.message);
+    }
 
     const sanitized = UserModel.sanitizeUser(staff);
 
