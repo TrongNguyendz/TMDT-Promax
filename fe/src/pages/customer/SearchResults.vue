@@ -57,6 +57,7 @@ import { useRoute } from 'vue-router';
 import { useProductsStore } from '../../stores/products';
 import { useCartStore } from '../../stores/cart';
 import ProductCard from '../../components/common/ProductCard.vue';
+import Fuse from 'fuse.js';
 
 const route = useRoute();
 const productStore = useProductsStore();
@@ -65,6 +66,34 @@ const cart = useCartStore();
 const loading = ref(false);
 const suggestedProducts = ref([]); // Lưu sản phẩm gợi ý khi không tìm thấy kết quả
 const isNotFound = ref(false);
+const allRawProducts = ref([]); // Lưu tất cả sản phẩm để fuzzy search
+
+/**
+ * Chuẩn hóa text: Bỏ dấu Tiếng Việt và xóa khoảng trắng
+ */
+const simplifyText = (text) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD')                // Tách dấu
+    .replace(/[\u0300-\u036f]/g, '') // Xóa dấu
+    .replace(/đ/g, 'd')              // Sửa chữ đ
+    .replace(/\s+/g, '');            // Xóa mọi khoảng trắng
+};
+
+/**
+ * Cấu hình Fuse.js cho fuzzy search
+ */
+const fuseOptions = {
+  keys: ['name', 'category_name'],
+  threshold: 0.3,   // Độ nhạy tìm kiếm mờ
+  distance: 100,
+  ignoreLocation: true,
+  getFn: (obj, key) => {
+    // Fuse sẽ lấy bản "đã làm sạch" để đối chiếu
+    return simplifyText(obj[key]);
+  }
+};
 
 // Hàm helper để map dữ liệu chuẩn cho ProductCard
 const mapProductData = (p) => {
@@ -85,7 +114,7 @@ const mapProductData = (p) => {
     };
 };
 
-// Map danh sách tìm kiếm
+// Map danh sách tìm kiếm (được filter bởi Fuse.js)
 const items = computed(() => (productStore.products || []).map(mapProductData));
 
 // Map danh sách gợi ý
@@ -95,26 +124,41 @@ async function performSearch() {
     const query = route.query.q;
     if (!query) return;
 
+    console.log('🔍 Searching for:', query);
     loading.value = true;
     isNotFound.value = false;
     
     try {
-        // 1. Gọi API search
-        await productStore.fetchProducts({ 
+        // 1. Gọi API search - lấy nhiều kết quả để rồi filter
+        const res = await productStore.fetchProducts({ 
             search: query, 
-            limit: 50 
+            limit: 100  // Lấy nhiều hơn để fuzzy search lọc lại
         });
 
-        // 2. Kiểm tra nếu kết quả rỗng
-        if (!productStore.products || productStore.products.length === 0) {
+        const rawProducts = productStore.products || [];
+        console.log('📦 Raw products from API:', rawProducts.length);
+        allRawProducts.value = rawProducts;
+
+        if (!rawProducts || rawProducts.length === 0) {
             isNotFound.value = true;
-            // Gọi API lấy sản phẩm mới nhất hoặc nổi bật để gợi ý
-            const res = await productStore.fetchProducts({ 
-                limit: 8,
-                sort: 'newest' // Giả sử store/api hỗ trợ sort
+            // Gọi API lấy sản phẩm mới nhất để gợi ý
+            await productStore.fetchProducts({ 
+                limit: 8
             });
-            // Vì fetchProducts của bạn có thể ghi đè store, ta nên lưu vào biến cục bộ
             suggestedProducts.value = productStore.products; 
+        } else {
+            // 2. Dùng Fuse.js để fuzzy search thêm lần nữa (client-side)
+            const searchPattern = simplifyText(query);
+            console.log('🔬 Search pattern after simplify:', searchPattern);
+            
+            const fuse = new Fuse(rawProducts, fuseOptions);
+            const results = fuse.search(searchPattern);
+            console.log('🎯 Fuse.js results:', results.length);
+            
+            // Update store.products với kết quả đã filter
+            productStore.products = results.map(r => r.item);
+            console.log('✅ Final products to display:', productStore.products.length);
+            isNotFound.value = false;
         }
     } catch (error) {
         console.error("Search error:", error);

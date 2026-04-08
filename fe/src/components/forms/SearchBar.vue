@@ -88,10 +88,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/product_service_api'; 
-// import Fuse from 'fuse.js';
+import Fuse from 'fuse.js';
 
 const router = useRouter();
 const q = ref('');
@@ -186,15 +186,20 @@ function closeSuggestions() {
 }
 
 function selectSuggestion(product) {
-  q.value = product.name;
   showSuggestions.value = false;
-  router.push(`/product/${product.id}`);
+  router.push({ path: '/search', query: { q: q.value.trim() } });
 }
 
 function submit() {
   if (!q.value?.trim()) return;
+  console.log('🚀 Submit called with q.value:', JSON.stringify(q.value), 'trimmed:', JSON.stringify(q.value.trim()));
+  console.log('🚀 Current showSuggestions:', showSuggestions.value);
   showSuggestions.value = false;
-  router.push({ path: '/search', query: { q: q.value.trim() } });
+  
+  // Đảm bảo DOM update hoàn thành trước khi navigate
+  nextTick(() => {
+    router.push({ path: '/search', query: { q: q.value.trim() } });
+  });
 }
 </script>
 
