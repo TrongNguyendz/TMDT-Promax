@@ -31,7 +31,7 @@
           :paymentMethod="checkout.paymentMethod"
           :qrData="qrCodeData"
           :checkoutUrl="checkoutUrl"
-          :total="checkoutSubtotal"
+          :finalTotal="checkoutFinalTotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -39,7 +39,12 @@
         />
       </div>
 
-      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="cart.subtotal" :currentStep="checkout.currentStep" />
+      <OrdersSummary
+        :itemCount="itemCount"
+        :subtotal="subtotal || 0"
+        :finalTotal="checkoutFinalTotal"
+        :currentStep="checkout.currentStep"
+      />
     </div>
   </section>
 </template>
@@ -53,6 +58,7 @@ import { useCheckoutStore } from '../../stores/checkout';
 import { useOrderStore } from '../../stores/order';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
+import { useRoute } from 'vue-router';
 
 // Import các component con
 import CheckoutStep from '../../components/checkout/CheckoutStep.vue';   
@@ -68,6 +74,8 @@ const checkout = useCheckoutStore();
 const orderStore = useOrderStore();
 const ui = useUIStore();
 const userStore = useUserStore();
+const route = useRoute();
+
 
 // Biến cho PayOS
 const qrCodeData = ref('');
@@ -75,23 +83,29 @@ const checkoutUrl = ref('');
 const isProcessing = ref(false);
 const successOrder = ref(null); 
 let socket = null;
+const type = route.query.type; 
+const subtotal = Number(route.query.subtotal);
+const itemCount = Number(route.query.itemCount);
 
 // 1. Lấy sản phẩm hiển thị
 const checkoutItems = computed(() => {
+  
     if (successOrder.value && successOrder.value.items) {
         return successOrder.value.items;
     }
     
     if (checkout.isDirectBuy && checkout.directBuyItem) {
         return [checkout.directBuyItem]; 
+    } 
+    if (type === 'cart') {
+        return cart.items
     }
-    return cart.items; 
 });
 
-// 2. Lấy tổng tiền cuối cùng (bao gồm shipping + discount)
-const checkoutSubtotal = computed(() => {
+// 2. Tổng tiền cuối cùng dùng chung cho Step3Payment và OrderSummary
+const checkoutFinalTotal = computed(() => {
     if (successOrder.value) {
-        return successOrder.value.total_amount || successOrder.value.final_amount;
+        return successOrder.value.final_amount || successOrder.value.total_amount;
     }
     
     if (checkout.isDirectBuy && checkout.directBuyItem) {
@@ -99,7 +113,6 @@ const checkoutSubtotal = computed(() => {
         return Math.max(0, Math.round(itemTotal + (checkout.shippingFee || 0) - (checkout.discountAmount || 0)));
     }
     
-    // Sử dụng cùng logic với finalTotal trong OrderSummary
     return Math.max(
         0,
         Math.round(

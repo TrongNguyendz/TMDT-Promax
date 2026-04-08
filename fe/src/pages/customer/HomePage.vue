@@ -78,14 +78,6 @@
             >{{ cat.name }}</span
           >
         </div>
-
-        <h2  class="mb-3 flex items-center justify-between text-lg font-semibold">
-            <span>Sản phẩm nổi bật</span>
-            <span class="text-xs text-gray-400 font-normal">
-                (Tổng: {{ productsStore.pagination?.total || 0 }} - Trang: {{ page }}/{{ totalPages }})
-            </span>
-
-        </h2>
         
         <!-- Trong template của HomePage.vue -->
 

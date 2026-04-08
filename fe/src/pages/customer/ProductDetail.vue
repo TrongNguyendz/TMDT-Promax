@@ -899,6 +899,7 @@ import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
 import { useCheckoutStore } from '../../stores/checkout'; 
 
+
 const router = useRouter();
 const route = useRoute();
 const productStore = useProductsStore();
@@ -1173,7 +1174,7 @@ function buyNow() {
       quantity: qty.value
   });
 
-  router.push('/checkout');
+  router.push({ name: 'checkout' , query: { subtotal: product.value.price , itemCount: 1 ,type: 'direct-buy' } });
 }
 
 function toggleWishlist() {

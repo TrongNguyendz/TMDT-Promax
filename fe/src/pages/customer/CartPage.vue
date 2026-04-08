@@ -163,12 +163,13 @@ import { computed } from 'vue';
 import { useCartStore } from '../../stores/cart';
 import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
-import { useRouter } from 'vue-router';
+import { useRouter,useRoute } from 'vue-router';
 import { formatCurrency } from '../../utils/helpers';
 
 const cart = useCartStore();
 const userStore = useUserStore();
 const uiStore = useUIStore();
+const route = useRoute();
 const router = useRouter();
 
 const items = computed(() => cart.items);
@@ -177,7 +178,7 @@ const subtotal = computed(() => cart.subtotal);
 // [CHANGE]
 function handleCheckout() {
   if (userStore.profile?.id || userStore.isAuthenticated) {
-    router.push('/checkout');
+    router.push({ name: 'checkout' , query: { subtotal: cart.subtotal, itemCount: cart.itemCount , type: 'cart' } });
   } else {
     if (uiStore.pushToast) {
       uiStore.pushToast({
