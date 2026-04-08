@@ -122,10 +122,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { useOrderStore } from '@/stores/order';
-import { useCartStore } from '@/stores/cart';
-import { useUIStore } from '@/stores/ui';
-import { formatCurrency } from '@/utils/helpers';
+import { useOrderStore } from '../../stores/order';
+import { useCartStore } from '../../stores/cart';
+import { useUIStore } from '../../stores/ui';
+import { formatCurrency } from '../../utils/helpers';
 
 const orderStore = useOrderStore();
 const cartStore = useCartStore();
