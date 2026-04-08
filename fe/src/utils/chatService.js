@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { useUserStore } from '@/stores/user';
 
-const API_BASE = 'http://localhost:3000/api/v1/support';
+const API_BASE = 'https://tmdt-promax-api-gateway.onrender.com/api/v1/support';
 
 const getAuthHeaders = () => {
   const userStore = useUserStore();

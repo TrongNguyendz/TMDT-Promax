@@ -288,7 +288,7 @@ async function loadBanners() {
       title: banner.title,
       description: banner.description,
       type: banner.link_type === 'video' ? 'video' : 'image',
-      media: banner.link_type === 'video' ? `http://localhost:3006${banner.image_url}` : `http://localhost:3006${banner.image_url}`,
+      media: banner.link_type === 'video' ? `https://tmdt-promax-admin-service.onrender.com${banner.image_url}` : `https://tmdt-promax-admin-service.onrender.com${banner.image_url}`,
       link: banner.link || null
     }));
   } catch (err) {

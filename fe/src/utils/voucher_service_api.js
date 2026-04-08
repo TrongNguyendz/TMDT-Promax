@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Thay đổi base URL tùy theo backend của bạn
-const API_BASE_URL = 'http://localhost:3000/api/v1'; // hoặc import từ env: import.meta.env.VITE_API_URL
+const API_BASE_URL = 'https://tmdt-promax-api-gateway.onrender.com/api/v1'; // hoặc import từ env: import.meta.env.VITE_API_URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,

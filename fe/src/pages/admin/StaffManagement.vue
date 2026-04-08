@@ -429,7 +429,7 @@ const formData = reactive({
 
 const fileToUpload = ref(null);
 
-const API_BASE = "http://localhost:3007";
+const API_BASE = "https://tmdt-promax-staff-service.onrender.com";
 
 const getAvatar = (avatar) => {
   if (!avatar) return defaultAvatar;
