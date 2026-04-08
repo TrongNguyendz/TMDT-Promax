@@ -31,7 +31,7 @@
           :paymentMethod="checkout.paymentMethod"
           :qrData="qrCodeData"
           :checkoutUrl="checkoutUrl"
-          :total="cart.subtotal"
+          :total="checkoutSubtotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
