@@ -198,7 +198,7 @@ async function generatePayOSUrl(orderId, amount) {
     }
 
     // 3. GỌI API VỚI CONFIG (Bao gồm Token)
-    const response = await axios.post('http://localhost:3000/api/v1/payments/payos/create', {
+    const response = await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/payments/payos/create', {
       orderId: orderId, 
       amount: cleanAmount, 
       userId: userStore.profile?.id || 'GUEST',
@@ -236,7 +236,7 @@ async function completeCODOrder() {
 // --- SOCKET & HOÀN TẤT ---
 
 function setupSocketListener(orderId) {
-  socket = io('http://localhost:3004', {
+  socket = io('https://tmdt-promax-payment-service.onrender.com', {
     transports: ['websocket', 'polling'],
     withCredentials: true
   });

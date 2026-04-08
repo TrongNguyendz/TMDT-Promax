@@ -141,7 +141,7 @@ const isDark = computed(() => ui.isDarkMode);
 const isDropdownOpen = ref(false);
 
 const userAvatar = computed(() => {
-  if (user.profile?.avatar_url) return `http://localhost:3001${user.profile.avatar_url}`;
+  if (user.profile?.avatar_url) return `https://tmdt-promax-user-service.onrender.com${user.profile.avatar_url}`;
   return defaultAvatar;
 });
 

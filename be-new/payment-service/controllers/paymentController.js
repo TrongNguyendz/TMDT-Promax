@@ -82,7 +82,7 @@ exports.payosWebhook = async (req, res) => {
 
         try {
           // Báo cho Order Service chốt đơn
-          await axios.put(`http://localhost:3003/api/orders/${payment.order_id}/status`, { 
+          await axios.put(`https://tmdt-promax-order-service.onrender.com/api/orders/${payment.order_id}/status`, { 
             status: 'processing',
             payment_status: 'paid',
             paid_at: new Date().toISOString()

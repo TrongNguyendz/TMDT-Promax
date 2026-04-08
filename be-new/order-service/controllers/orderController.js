@@ -215,7 +215,7 @@ exports.createOrder = async (req, res) => {
             };
 
             // Gửi bất đồng bộ (fire-and-forget) - không làm chậm response tạo order
-            axios.post('http://localhost:3005/api/notifications', notificationPayload)
+            axios.post('https://tmdt-promax-notification-service.onrender.com/api/notifications', notificationPayload)
                 .then(response => {
                     console.log('✅ Đã gửi yêu cầu tạo & gửi hóa đơn PDF thành công:', response.data);
                 })

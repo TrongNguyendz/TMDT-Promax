@@ -219,7 +219,7 @@ exports.createStaff = async (req, res) => {
     // });
     let data = {} ;
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/staff', {
+      const response = await axios.post('https://tmdt-promax-user-service.onrender.com/api/auth/staff', {
         username,
         email,
         phone,
@@ -341,7 +341,7 @@ exports.updateStaff = async (req, res) => {
     }
     let data = {};
     try {
-      const response = await axios.put('http://localhost:3001/api/users/' + UserId,
+      const response = await axios.put('https://tmdt-promax-user-service.onrender.com/api/users/' + UserId,
         {
           full_name: req.body.full_name,
           email: req.body.email,
@@ -456,7 +456,7 @@ exports.hardDeleteStaff = async (req, res) => {
     // Gọi user-service để xóa tài khoản liên quan (nếu có)
     try {
       console.log(`[DEBUG] Gọi user-service để xóa tài khoản nhân viên (user_id: ${UserId})...`);
-      const userDeleteRes = await axios.delete(`http://localhost:3001/api/users/${UserId}`);
+      const userDeleteRes = await axios.delete(`https://tmdt-promax-user-service.onrender.com/api/users/${UserId}`);
       console.log('[DEBUG] user-service delete response:', userDeleteRes.data);
       if (!userDeleteRes.data.success) {
         console.warn(`[WARN] user-service không thể xóa tài khoản liên quan (user_id: ${UserId}):`, userDeleteRes.data);
