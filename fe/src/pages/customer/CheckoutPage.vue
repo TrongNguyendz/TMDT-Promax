@@ -88,16 +88,24 @@ const checkoutItems = computed(() => {
     return cart.items; 
 });
 
-// 2. Lấy tổng tiền
+// 2. Lấy tổng tiền cuối cùng (bao gồm shipping + discount)
 const checkoutSubtotal = computed(() => {
     if (successOrder.value) {
         return successOrder.value.total_amount || successOrder.value.final_amount;
     }
     
     if (checkout.isDirectBuy && checkout.directBuyItem) {
-        return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
+        const itemTotal = checkout.directBuyItem.price * checkout.directBuyItem.quantity;
+        return Math.max(0, Math.round(itemTotal + (checkout.shippingFee || 0) - (checkout.discountAmount || 0)));
     }
-    return cart.subtotal;
+    
+    // Tính tổng cuối cùng: subtotal + shipping - discount
+    const subtotal = cart.subtotal;
+    const shipping = checkout.shippingFee || 0;
+    const discount = checkout.discountAmount || 0;
+    
+    return Math.max(0, Math.round(subtotal + shipping - discount));
+});
 });
 
 onMounted(() => {
