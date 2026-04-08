@@ -1,12 +1,27 @@
 // File: product-service/models/productModel.js
 const mongoose = require('mongoose');
 const slugify = require('../functions/slugify');
-const cloudinary = require('../config/cloudinary'); 
+const cloudinary = require('../config/cloudinary');
+
+/**
+ * Chuẩn hóa text: Bỏ dấu Tiếng Việt và xóa khoảng trắng
+ * Để so sánh chính xác
+ */
+const normalizeText = (text) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD')                // Tách dấu
+    .replace(/[\u0300-\u036f]/g, '') // Xóa dấu
+    .replace(/đ/g, 'd')              // Sửa chữ đ
+    .trim();
+}; 
 
 // Định nghĩa Schema
 const productSchema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true },
   name: { type: String, required: true },
+  normalized_name: { type: String }, // Tên đã chuẩn hóa để tìm kiếm
   slug: { type: String, unique: true },
   description: { type: String },
   price: { type: Number, required: true },
@@ -41,7 +56,29 @@ productSchema.set('toJSON', {
   transform: function (doc, ret) { delete ret._id; }
 });
 
-productSchema.index({ name: 'text', sku: 'text' }); 
+// Tạo text index để tìm kiếm toàn văn
+productSchema.index({ name: 'text', sku: 'text', description: 'text' }); 
+// Tạo index cho normalized_name để tìm kiếm nhanh
+productSchema.index({ normalized_name: 1 });
+
+// Middleware: Tự động chuẩn hóa name khi save/update
+// THAY THẾ middleware pre('save') bằng đoạn này
+productSchema.pre('save', async function() {
+    if (this.name) {
+        this.normalized_name = normalizeText(this.name);
+    }
+    // KHÔNG cần next() nữa
+});
+
+// Nên sửa tương tự hoặc comment tạm nếu không cần
+productSchema.pre(['findOneAndUpdate', 'updateOne'],async function() {
+    const update = this.getUpdate();
+    if (update && update.name) {
+        update.normalized_name = normalizeText(update.name);
+    }
+    // KHÔNG cần next() nữa
+});
+
 
 const Product = mongoose.model('Product', productSchema);
 
@@ -56,10 +93,12 @@ exports.listProducts = async (filters = {}) => {
   // Lọc theo Category
   if (filters.categoryId) query.category_id = filters.categoryId;
   
-  // Tìm kiếm 
+  // Tìm kiếm với chuẩn hóa text
   if (filters.search) {
+     const normalizedSearch = normalizeText(filters.search);
+     // Tìm kiếm vừa dùng text index, vừa dùng normalized_name
      query.$or = [
-         { name: { $regex: filters.search, $options: 'i' } }, // i = không phân biệt hoa thường
+         { normalized_name: { $regex: normalizedSearch, $options: 'i' } },
          { sku: { $regex: filters.search, $options: 'i' } }
      ];
   }
@@ -88,6 +127,7 @@ exports.listProducts = async (filters = {}) => {
       doc.id = doc._id;
       doc.category_name = doc.category_id?.name; // Lấy tên danh mục
       delete doc._id;
+      delete doc.normalized_name; // Không trả về field này
       return doc;
   });
 
@@ -113,6 +153,7 @@ exports.getProductById = async (id) => {
   
   doc.category_id = doc.category_id?._id ? doc.category_id._id.toString() : doc.category_id;
   delete doc._id;
+  delete doc.normalized_name; // Không trả về field này
   return doc;
 };
 
@@ -278,10 +319,27 @@ exports.deleteProduct = async (id) => {
   return true;
 };
 
+// === THAY TOÀN BỘ HÀM updateStock BẰNG ĐOẠN CODE SAU (xóa hàm cũ đi) ===
 exports.updateStock = async (id, qty) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return await Product.findByIdAndUpdate(id, { stock_quantity: qty }, { new: true });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('ID sản phẩm không hợp lệ');
+    }
+
+    const product = await Product.findById(id);
+    if (!product) {
+        throw new Error('Không tìm thấy sản phẩm');
+    }
+
+    const oldStock = product.stock_quantity || 0;
+    product.stock_quantity = Number(qty);
+
+    await product.save();
+
+    console.log(`✅ Đã cập nhật tồn kho cho SP ${id}: ${oldStock} → ${product.stock_quantity}`);
+
+    return product;
 };
+
 exports.getPrimaryImageBySku = async (sku) => {
   // Tìm sản phẩm dựa trên SKU
   const product = await Product.findOne({ sku });

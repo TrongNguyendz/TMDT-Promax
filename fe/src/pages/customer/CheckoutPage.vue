@@ -59,6 +59,7 @@ import { useCheckoutStore } from '../../stores/checkout';
 import { useOrderStore } from '../../stores/order';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
+import { useRoute } from 'vue-router';
 
 // Import các component con
 import CheckoutStep from '../../components/checkout/CheckoutStep.vue'; 
@@ -73,6 +74,8 @@ const checkout = useCheckoutStore();
 const orderStore = useOrderStore();
 const ui = useUIStore();
 const userStore = useUserStore();
+const route = useRoute();
+
 
 const qrCodeData = ref('');
 const checkoutUrl = ref('');
