@@ -35,6 +35,12 @@ export const chatService = {
     return await axios.put(`${API_BASE}/${ticketId}/mark-read`, { reader_type: readerType }, getAuthHeaders());
   },
 
+  // ✅ HÀM MỚI ĐƯỢC THÊM VÀO: Cập nhật trạng thái Ticket (Ví dụ: Đóng chat)
+  updateTicketStatus: async (ticketId, payload) => {
+    // Dùng PATCH để cập nhật 1 phần dữ liệu (ở đây là status)
+    return await axios.patch(`${API_BASE}/${ticketId}/status`, payload, getAuthHeaders());
+  },
+
   // ==========================================
   // DÀNH CHO CUSTOMER
   // ==========================================

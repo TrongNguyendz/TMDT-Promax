@@ -145,13 +145,29 @@ exports.createTicket = async (req, res) => {
 // ====================== SEND MESSAGE ======================
 exports.sendMessage = async (req, res) => {
     try {
-        const { id } = req.params; // ticket_id
+        const { id } = req.params; 
         const { content, sender_type, sender_id, message_type, file_url } = req.body;
 
         const ticket = await SupportTicket.findById(id);
         if (!ticket) return res.status(404).json({ success: false, message: 'Không tìm thấy Ticket' });
 
-        // TẠO DOCUMENT MỚI (Thay vì ticket.messages.push)
+        let statusChanged = false;
+
+        // ✅ LOGIC TỰ ĐỘNG NHẢY TRẠNG THÁI
+        if (sender_type === 'staff' && ticket.status === 'open') {
+            // Admin tiếp quản đơn mới
+            ticket.status = 'in_progress';
+            ticket.assigned_staff_id = sender_id;
+            statusChanged = true;
+        } else if (sender_type === 'customer' && (ticket.status === 'resolved' || ticket.status === 'closed')) {
+            // Khách nhắn vào đơn đã xong -> Hồi sinh đơn
+            ticket.status = 'in_progress';
+            statusChanged = true;
+        }
+
+        if (statusChanged) await ticket.save();
+
+        // Tạo tin nhắn mới
         const newMessage = new SupportMessage({
             ticket_id: id,
             sender_type,
@@ -161,18 +177,25 @@ exports.sendMessage = async (req, res) => {
             file_url: file_url || null
         });
 
-        const savedMessage = await newMessage.save(); // Khi save, Mongoose Middleware ở trên sẽ tự chạy
+        const savedMessage = await newMessage.save();
 
-        // Phần Socket giữ nguyên...
+        // Bắn Socket Real-time
         const io = req.app.get('io');
         if (io) {
-            io.to(id).emit('receive_message', { ...savedMessage.toObject(), ticket_id: id });
-            io.emit('global_ticket_update', { ...savedMessage.toObject(), ticket_id: id });
+            const messageData = { ...savedMessage.toObject(), ticket_id: id };
+            io.to(id).emit('receive_message', messageData);
+            
+            // Nếu có đổi trạng thái, báo cho Sidebar cập nhật
+            io.emit('global_ticket_update', { 
+                ...messageData, 
+                type: statusChanged ? 'status_changed' : 'new_message',
+                new_status: ticket.status 
+            });
         }
 
         res.json({ success: true, data: savedMessage });
     } catch (error) {
-        console.error("LỖI TẠI SENDMESSAGE:", error); // hiện lỗi trên ter
+        console.error("LỖI SENDMESSAGE:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -196,6 +219,40 @@ exports.markAsRead = async (req, res) => {
 
         res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+// ====================== UPDATE TICKET STATUS ======================
+exports.updateTicketStatus = async (req, res) => {
+    try {
+        const ticketId = req.params.id;
+        const { status } = req.body;
+
+        // Chỉ cho phép các trạng thái có trong Schema
+        const validStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ' });
+        }
+
+        const updatedTicket = await SupportTicket.findByIdAndUpdate(
+            ticketId,
+            { status: status },
+            { new: true }
+        );
+
+        if (!updatedTicket) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy Ticket' });
+        }
+
+        // Báo cho toàn hệ thống biết để tự động nhảy tab bên giao diện
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('global_ticket_update', { type: 'status_changed', ticket_id: ticketId, status });
+        }
+
+        res.json({ success: true, data: updatedTicket, message: 'Cập nhật trạng thái thành công' });
+    } catch (error) {
+        console.error('Lỗi updateTicketStatus:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

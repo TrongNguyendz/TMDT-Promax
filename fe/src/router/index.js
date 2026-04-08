@@ -29,7 +29,6 @@ const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
 const AdminDashboard = () => import('../pages/admin/AdminDashboard.vue');
 const ProductManagement = () => import('../pages/admin/ProductManagement.vue');
 const OrderManagement = () => import('../pages/admin/OrderManagement.vue');
-const AdminOrderDetail = () => import('../pages/admin/OrderDetail.vue');
 const UserManagement = () => import('../pages/admin/UserManagement1.vue');
 const BannerManagement = () => import('../pages/admin/BannerManagement.vue');
 const ReportPage = () => import('../pages/admin/ReportPage.vue');
@@ -69,8 +68,8 @@ const routes = [
 	{ path: '/contact', component: ContactPage },
 	{ path: '/policy', component: PolicyPage },
 	{ path: '/try-on/:id', component: TryOnClothesWithAI },
-	// { path: '/total-amount', component: TotalAmountSpent },
-	// { path: '/support', component: SupportPage },
+	 { path: '/total-amount', component: TotalAmountSpent },
+	 { path: '/support', component: SupportPage },
 
 	{ path: '/profile', component: ProfilePage, meta: { requiresAuth: true } },
 	{ path: '/orders', component: OrderHistory, meta: { requiresAuth: true } },

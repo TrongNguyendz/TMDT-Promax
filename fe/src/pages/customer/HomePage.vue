@@ -32,6 +32,7 @@
             >Tất cả</span
           >
         </div>
+
         <!-- Các danh mục từ DB -->
         <div
           v-for="cat in productsStore.categories"
@@ -77,8 +78,28 @@
             >{{ cat.name }}</span
           >
         </div>
+
+        <h2  class="mb-3 flex items-center justify-between text-lg font-semibold">
+            <span>Sản phẩm nổi bật</span>
+            <span class="text-xs text-gray-400 font-normal">
+                (Tổng: {{ productsStore.pagination?.total || 0 }} - Trang: {{ page }}/{{ totalPages }})
+            </span>
+
+        </h2>
+        
+        <!-- Trong template của HomePage.vue -->
+
+        <Chatbot :products="productsStore.products" />
+        
+        <!-- Loading -->
+
+        <div v-if="productsStore.loading" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div v-for="i in 4" :key="i" class="h-64 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800"></div>
+
+        </div>
       </div>
     </div>
+
 
     <h2 class="mb-3 flex items-center justify-between text-lg font-semibold">
       <span>Sản phẩm nổi bật</span>
@@ -172,10 +193,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed, watch } from "vue";
-import ProductCard from "../../components/common/ProductCard.vue";
-import BannerCarousel from "../../components/common/BannerCarousel.vue";
 
+import { onMounted, ref, computed, watch } from 'vue';
+import ProductCard from '../../components/common/ProductCard.vue';
+import BannerCarousel from '../../components/common/BannerCarousel.vue';
 import Chatbot from "../../components/common/chatbot.vue";
 import { useCartStore } from "../../stores/cart";
 import { useProductsStore } from "../../stores/products";

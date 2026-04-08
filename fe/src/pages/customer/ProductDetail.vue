@@ -349,7 +349,7 @@
 
           <!-- Danh sách đánh giá -->
           <div>
-            <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white">Khách hàng nhận xét ({{ reviews.length }})</h3>
+            
             <div v-if="reviews.length === 0" class="text-center py-10 text-gray-500 border border-dashed rounded-lg dark:border-gray-700">
               Chưa có đánh giá nào. Hãy là người đầu tiên!
             </div>
