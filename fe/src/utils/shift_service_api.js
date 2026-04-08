@@ -9,7 +9,7 @@ export const getListShifts = async ( token) => {
     if (!token) throw new Error('Token is required');
 
     return await axios.get(
-        'https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts',
+        'http://localhost:3000/api/v1/shifts',
         {
             // params, // hỗ trợ query params: page, limit, staff_id, status, start_date, end_date, search,...
             headers: {
@@ -28,7 +28,7 @@ export const getShiftById = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.get(
-        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
+        `http://localhost:3000/api/v1/shifts/${id}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -45,7 +45,7 @@ export const createShift = async (data, token) => {
     if (!token) throw new Error('Token is required');
 
     return await axios.post(
-        'https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts',
+        'http://localhost:3000/api/v1/shifts',
         data,
         {
             headers: {
@@ -65,7 +65,7 @@ export const updateShift = async (id, data, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.put(
-        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
+        `http://localhost:3000/api/v1/shifts/${id}`,
         data,
         {
             headers: {
@@ -85,7 +85,7 @@ export const deleteShift = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.delete(
-        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}`,
+        `http://localhost:3000/api/v1/shifts/${id}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -103,7 +103,7 @@ export const hardDeleteShift = async (id, token) => {
     if (!id) throw new Error('Shift ID is required');
 
     return await axios.delete(
-        `https://tmdt-promax-api-gateway.onrender.com/api/v1/shifts/${id}/hard`,
+        `http://localhost:3000/api/v1/shifts/${id}/hard`,
         {
             headers: {
                 Authorization: `Bearer ${token}`
