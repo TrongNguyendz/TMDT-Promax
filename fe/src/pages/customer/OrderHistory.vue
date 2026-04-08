@@ -167,6 +167,7 @@ const handleCancel = async (orderId) => {
 };
 
 const reorderItems = (order) => {
+<<<<<<< Updated upstream
   order.items.forEach(item => {
     cartStore.addToCart({
       id: item.product_id,
@@ -178,6 +179,23 @@ const reorderItems = (order) => {
     }, item.quantity);
   });
   uiStore.pushToast({ type: 'success', message: 'Đã thêm vào giỏ hàng' });
+=======
+	let count = 0;
+	order.items.forEach(item => {
+		// Map lại dữ liệu snapshot sang dữ liệu Cart Store cần
+		cartStore.addToCart({
+			id: item.product_id,
+			name: item.product_name,
+			price: item.unit_price,
+			image: item.product_image,
+			selectedColor: item.color,
+			selectedSize: item.size
+		}, item.quantity);
+		count++;
+	});
+
+	
+>>>>>>> Stashed changes
 };
 
 const statusColor = (status) => {

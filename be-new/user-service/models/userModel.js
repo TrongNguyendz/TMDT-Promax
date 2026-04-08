@@ -29,7 +29,7 @@ UserSchema.set('toJSON', {
   virtuals: true,
   versionKey: false, // Ẩn trường __v
   transform: function (doc, ret) {
-    delete ret._id;  // Ẩn trường _id gốc của Mongo, chỉ giữ lại 'id' số của bạn
+     // Ẩn trường _id gốc của Mongo, chỉ giữ lại 'id' số của bạn
   }
 });
 // 👆 HẾT PHẦN THÊM 👆
@@ -79,8 +79,15 @@ exports.sanitizeUser = sanitizeUser;
 
 exports.findById = async (id) => {
   const numericId = Number(id);
-  if (isNaN(numericId)) return null;
-  return User.findOne({ id: numericId });
+  if (!isNaN(numericId) && String(id).length < 20) { //phân biệt với ObjectId
+    return await User.findOne({ id: numericId });
+  }
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return await User.findById(id);
+  }
+  
+  return null; 
 };
 
 exports.findByEmail = async (email) =>
@@ -134,30 +141,62 @@ exports.createUser = async (payload) => {
 };
 
 exports.updateUser = async (id, payload) => {
-  const numericId = Number(id);
-  if (isNaN(numericId)) return null;
-  return User.findOneAndUpdate(
-    { id: numericId },
-    { $set: { ...payload, updated_at: Date.now() } },
-    { new: true, lean: true }
-  );
+  
+  if (!isNaN(Number(id))) {
+    return User.findOneAndUpdate(
+      { id: Number(id) },
+      { $set: { ...payload, updated_at: Date.now() } },
+      { new: true, lean: true }
+    );
+  }
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return User.findByIdAndUpdate(
+      id,
+      { $set: { ...payload, updated_at: Date.now() } },
+      { new: true, lean: true }
+    );
+  }
+
+  return null;
 };
 
 exports.deleteUser = async (id) => {
-  const numericId = Number(id);
-  if (isNaN(numericId)) return false;
-  const result = await User.findOneAndDelete({ id: numericId });
-  return !!result;
+  //  số dùng id
+  if (!isNaN(Number(id))) {
+    const result = await User.findOneAndDelete({ id: Number(id) });
+    return !!result;
+  }
+
+  // ObjectId dùng _id
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    const result = await User.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  return false;
 };
 
 exports.updateRole = async (id, role) => {
-  const numericId = Number(id);
-  if (isNaN(numericId)) return null;
-  return User.findOneAndUpdate(
-    { id: numericId },
-    { role, updated_at: Date.now() },
-    { new: true }
-  );
+  // check soos
+  if (!isNaN(Number(id))) {
+    return User.findOneAndUpdate(
+      { id: Number(id) },
+      { role, updated_at: Date.now() },
+      { new: true }
+    );
+  }
+
+  // check object
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return User.findByIdAndUpdate(
+      id,
+      { role, updated_at: Date.now() },
+      { new: true }
+    );
+  }
+
+  return null;
 };
 
 exports.setTempPassword = async (userId, tempPassword, expiresInMinutes = 30) => {

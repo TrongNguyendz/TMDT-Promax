@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const rateLimitMiddleware = require('./middlewares/rate-limit');
 const responseTimeMiddleware = require('./middlewares/response-time');
 const logger = require('./middlewares/logger');

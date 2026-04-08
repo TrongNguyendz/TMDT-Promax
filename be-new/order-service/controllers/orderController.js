@@ -252,12 +252,14 @@ exports.listOrders = async (req, res) => {
         const currentUserId = req.headers['x-user-id'];
         const currentUserRole = req.headers['x-user-role'];
         
-        const canViewAll = ['admin', 'staff'].includes(currentUserRole);
+        let targetUserId = req.query.user_id;
 
-        const data = await OrderModel.listOrders(
-            canViewAll ? null : currentUserId
-        );
-
+        // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
+        if (currentUserRole !== 'admin') {
+            targetUserId = currentUserId;
+        }
+        
+        const data = await OrderModel.listOrders(targetUserId);
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

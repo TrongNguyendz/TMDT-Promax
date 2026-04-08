@@ -235,6 +235,7 @@
             </svg>
           </button>
 
+<<<<<<< Updated upstream
           <!-- Nút Thêm vào giỏ -->
           <button 
             :disabled="!product.inStock" 
@@ -257,6 +258,10 @@
 
         <!-- Try On & Compare Buttons -->
         <div class="flex flex-wrap items-center gap-2 mt-6">
+=======
+        <!-- Try On & Compare Buttons -->
+        <div class="flex gap-2">
+>>>>>>> Stashed changes
           <RouterLink
             :to="`/try-on/${product.id}`"
             class="rounded-lg w-fit bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-bold text-white shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-blue-700 active:scale-[0.98] transition-all text-center"
@@ -440,7 +445,11 @@
                   >
                     <span>
                       {{ expandedReviews.has(review.id)
+<<<<<<< Updated upstream
                         ? `Thu gọn phản hồi`
+=======
+                        ? `Thu gọn ${review.replies.length - 1} phản hồi`
+>>>>>>> Stashed changes
                         : `Xem thêm ${review.replies.length - 1} phản hồi`
                       }}
                     </span>
@@ -888,7 +897,11 @@
 
 <script setup>
 import { onMounted, ref, watch, reactive } from "vue";
+<<<<<<< Updated upstream
 import { useRoute, useRouter } from 'vue-router'; 
+=======
+import { useRoute } from "vue-router";
+>>>>>>> Stashed changes
 import { useProductsStore } from "../../stores/products";
 import { useCartStore } from "../../stores/cart";
 import { useWishlistStore } from "../../stores/wishlist";
@@ -897,17 +910,25 @@ import { useCompareStore } from "../../stores/compare";
 import { useUIStore } from "../../stores/ui";
 import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
+<<<<<<< Updated upstream
 import { useCheckoutStore } from '../../stores/checkout'; 
 
 const router = useRouter();
+=======
+
+>>>>>>> Stashed changes
 const route = useRoute();
 const productStore = useProductsStore();
 const cart = useCartStore();
 const wishlist = useWishlistStore();
 const userStore = useUserStore();
+<<<<<<< Updated upstream
 const compareStore = useCompareStore();
 const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
 const checkoutStore = useCheckoutStore(); 
+=======
+const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
+>>>>>>> Stashed changes
 
 const showSizeGuide = ref(false);
 const sizeTab = ref("Nam");
@@ -1032,7 +1053,11 @@ const getPreviewReplies = (replies) => {
 const getExpandedReplies = (replies) => {
   if (!replies?.length) return [];
   const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+<<<<<<< Updated upstream
   return sorted;// tất cả reply theo thứ tự thời gian (cũ nhất -> mới nhất)
+=======
+  return sorted.slice(0, -1); // tất cả trừ reply mới nhất
+>>>>>>> Stashed changes
 };
 
 const formatRelativeTime = (dateStr) => {
@@ -1076,6 +1101,7 @@ async function submitReview() {
       newReview.comment = '';
       newReview.rating = 5;
       fetchReviews(product.value.id);
+<<<<<<< Updated upstream
       ui.pushToast({
   message: "Đánh giá đã được gửi!",
   type: "success"
@@ -1086,6 +1112,12 @@ async function submitReview() {
       message: 'Lỗi: ' + (e.response?.data?.message || e.message),
       type: "error"
     });
+=======
+      alert('Đánh giá đã được gửi!');
+    }
+  } catch (e) {
+    alert('Lỗi: ' + (e.response?.data?.message || e.message));
+>>>>>>> Stashed changes
   } finally {
     isSubmitting.value = false;
   }
@@ -1105,10 +1137,14 @@ async function submitReply(reviewId) {
       fetchReviews(product.value.id);
     }
   } catch (error) {
+<<<<<<< Updated upstream
     ui.pushToast({
       message: 'Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message),
       type: "error"
     });
+=======
+    alert('Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message));
+>>>>>>> Stashed changes
   }
 }
 
@@ -1118,6 +1154,7 @@ async function handleDeleteReview(reviewId) {
     await api.delete(`/products/reviews/${reviewId}`);
     fetchReviews(product.value.id);
   } catch (e) {
+<<<<<<< Updated upstream
     ui.pushToast({
       message: "Lỗi xóa đánh giá",
       type: "error"
@@ -1125,6 +1162,13 @@ async function handleDeleteReview(reviewId) {
   }
 }
 
+=======
+    alert("Lỗi xóa đánh giá");
+  }
+}
+
+// Other functions (giữ nguyên)
+>>>>>>> Stashed changes
 function handleImageError(e) {
   e.target.src = "https://placehold.co/600x600?text=Error";
 }
@@ -1159,6 +1203,7 @@ function addToCart() {
   );
 }
 
+<<<<<<< Updated upstream
 function buyNow() {
   if (!product.value) return;
 
@@ -1176,6 +1221,8 @@ function buyNow() {
   router.push('/checkout');
 }
 
+=======
+>>>>>>> Stashed changes
 function toggleWishlist() {
   if (!product.value) return;
   wishlist.toggleWishlist({

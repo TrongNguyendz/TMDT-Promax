@@ -447,7 +447,10 @@ watch(filters, () => {
     fetchReviews();
   }, 500);
 }, { deep: true });
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 const openReplyModal = (review) => {
   selectedReview.value = review;
