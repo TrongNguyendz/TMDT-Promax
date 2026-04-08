@@ -111,7 +111,6 @@ const loadInventory = async () => {
   try {
     const res = await getListProducts();
     const data = res.data.data || [];
-    console.log(data);
 
     inventory.value = data.map(p => ({
       id: p._id || p.id,
@@ -122,6 +121,7 @@ const loadInventory = async () => {
       .map(a => a.attribute_value)
       .join('/') || '---',
 
+      // ⚠️ cần backend trả
       sold: p.sold || 0,
       totalStock: p.stock_quantity || 0
     }));

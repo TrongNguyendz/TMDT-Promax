@@ -85,7 +85,7 @@ const routes = [
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
-	{ path: '/admin/orders-detail/:id', component: AdminOrderDetail, meta: { requiresAdmin: true } },
+	// { path: '/admin/orders-detail/:id', component: AdminOrderDetail, meta: { requiresAdmin: true } },
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
     { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
     { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },

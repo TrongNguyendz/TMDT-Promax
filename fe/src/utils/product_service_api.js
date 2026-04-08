@@ -51,7 +51,7 @@ productApi.interceptors.response.use(
   }
 );
 
-export const getlistproduct = () => productApi.get('/products');
+export const getListProducts = () => productApi.get('/products');
 export const getmainimagebySKU = (sku) => productApi.get(`/products/sku/${sku}/primary-image`);
 
 export default productApi;
