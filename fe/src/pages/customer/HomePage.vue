@@ -32,6 +32,7 @@
             >Tất cả</span
           >
         </div>
+
         <!-- Các danh mục từ DB -->
         <div
           v-for="cat in productsStore.categories"
@@ -77,8 +78,28 @@
             >{{ cat.name }}</span
           >
         </div>
+
+        <h2  class="mb-3 flex items-center justify-between text-lg font-semibold">
+            <span>Sản phẩm nổi bật</span>
+            <span class="text-xs text-gray-400 font-normal">
+                (Tổng: {{ productsStore.pagination?.total || 0 }} - Trang: {{ page }}/{{ totalPages }})
+            </span>
+
+        </h2>
+        
+        <!-- Trong template của HomePage.vue -->
+
+        <Chatbot :products="productsStore.products" />
+        
+        <!-- Loading -->
+
+        <div v-if="productsStore.loading" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div v-for="i in 4" :key="i" class="h-64 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800"></div>
+
+        </div>
       </div>
     </div>
+
 
     <h2 class="mb-3 flex items-center justify-between text-lg font-semibold">
       <span>Sản phẩm nổi bật</span>
@@ -172,10 +193,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed, watch } from "vue";
-import ProductCard from "../../components/common/ProductCard.vue";
-import BannerCarousel from "../../components/common/BannerCarousel.vue";
 
+import { onMounted, ref, computed, watch } from 'vue';
+import ProductCard from '../../components/common/ProductCard.vue';
+import BannerCarousel from '../../components/common/BannerCarousel.vue';
 import Chatbot from "../../components/common/chatbot.vue";
 import { useCartStore } from "../../stores/cart";
 import { useProductsStore } from "../../stores/products";
@@ -347,22 +368,18 @@ async function RecommentCategories() {
 }
 
 onMounted(async () => {
-  console.log("--- ONMOUNTED START ---");
 
   // 1. Load các dữ liệu tĩnh trước
   // 2. Kiểm tra token (nếu Store trống, thử lấy từ localStorage)
   const token = userStore.token || localStorage.getItem("token");
-  console.log("Token check:", token);
 
   if (token) {
     // Nếu có token nhưng chưa có profile, hãy load profile trước khi gợi ý
     if (!userStore.profile?.id) {
-      console.log("Đang lấy lại profile...");
       // await userStore.fetchProfile(); // Đảm bảo bạn có hàm này trong userStore
     }
     await RecommentCategories();
   } else {
-    console.log("Khách vãng lai - Load mặc định");
     await loadPage();
   }
   await Promise.all([productsStore.fetchCategories(), loadBanners()]);

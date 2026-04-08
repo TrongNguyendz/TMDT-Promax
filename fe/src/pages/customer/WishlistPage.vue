@@ -137,7 +137,7 @@ onMounted(async () => {
 
         // -> Gọi API lấy thông tin
         try {
-            const res = await axios.get(`https://tmdt-promax-api-gateway.onrender.com/api/v1/products/${item.product_id}`);
+            const res = await axios.get(`http://localhost:3000/api/v1/products/${item.product_id}`);
             if (res.data.success) {
                 const p = res.data.data;
                 
