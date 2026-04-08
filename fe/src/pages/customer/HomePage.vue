@@ -186,7 +186,7 @@ import { useUserStore } from "../../stores/user";
 
 const cart = useCartStore();
 const productsStore = useProductsStore();
-const bannerUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop';
+const defaultBannerUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop';
 
 const userStore = useUserStore();
 const page = ref(1);
@@ -209,7 +209,7 @@ async function loadBanners() {
         type: banner.link_type === "video" ? "video" : "image",
         src: banner.image_url.startsWith("http")
           ? banner.image_url
-          : `http://localhost:3006${banner.image_url}`,
+          : `https://tmdt-promax-admin-service.onrender.com${banner.image_url}`,
 
         title: banner.title,
         subtitle: banner.description,
