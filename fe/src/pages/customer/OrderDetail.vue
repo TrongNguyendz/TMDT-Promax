@@ -167,22 +167,6 @@
           <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">
             Thanh toán
           </h3>
-          <div
-            class="space-y-3 text-sm border-b pb-4 mb-4 border-gray-100 dark:border-gray-700"
-          >
-            <div class="flex justify-between">
-              <span class="text-gray-500">Tổng tiền:</span>
-              <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                formatCurrency(order.total_amount)
-              }}</span>
-            </div>
-            <div class="flex justify-between" v-if="order.discount_amount > 0">
-              <span class="text-gray-500">Giảm giá:</span>
-              <span class="font-medium text-green-600"
-                >-{{ formatCurrency(order.discount_amount) }}</span
-              >
-            </div>
-          </div>
           <div class="flex justify-between items-center mb-6">
             <span class="font-bold text-gray-900 dark:text-white"
               >Thành tiền:</span
