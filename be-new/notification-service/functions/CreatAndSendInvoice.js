@@ -19,21 +19,27 @@ if (!fs.existsSync(INVOICE_DIR)) {
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // STARTTLS
+  secure: false,                    // STARTTLS
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS
   },
-  tls: {
-    rejectUnauthorized: false
-  },
-  // Các timeout để tránh hanging + pool để tái sử dụng kết nối nhanh
+  // === Phần quan trọng để fix lỗi IPv6 ===
+  family: 4,                        // Buộc dùng IPv4 (rất hiệu quả)
+  
+  // Các tùy chọn timeout & pool (giữ lại nhưng tối ưu hơn)
   pool: true,
-  maxConnections: 5,    // Tăng lên một chút để ổn định
-  maxMessages: 100,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 30000   // Tăng socket timeout để Gmail có thời gian xử lý attachment lớn
+  maxConnections: 5,
+  maxMessages: Infinity,            // Thường nên để Infinity khi dùng pool
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000,
+
+  // Tùy chọn TLS an toàn hơn
+  tls: {
+    rejectUnauthorized: true,       // Nên để true nếu có thể (false chỉ để test)
+    ciphers: 'SSLv3'                // Một số server cần cái này
+  }
 });
 
 // Kiểm tra kết nối khi server khởi động
