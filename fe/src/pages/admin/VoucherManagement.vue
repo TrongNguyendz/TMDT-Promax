@@ -205,6 +205,7 @@ async function loadVouchers() {
   try {
     const response = await getListVouchers1(user.token);
     voucherData.value = response.data.data;
+    console.log('Danh sách voucher đã tải:', voucherData.value);
   } catch (err) {
     console.error('Lỗi tải voucher:', err);
     ui.pushToast({ type: 'error', message: 'Không thể tải danh sách voucher' });
@@ -246,7 +247,7 @@ function openCreateModal() {
 }
 
 function editVoucher(voucher) {
-  editingId.value = voucher.id;
+  editingId.value = voucher._id;
   Object.assign(formData, { 
     ...voucher,
     // Đảm bảo định dạng ngày để DatePicker nhận diện
@@ -285,7 +286,7 @@ function deleteVoucher(voucher) {
 async function confirmDelete() {
   if (voucherToDelete.value) {
     try {
-      await deleteVoucher1(voucherToDelete.value.id, user.token);
+      await deleteVoucher1(voucherToDelete.value._id, user.token);
       ui.pushToast({ type: 'success', message: 'Mã ưu đãi đã được gỡ bỏ' });
 await loadVouchers();
     } catch (err) {

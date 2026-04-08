@@ -230,7 +230,7 @@ async function loadBanners() {
         type: banner.link_type === "video" ? "video" : "image",
         src: banner.image_url.startsWith("https")
           ? banner.image_url
-          : `https://tmdt-promax-admin-service.onrender.com${banner.image_url}`,
+          : `http://localhost:3006${banner.image_url}`,
 // Debug URL
         title: banner.title,
         subtitle: banner.description,
