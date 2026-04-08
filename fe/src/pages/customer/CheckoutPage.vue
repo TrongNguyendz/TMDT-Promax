@@ -41,7 +41,7 @@
 
       <OrdersSummary
         :itemCount="itemCount"
-        :subtotal="subtotal || 0"
+        :subtotal="subtotal "
         :finalTotal="checkoutFinalTotal"
         :currentStep="checkout.currentStep"
       />
@@ -94,7 +94,8 @@ const checkoutItems = computed(() => {
         return successOrder.value.items;
     }
     
-    if (checkout.isDirectBuy && checkout.directBuyItem) {
+    if (type === 'direct-buy'
+    ) {
         return [checkout.directBuyItem]; 
     } 
     if (type === 'cart') {
@@ -108,15 +109,11 @@ const checkoutFinalTotal = computed(() => {
         return successOrder.value.final_amount || successOrder.value.total_amount;
     }
     
-    if (checkout.isDirectBuy && checkout.directBuyItem) {
-        const itemTotal = checkout.directBuyItem.price * checkout.directBuyItem.quantity;
-        return Math.max(0, Math.round(itemTotal + (checkout.shippingFee || 0) - (checkout.discountAmount || 0)));
-    }
     
     return Math.max(
         0,
         Math.round(
-            Number(cart.subtotal || 0) +
+            subtotal +
             Number(checkout.shippingFee || 0) -
             (Number(checkout.discountAmount) || 0)
         )
