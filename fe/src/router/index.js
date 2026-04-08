@@ -40,6 +40,7 @@ const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
 const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 const AdminProfile = () => import('../pages/admin/Profile.vue');
+const AdminOrderDetail = () => import('../pages/admin/OrderDetail.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
 const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
