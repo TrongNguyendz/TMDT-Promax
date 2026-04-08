@@ -97,7 +97,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getListProducts } from "../../utils/product_service_api";
+import { getlistproduct } from "../../utils/product_service_api";
 
 const searchKeyword = ref("");
 const sortBy = ref("");
@@ -109,7 +109,7 @@ const inventory = ref([]);
 
 const loadInventory = async () => {
   try {
-    const res = await getListProducts();
+    const res = await getlistproduct();
     const data = res.data.data || [];
     console.log(data);
 
