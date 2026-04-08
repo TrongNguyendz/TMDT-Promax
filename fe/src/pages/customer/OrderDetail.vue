@@ -215,7 +215,6 @@
             >
           </div>
 
-<<<<<<< Updated upstream
           <!-- Cancel Button -->
           <button
             v-if="order.status === 'pending'"
@@ -225,17 +224,6 @@
             Hủy đơn hàng
           </button>
         </div>
-=======
-					<!-- Cancel Button -->
-					<button 
-  v-if="order.status === 'pending'"
-  @click="handleCancel"
-  class="w-full py-3 rounded-lg border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
->
-  Hủy đơn hàng
-</button>
-				</div>
->>>>>>> Stashed changes
 
         <!-- Support -->
         <div
