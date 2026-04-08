@@ -12,7 +12,7 @@ const signToken = (payload) =>
 
 // ==================== HELPER: GỬI NOTIFICATION KHÔNG BLOCK ====================
 const sendNotificationAsync = (payload) => {
-  axios.post('http://localhost:3005/api/notifications', payload)
+  axios.post('https://tmdt-promax-notification-service.onrender.com/api/notifications', payload)
     .then((res) => {
       console.log(`[Notification] Gửi thành công - Type: ${payload.notification_type} | Status: ${res.status}`);
     })
