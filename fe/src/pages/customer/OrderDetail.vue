@@ -89,9 +89,6 @@
                   <p class="text-sm text-gray-500">
                     Số lượng: {{ item.quantity }}
                   </p>
-                  <p class="font-semibold text-gray-900 dark:text-gray-100">
-                    {{ formatCurrency(item.unit_price) }}
-                  </p>
                 </div>
               </div>
             </li>
