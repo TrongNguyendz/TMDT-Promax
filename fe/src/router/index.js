@@ -29,7 +29,6 @@ const AdminWelcome = () => import('../pages/admin/AdminWelcome.vue');
 const AdminDashboard = () => import('../pages/admin/AdminDashboard.vue');
 const ProductManagement = () => import('../pages/admin/ProductManagement.vue');
 const OrderManagement = () => import('../pages/admin/OrderManagement.vue');
-
 const UserManagement = () => import('../pages/admin/UserManagement1.vue');
 const BannerManagement = () => import('../pages/admin/BannerManagement.vue');
 const ReportPage = () => import('../pages/admin/ReportPage.vue');

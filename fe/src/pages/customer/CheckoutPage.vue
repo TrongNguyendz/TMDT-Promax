@@ -107,11 +107,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (socket) {
     socket.disconnect();
-<<<<<<< Updated upstream
     console.log("Socket disconnected cleanup");
-=======
-    console.log(" Socket disconnected cleanup");
->>>>>>> Stashed changes
   }
 });
 

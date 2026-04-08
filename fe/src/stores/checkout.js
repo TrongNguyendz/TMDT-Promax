@@ -91,14 +91,9 @@ export const useCheckoutStore = defineStore('checkout', () => {
         const orderStore = useOrderStore();
         const uiStore = useUIStore();
         
-<<<<<<< Updated upstream
-        const userId = userStore.profile?.id;
-        const userEmail = userStore.profile?.email;
-=======
         // 1. Kiểm tra đăng nhập 
         const userId = userStore.profile?.id;
         const userEmail = userStore.profile?.email 
->>>>>>> Stashed changes
 
         if (!userStore.token || !userId) {
             uiStore.pushToast({ type: 'error', message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' });

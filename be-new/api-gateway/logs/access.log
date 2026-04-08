@@ -1586,3 +1586,7 @@
 ::1 - - [08/Apr/2026:07:16:27 +0000] "GET /api/v1/staff HTTP/1.1" 200 318 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [08/Apr/2026:07:16:33 +0000] "PUT /api/v1/users/1002/avatar HTTP/1.1" 200 402 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 ::1 - - [08/Apr/2026:07:16:36 +0000] "GET /api/v1/users HTTP/1.1" 200 3509 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+::1 - - [08/Apr/2026:07:20:02 +0000] "GET /api/v1/users HTTP/1.1" 200 3509 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+::1 - - [08/Apr/2026:07:20:07 +0000] "DELETE /api/v1/users/69cdf679ce604bf78cfadefb HTTP/1.1" 200 61 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+::1 - - [08/Apr/2026:07:20:07 +0000] "GET /api/v1/users HTTP/1.1" 200 3242 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+::1 - - [08/Apr/2026:07:20:26 +0000] "GET /api/v1/orders?user_id=1012 HTTP/1.1" 200 26 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"

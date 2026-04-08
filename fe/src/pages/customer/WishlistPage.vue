@@ -99,15 +99,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-<<<<<<< Updated upstream
-import { useWishlistStore } from '../../stores/wishlist';
-import { useUIStore } from '../../stores/ui';
-import { formatCurrency } from '../../utils/helpers';
-=======
 import { useWishlistStore } from '@/stores/wishlist';
 import { useUIStore } from '@/stores/ui';
 import { formatCurrency } from '@/utils/helpers';
->>>>>>> Stashed changes
 import axios from 'axios'; //Import axios để gọi API Product Service
 
 const wishlistStore = useWishlistStore();
@@ -143,11 +137,7 @@ onMounted(async () => {
 
         // -> Gọi API lấy thông tin
         try {
-<<<<<<< Updated upstream
-            const res = await axios.get(`https://tmdt-promax-api-gateway.onrender.com/api/v1/products/${item.product_id}`);
-=======
             const res = await axios.get(`http://localhost:3000/api/v1/products/${item.product_id}`);
->>>>>>> Stashed changes
             if (res.data.success) {
                 const p = res.data.data;
                 
