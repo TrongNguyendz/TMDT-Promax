@@ -1,7 +1,7 @@
 // fe/src/utils/socketService.js
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = 'http://localhost:3000';
+const SOCKET_URL = 'http://localhost:3007';
 
 class SocketService {
   constructor() {
