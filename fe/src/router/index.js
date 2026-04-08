@@ -40,6 +40,7 @@ const ReviewManagement = () => import('../pages/admin/ReviewManagement.vue');
 const AdminInvoiceManagementv2 = () => import('../pages/admin/AdminInvoiceManagement-v2.vue');
 const AdminSupport = () => import('../pages/admin/SupportManagement.vue');
 const AdminProfile = () => import('../pages/admin/Profile.vue');
+const AdminOrderDetail = () => import('../pages/admin/OrderDetail.vue');
 // Staff pages (can be added similarly to admin pages if needed)
 // const StaffWelcome = () => import('../pages/Staff/StaffWelcome.vue');
 const StaffDashboard = () => import('../pages/Staff/DashBoard.vue');
@@ -85,7 +86,7 @@ const routes = [
 	{ path: '/admin/reports', component: ReportPage, meta: { requiresAdmin: true } },
 	{ path: '/admin/vouchers', component: VoucherManagement, meta: { requiresAdmin: true } },
 	{ path: '/admin/invoices', component: AdminInvoiceManagement, meta: { requiresAdmin: true } },
-	// { path: '/admin/orders-detail/:id', component: AdminOrderDetail, meta: { requiresAdmin: true } },
+	{ path: '/admin/order-detail/:id', component: AdminOrderDetail, meta: { requiresAdmin: true } },
 	{ path: '/admin/staff', component: StaffManagement, meta: { requiresAdmin: true } },
     { path: '/admin/reviews', component: ReviewManagement, meta: { requiresAdmin: true } },
     { path: '/admin/invoicesv2', component: AdminInvoiceManagementv2, meta: { requiresAdmin: true } },

@@ -31,7 +31,7 @@
           :paymentMethod="checkout.paymentMethod"
           :qrData="qrCodeData"
           :checkoutUrl="checkoutUrl"
-          :total="cart.subtotal"
+          :total="checkoutSubtotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -39,7 +39,7 @@
         />
       </div>
 
-      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
+      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="checkoutSubtotal" :currentStep="checkout.currentStep" />
     </div>
   </section>
 </template>

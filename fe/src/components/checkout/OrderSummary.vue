@@ -5,11 +5,11 @@
     <div class="mb-4 space-y-2 border-b pb-4 dark:border-gray-700">
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Số lượng:</span>
-        <span class="font-medium">{{ itemCount }} sản phẩm</span>
+        <span class="font-medium">{{ props.itemCount || 0 }} sản phẩm</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Tổng tiền hàng:</span>
-        <span class="font-medium">{{ formatCurrency(props.subtotal) }}</span>
+        <span class="font-medium">{{ formatCurrency(subtotalValue) }}</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-600 dark:text-gray-400">Vận chuyển:</span>
@@ -41,9 +41,9 @@
     <!-- Thông tin bước hiện tại -->
     <div class="rounded-lg bg-gray-50 p-3 text-sm text-gray-900 dark:bg-gray-800 dark:text-gray-100">
       <p class="font-semibold">
-        Bước {{ currentStep }}/4:
-        <span v-if="currentStep === 1">Xem lại đơn hàng</span>
-        <span v-else-if="currentStep === 2">Nhập thông tin giao hàng</span>
+        Bước {{ props.currentStep }}/4:
+        <span v-if="props.currentStep === 1">Xem lại đơn hàng</span>
+        <span v-else-if="props.currentStep === 2">Nhập thông tin giao hàng</span>
         <span v-else>Xác nhận đơn hàng</span>
       </p>
     </div>
