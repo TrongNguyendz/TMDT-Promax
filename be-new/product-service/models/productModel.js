@@ -62,20 +62,23 @@ productSchema.index({ name: 'text', sku: 'text', description: 'text' });
 productSchema.index({ normalized_name: 1 });
 
 // Middleware: Tự động chuẩn hóa name khi save/update
-productSchema.pre('save', function(next) {
-  if (this.name) {
-    this.normalized_name = normalizeText(this.name);
-  }
-  next();
+// THAY THẾ middleware pre('save') bằng đoạn này
+productSchema.pre('save', async function() {
+    if (this.name) {
+        this.normalized_name = normalizeText(this.name);
+    }
+    // KHÔNG cần next() nữa
 });
 
-productSchema.pre(['findOneAndUpdate', 'updateOne'], function(next) {
-  const update = this.getUpdate();
-  if (update && update.name) {
-    update.normalized_name = normalizeText(update.name);
-  }
-  next();
+// Nên sửa tương tự hoặc comment tạm nếu không cần
+productSchema.pre(['findOneAndUpdate', 'updateOne'],async function() {
+    const update = this.getUpdate();
+    if (update && update.name) {
+        update.normalized_name = normalizeText(update.name);
+    }
+    // KHÔNG cần next() nữa
 });
+
 
 const Product = mongoose.model('Product', productSchema);
 
@@ -316,10 +319,27 @@ exports.deleteProduct = async (id) => {
   return true;
 };
 
+// === THAY TOÀN BỘ HÀM updateStock BẰNG ĐOẠN CODE SAU (xóa hàm cũ đi) ===
 exports.updateStock = async (id, qty) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return await Product.findByIdAndUpdate(id, { stock_quantity: qty }, { new: true });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('ID sản phẩm không hợp lệ');
+    }
+
+    const product = await Product.findById(id);
+    if (!product) {
+        throw new Error('Không tìm thấy sản phẩm');
+    }
+
+    const oldStock = product.stock_quantity || 0;
+    product.stock_quantity = Number(qty);
+
+    await product.save();
+
+    console.log(`✅ Đã cập nhật tồn kho cho SP ${id}: ${oldStock} → ${product.stock_quantity}`);
+
+    return product;
 };
+
 exports.getPrimaryImageBySku = async (sku) => {
   // Tìm sản phẩm dựa trên SKU
   const product = await Product.findOne({ sku });

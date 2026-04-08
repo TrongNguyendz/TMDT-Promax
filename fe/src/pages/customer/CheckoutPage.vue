@@ -252,9 +252,13 @@ function setupSocketListener(orderId) {
 }
 
 function finishSteps() {
+  const wasDirectBuy = checkout.isDirectBuy;
   checkout.currentStep = 4; // Nhảy sang Bước 4 (Thành công)
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  cart.clearCart(); 
+  if (!wasDirectBuy) {
+    cart.clearCart();
+  }
+  checkout.clearDirectBuy(); 
   if (socket) socket.disconnect();
 }
 
