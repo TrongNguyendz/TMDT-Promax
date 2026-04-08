@@ -105,7 +105,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import orderApi from '@/utils/order_service_api';
+import orderApi from '../../utils/order_service_api';
 import { getlistproduct } from '../../utils/product_service_api';
 
 
