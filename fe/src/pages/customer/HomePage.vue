@@ -347,22 +347,18 @@ async function RecommentCategories() {
 }
 
 onMounted(async () => {
-  console.log("--- ONMOUNTED START ---");
 
   // 1. Load các dữ liệu tĩnh trước
   // 2. Kiểm tra token (nếu Store trống, thử lấy từ localStorage)
   const token = userStore.token || localStorage.getItem("token");
-  console.log("Token check:", token);
 
   if (token) {
     // Nếu có token nhưng chưa có profile, hãy load profile trước khi gợi ý
     if (!userStore.profile?.id) {
-      console.log("Đang lấy lại profile...");
       // await userStore.fetchProfile(); // Đảm bảo bạn có hàm này trong userStore
     }
     await RecommentCategories();
   } else {
-    console.log("Khách vãng lai - Load mặc định");
     await loadPage();
   }
   await Promise.all([productsStore.fetchCategories(), loadBanners()]);
