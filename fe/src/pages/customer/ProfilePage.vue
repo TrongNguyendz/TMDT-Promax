@@ -148,7 +148,7 @@ const isUpdatingAvatar = ref(false) ;
 // const avatarPreview = ref(user.profile?.avatar_url || "");
 const avatarPreview = computed(() => {
   if (!user.profile?.avatar_url) return defaultAvatar;
-  return `http://localhost:3001${user.profile.avatar_url}`;
+  return `https://tmdt-promax-user-service.onrender.com${user.profile.avatar_url}`;
 });
 const avatarFile = ref(null); // File để gửi lên server
 
