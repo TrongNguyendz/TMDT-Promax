@@ -5,7 +5,7 @@ import { useUserStore } from '../stores/user';
 
 const orderApi = axios.create({
   baseURL: 'https://tmdt-promax-api-gateway.onrender.com/api/v1',
-  timeout: 15000,
+  timeout: 30000,
 });
 
 orderApi.interceptors.request.use(
