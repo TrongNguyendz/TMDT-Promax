@@ -207,10 +207,10 @@ async function loadBanners() {
     if (rawBanners.length > 0) {
       bannerData.value = rawBanners.map((banner) => ({
         type: banner.link_type === "video" ? "video" : "image",
-        src: banner.image_url.startsWith("http")
+        src: banner.image_url.startsWith("https")
           ? banner.image_url
           : `https://tmdt-promax-admin-service.onrender.com${banner.image_url}`,
-
+// Debug URL
         title: banner.title,
         subtitle: banner.description,
         link: banner.link || null,
