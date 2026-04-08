@@ -7,7 +7,7 @@
         @focus="showSuggestions = true"
         @blur="closeSuggestions"
         type="search"
-        placeholder="Tìm sản phẩm (ví dụ: q u a n, a o s o m i...)"
+        placeholder="Tìm sản phẩm "
         class="w-full h-10 lg:h-11 rounded-full border border-gray-200/80 bg-gray-50/50 pl-11 pr-12 text-sm font-medium tracking-tight transition-all duration-500 
                placeholder:text-gray-400 placeholder:font-normal
                focus:bg-white focus:border-black focus:ring-[3px] focus:ring-black/5 
@@ -88,10 +88,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/product_service_api'; 
-// import Fuse from 'fuse.js';
+import Fuse from 'fuse.js';
 
 const router = useRouter();
 const q = ref('');
@@ -167,8 +167,11 @@ async function onInput() {
                 // Tìm kiếm bằng chuỗi đã chuẩn hóa
                 const results = fuse.search(searchPattern);
                 
+                // Nếu từ khóa dài (>3 ký tự), hiển thị nhiều gợi ý hơn
+                const maxSuggestions = searchPattern.length > 3 ? 10 : 5;
+                
                 // Trả kết quả về danh sách hiển thị
-                suggestions.value = results.map(r => r.item).slice(0, 5);
+                suggestions.value = results.map(r => r.item).slice(0, maxSuggestions);
             } else {
                 suggestions.value = [];
             }
@@ -183,15 +186,20 @@ function closeSuggestions() {
 }
 
 function selectSuggestion(product) {
-  q.value = product.name;
   showSuggestions.value = false;
-  router.push(`/product/${product.id}`);
+  router.push({ path: '/search', query: { q: q.value.trim() } });
 }
 
 function submit() {
   if (!q.value?.trim()) return;
+  console.log('🚀 Submit called with q.value:', JSON.stringify(q.value), 'trimmed:', JSON.stringify(q.value.trim()));
+  console.log('🚀 Current showSuggestions:', showSuggestions.value);
   showSuggestions.value = false;
-  router.push({ path: '/search', query: { q: q.value.trim() } });
+  
+  // Đảm bảo DOM update hoàn thành trước khi navigate
+  nextTick(() => {
+    router.push({ path: '/search', query: { q: q.value.trim() } });
+  });
 }
 </script>
 

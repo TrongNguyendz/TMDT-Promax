@@ -11,6 +11,9 @@ router.post('/', supportController.createTicket);
 router.post('/:id/messages', supportController.sendMessage);
 router.put('/:id/mark-read', supportController.markAsRead);
 
+// ✅ THÊM DÒNG NÀY VÀO ĐÂY (Ổ CẮM CHO NÚT KẾT THÚC CHAT)
+router.patch('/:id/status', supportController.updateTicketStatus);
+
 // URL mới sẽ là: GET /api/support/user/:userId (Hoàn toàn khớp với Frontend)
 router.get('/user/:userId', supportController.getTicketsByUserId);
 
