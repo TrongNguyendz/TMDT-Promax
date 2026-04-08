@@ -39,7 +39,7 @@
         />
       </div>
 
-      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="checkoutSubtotal" :currentStep="checkout.currentStep" />
+      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="cart.subtotal" :currentStep="checkout.currentStep" />
     </div>
   </section>
 </template>
@@ -99,13 +99,15 @@ const checkoutSubtotal = computed(() => {
         return Math.max(0, Math.round(itemTotal + (checkout.shippingFee || 0) - (checkout.discountAmount || 0)));
     }
     
-    // Tính tổng cuối cùng: subtotal + shipping - discount
-    const subtotal = cart.subtotal;
-    const shipping = checkout.shippingFee || 0;
-    const discount = checkout.discountAmount || 0;
-    
-    return Math.max(0, Math.round(subtotal + shipping - discount));
-});
+    // Sử dụng cùng logic với finalTotal trong OrderSummary
+    return Math.max(
+        0,
+        Math.round(
+            Number(cart.subtotal || 0) +
+            Number(checkout.shippingFee || 0) -
+            (Number(checkout.discountAmount) || 0)
+        )
+    );
 });
 
 onMounted(() => {
@@ -186,7 +188,7 @@ async function generatePayOSUrl(orderId, amount) {
     }
 
     // 3. GỌI API VỚI CONFIG (Bao gồm Token)
-    const response = await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/payments/payos/create', {
+    const response = await axios.post('http://localhost:3000/api/v1/payments/payos/create', {
       orderId: orderId, 
       amount: cleanAmount, 
       userId: userStore.profile?.id || 'GUEST',
@@ -224,7 +226,7 @@ async function completeCODOrder() {
 // --- SOCKET & HOÀN TẤT ---
 
 function setupSocketListener(orderId) {
-  socket = io('https://tmdt-promax-payment-service.onrender.com', {
+  socket = io('http://localhost:3004', {
     transports: ['websocket', 'polling'],
     withCredentials: true
   });

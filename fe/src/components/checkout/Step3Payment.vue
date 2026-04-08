@@ -95,7 +95,7 @@
           <div>
             <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100">Xác nhận thanh toán COD</h4>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Bạn sẽ thanh toán bằng tiền mặt với số tiền <span class="font-bold text-red-600">{{ formatCurrency(total) }}</span> khi nhận hàng.
+              Bạn sẽ thanh toán bằng tiền mặt với số tiền <span class="font-bold text-red-600">{{ formatCurrency(props.total) }}</span> khi nhận hàng.
             </p>
           </div>
         </div>
