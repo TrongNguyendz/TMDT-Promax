@@ -56,10 +56,10 @@ module.exports = {
     createOrder: async (payload) => {
         const { 
             user_id, items, shipping_address, 
-            shipping_fee = 0, discount_amount = 0, coupon_code, notes, payment_method 
+            shipping_fee = 0, discount_amount = 0, coupon_code, notes, payment_method, status = 'pending'
         } = payload;
 
-        // Tính toán lại tiền
+        // Tính toán tiền từ items
         const totalAmount = items.reduce((sum, item) => sum + (Number(item.unit_price) * Number(item.quantity)), 0);
         const finalAmount = Math.max(0, totalAmount + Number(shipping_fee) - Number(discount_amount));
 
@@ -71,13 +71,14 @@ module.exports = {
             shipping_phone: shipping_address.phone,
             shipping_address: shipping_address.address,
             shipping_city: shipping_address.city,
-            total_amount: totalAmount,
+            total_amount: totalAmount,  // Tổng tiền hàng từ items
             shipping_fee,
             discount_amount,
             coupon_code,
-            final_amount: finalAmount,
+            final_amount: finalAmount,  // Tổng cuối cùng sau shipping và discount
             payment_method,
             notes,
+            status,
             items: items.map(item => ({
                 product_id: item.product_id,
                 product_name: item.product_name,

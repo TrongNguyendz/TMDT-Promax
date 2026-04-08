@@ -65,7 +65,7 @@
         </div>
         
         <p class="text-sm text-gray-600">
-          Tổng tiền: <span class="text-lg font-bold text-red-600">{{ formatCurrency(total) }}</span>
+          Tổng tiền: <span class="text-lg font-bold text-red-600">{{ formatCurrency(displayTotal) }}</span>
         </p>
 
         <a v-if="checkoutUrl" :href="checkoutUrl" target="_blank" class="mt-2 text-xs font-semibold text-blue-500 underline transition-colors hover:text-blue-700">
@@ -95,7 +95,7 @@
           <div>
             <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100">Xác nhận thanh toán COD</h4>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Bạn sẽ thanh toán bằng tiền mặt với số tiền <span class="font-bold text-red-600">{{ formatCurrency(total) }}</span> khi nhận hàng.
+              Bạn sẽ thanh toán bằng tiền mặt với số tiền <span class="font-bold text-red-600">{{ formatCurrency(displayTotal) }}</span> khi nhận hàng.
             </p>
           </div>
         </div>
@@ -129,13 +129,15 @@ import { formatCurrency } from '../../utils/helpers';
 
 const props = defineProps({
   paymentMethod: String,
-  qrData: String,       
-  checkoutUrl: String,  
-  total: Number,
+  qrData: String,
+  checkoutUrl: String,
+  finalTotal: Number,
   isProcessing: Boolean // Hứng trạng thái loading từ Component Cha
 });
 
 const emit = defineEmits(['prev', 'complete', 'refresh-qr']);
+
+const displayTotal = computed(() => Number(props.finalTotal ?? 0));
 
 const TIME_LIMIT = 300; 
 const timeLeft = ref(TIME_LIMIT);

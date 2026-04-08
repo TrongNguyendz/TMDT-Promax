@@ -90,10 +90,14 @@ const handleDistrictChange = async () => {
   try {
     const d = districts.value.find(item => item.code == selectedDistrictCode.value);
     info.district = d ? d.name : '';
+    console.log('Loading wards for district:', selectedDistrictCode.value);
     wards.value = await getWards(selectedDistrictCode.value);
+    console.log('Loaded wards:', wards.value.length);
     await updateShippingFee();
   } catch (error) {
     console.error('Lỗi tải xã:', error);
+    // Hiển thị lỗi cho user
+    errors.ward = 'Không thể tải danh sách phường/xã. Vui lòng thử lại.';
   }
 };
 
@@ -199,9 +203,18 @@ const handleSubmit = async () => {
   if (!cleanValue(info.phone) || !validatePhone(info.phone)) { errors.phone = 'Số điện thoại không hợp lệ'; isValid = false; }
   
   // Kiểm tra trực tiếp vào mã Code của Dropdown
-if (!cleanValue(selectedProvinceCode.value)) { errors.province = 'Vui lòng chọn tỉnh/thành'; isValid = false; }
-if (!cleanValue(selectedDistrictCode.value)) { errors.district = 'Vui lòng chọn quận/huyện'; isValid = false; }
-if (!cleanValue(selectedWardCode.value)) { errors.ward = 'Vui lòng chọn phường/xã'; isValid = false; }
+  if (!cleanValue(selectedProvinceCode.value)) { 
+    errors.province = 'Vui lòng chọn tỉnh/thành phố'; 
+    isValid = false; 
+  }
+  if (!cleanValue(selectedDistrictCode.value)) { 
+    errors.district = 'Vui lòng chọn quận/huyện'; 
+    isValid = false; 
+  }
+  if (!cleanValue(selectedWardCode.value)) { 
+    errors.ward = 'Vui lòng chọn phường/xã để tính phí vận chuyển'; 
+    isValid = false; 
+  }
   
   if (!cleanValue(info.address)) { errors.address = 'Vui lòng nhập địa chỉ cụ thể'; isValid = false; }
   if (!props.paymentMethod) { errors.paymentMethod = 'Vui lòng chọn phương thức thanh toán'; isValid = false; }
@@ -215,8 +228,32 @@ if (!cleanValue(selectedWardCode.value)) { errors.ward = 'Vui lòng chọn phư�
   }
 };
 
-onMounted(() => {
-  loadProvinces();
+onMounted(async () => {
+  await loadProvinces();
+  
+  // Khởi tạo lại các mã code từ thông tin shipping đã có
+  if (info.province) {
+    const province = provinces.value.find(p => p.name === info.province);
+    if (province) {
+      selectedProvinceCode.value = province.code;
+      await handleProvinceChange();
+      
+      if (info.district) {
+        const district = districts.value.find(d => d.name === info.district);
+        if (district) {
+          selectedDistrictCode.value = district.code;
+          await handleDistrictChange();
+          
+          if (info.ward) {
+            const ward = wards.value.find(w => w.name === info.ward);
+            if (ward) {
+              selectedWardCode.value = ward.code;
+            }
+          }
+        }
+      }
+    }
+  }
 });
 </script>
 
@@ -259,7 +296,7 @@ onMounted(() => {
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quận/Huyện *</label>
           <select class="input-field" v-model="selectedDistrictCode" @change="handleDistrictChange" :disabled="!selectedProvinceCode">
-            <option value="">Chọn quận/huyện</option>
+            <option value="">{{ selectedProvinceCode ? 'Chọn quận/huyện' : 'Chọn tỉnh/thành trước' }}</option>
             <option v-for="d in districts" :key="d.code" :value="d.code">{{ d.name }}</option>
           </select>
           <p v-if="errors.district" class="error-msg">{{ errors.district }}</p>
@@ -268,10 +305,13 @@ onMounted(() => {
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phường/Xã *</label>
           <select class="input-field" v-model="selectedWardCode" @change="handleWardChange" :disabled="!selectedDistrictCode">
-            <option value="">Chọn phường/xã</option>
+            <option value="">{{ selectedDistrictCode ? 'Chọn phường/xã' : 'Chọn quận/huyện trước' }}</option>
             <option v-for="w in wards" :key="w.code" :value="w.code">{{ w.name }}</option>
           </select>
           <p v-if="errors.ward" class="error-msg">{{ errors.ward }}</p>
+          <p v-if="selectedDistrictCode && wards.length === 0 && !errors.ward" class="text-xs text-orange-600 mt-1">
+            Đang tải danh sách phường/xã...
+          </p>
         </div>
 
         <div>

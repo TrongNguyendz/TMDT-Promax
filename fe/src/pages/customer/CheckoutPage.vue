@@ -31,7 +31,7 @@
           :paymentMethod="checkout.paymentMethod"
           :qrData="qrCodeData"
           :checkoutUrl="checkoutUrl"
-          :total="checkoutSubtotal"
+          :finalTotal="checkoutFinalTotal"
           :isProcessing="isProcessing"
           @prev="handleBackStep"
           @complete="completeCODOrder"
@@ -39,7 +39,12 @@
         />
       </div>
 
-      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="checkoutSubtotal" :currentStep="checkout.currentStep" />
+      <OrdersSummary
+        :itemCount="itemCount"
+        :subtotal="subtotal "
+        :finalTotal="checkoutFinalTotal"
+        :currentStep="checkout.currentStep"
+      />
     </div>
   </section>
 </template>
@@ -53,6 +58,7 @@ import { useCheckoutStore } from '../../stores/checkout';
 import { useOrderStore } from '../../stores/order';
 import { useUIStore } from '../../stores/ui';
 import { useUserStore } from '../../stores/user';
+import { useRoute } from 'vue-router';
 
 // Import các component con
 import CheckoutStep from '../../components/checkout/CheckoutStep.vue';   
@@ -68,6 +74,8 @@ const checkout = useCheckoutStore();
 const orderStore = useOrderStore();
 const ui = useUIStore();
 const userStore = useUserStore();
+const route = useRoute();
+
 
 // Biến cho PayOS
 const qrCodeData = ref('');
@@ -75,29 +83,41 @@ const checkoutUrl = ref('');
 const isProcessing = ref(false);
 const successOrder = ref(null); 
 let socket = null;
+const type = route.query.type; 
+const subtotal = Number(route.query.subtotal);
+const itemCount = Number(route.query.itemCount);
 
 // 1. Lấy sản phẩm hiển thị
 const checkoutItems = computed(() => {
+  
     if (successOrder.value && successOrder.value.items) {
         return successOrder.value.items;
     }
     
-    if (checkout.isDirectBuy && checkout.directBuyItem) {
+    if (type === 'direct-buy'
+    ) {
         return [checkout.directBuyItem]; 
+    } 
+    if (type === 'cart') {
+        return cart.items
     }
-    return cart.items; 
 });
 
-// 2. Lấy tổng tiền
-const checkoutSubtotal = computed(() => {
+// 2. Tổng tiền cuối cùng dùng chung cho Step3Payment và OrderSummary
+const checkoutFinalTotal = computed(() => {
     if (successOrder.value) {
-        return successOrder.value.total_amount || successOrder.value.final_amount;
+        return successOrder.value.final_amount || successOrder.value.total_amount;
     }
     
-    if (checkout.isDirectBuy && checkout.directBuyItem) {
-        return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
-    }
-    return cart.subtotal;
+    
+    return Math.max(
+        0,
+        Math.round(
+            subtotal +
+            Number(checkout.shippingFee || 0) -
+            (Number(checkout.discountAmount) || 0)
+        )
+    );
 });
 
 onMounted(() => {
@@ -178,7 +198,7 @@ async function generatePayOSUrl(orderId, amount) {
     }
 
     // 3. GỌI API VỚI CONFIG (Bao gồm Token)
-    const response = await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/payments/payos/create', {
+    const response = await axios.post('http://localhost:3000/api/v1/payments/payos/create', {
       orderId: orderId, 
       amount: cleanAmount, 
       userId: userStore.profile?.id || 'GUEST',
@@ -216,7 +236,7 @@ async function completeCODOrder() {
 // --- SOCKET & HOÀN TẤT ---
 
 function setupSocketListener(orderId) {
-  socket = io('https://tmdt-promax-payment-service.onrender.com', {
+  socket = io('http://localhost:3004', {
     transports: ['websocket', 'polling'],
     withCredentials: true
   });
@@ -242,9 +262,13 @@ function setupSocketListener(orderId) {
 }
 
 function finishSteps() {
+  const wasDirectBuy = checkout.isDirectBuy;
   checkout.currentStep = 4; // Nhảy sang Bước 4 (Thành công)
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  cart.clearCart(); 
+  if (!wasDirectBuy) {
+    cart.clearCart();
+  }
+  checkout.clearDirectBuy(); 
   if (socket) socket.disconnect();
 }
 
