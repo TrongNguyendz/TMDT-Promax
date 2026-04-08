@@ -106,7 +106,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import orderApi from '@/utils/order_service_api';
-import { getTopProducts } from '@/utils/product_service_api';
+import { getTopProducts } from '../../utils/product_service_api';
 import ProductCard from '../../components/common/ProductCard.vue';
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
