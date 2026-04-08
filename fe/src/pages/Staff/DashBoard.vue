@@ -105,15 +105,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-<<<<<<< HEAD
 import orderApi from '@/utils/order_service_api';
 import { getTopProducts } from '../../utils/product_service_api';
 import ProductCard from '../../components/common/ProductCard.vue';
-=======
-import orderApi from '../../utils/order_service_api';
-import { getlistproduct } from '../../utils/product_service_api';
-
->>>>>>> master
 
 const today = computed(() => new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
 const productSearch = ref('')
@@ -180,11 +174,7 @@ const topProducts = ref([]);
 
 const loadTopProducts = async () => {
   try {
-<<<<<<< HEAD
     const res = await getTopProducts()
-=======
-    const res = await getListProducts()
->>>>>>> master
 
     const data = res.data.data || []
 
