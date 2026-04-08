@@ -5,7 +5,7 @@ export const postuserCategoryInteraction = async (payload, token) => {
 
   try {
     const response = await axios.post(
-      "https://tmdt-promax-api-gateway.onrender.com/api/v1/user-category/click",
+      "http://localhost:3000/api/v1/user-category/click",
       payload,
       {
         headers: {
@@ -27,7 +27,7 @@ export const postuserCategoryInteraction = async (payload, token) => {
 // user-category.js
 export const getRecentCategoryIds = async (userId, token) => {
   const response = await axios.get(
-    `https://tmdt-promax-api-gateway.onrender.com/api/v1/user-category/recent`, 
+    `http://localhost:3000/api/v1/user-category/recent`, 
     {
       params: { userId: userId }, // Nó sẽ tạo ra dạng ?userId=1000
       headers: { Authorization: `Bearer ${token}` }

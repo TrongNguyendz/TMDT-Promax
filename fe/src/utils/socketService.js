@@ -1,7 +1,7 @@
 // fe/src/utils/socketService.js
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = 'https://tmdt-promax-staff-service.onrender.com';
+const SOCKET_URL = 'http://localhost:3000';
 
 class SocketService {
   constructor() {
