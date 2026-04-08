@@ -86,9 +86,10 @@ const loading = ref(true);
 // 1. Định nghĩa các bước vận chuyển chuẩn
 const trackingSteps = [
 	{ status: 'pending', label: 'Đặt hàng thành công', desc: 'Đơn hàng của bạn đã được hệ thống ghi nhận.' },
-	{ status: 'processing', label: 'Đang chuẩn bị hàng', desc: 'Người bán đang đóng gói sản phẩm của bạn.' },
-	{ status: 'shipping', label: 'Đang vận chuyển', desc: 'Đơn hàng đang trên đường giao đến bạn.' },
-	{ status: 'delivered', label: 'Giao hàng thành công', desc: 'Bạn đã nhận được kiện hàng.' }
+	{ status: 'confirmed', label: 'Đã xác nhận', desc: 'Đơn hàng của bạn đã được xác nhận và đang được chuẩn bị.' },
+	{ status: 'packed', label: 'Đã đóng gói', desc: 'Đơn hàng của bạn đã được đóng gói và sẵn sàng giao.' },
+	{ status: 'shipping', label: 'Đang giao', desc: 'Đơn hàng của bạn đang được vận chuyển đến địa chỉ nhận.' },
+	{ status: 'delivered', label: 'Đã giao', desc: 'Đơn hàng của bạn đã được giao thành công.' }
 ];
 
 // 2. Xác định index hiện tại dựa trên status của đơn hàng
@@ -98,9 +99,11 @@ const currentStepIndex = computed(() => {
 	const statusMap = {
 		'unpaid': 0,
 		'pending': 0,
-		'processing': 1,
+		'confirmed': 1,
+		'packed': 1,
 		'shipping': 2,
-		'delivered': 3
+		'delivered': 3,
+		'cancelled': 0 // Nếu bị hủy, vẫn hiển thị bước đầu tiên nhưng với trạng thái đặc biệt
 	};
 	return statusMap[order.value.status] ?? 0;
 });

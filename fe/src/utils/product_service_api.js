@@ -3,8 +3,8 @@ import { useUIStore } from '../stores/ui';
 import { useUserStore } from '../stores/user'; 
 
 const productApi = axios.create({
-  baseURL: 'http://localhost:3000/api/v1', 
-  timeout: 15000,
+  baseURL: 'https://tmdt-promax-api-gateway.onrender.com/api/v1', 
+  timeout: 30000,
 });
 
 // --- Interceptor Request (Gửi Token) ---
@@ -51,14 +51,7 @@ productApi.interceptors.response.use(
   }
 );
 
-export const getlistproduct = async () => {
-    // if (!token) throw new Error('Token is required');
-    return await axios.get('http://localhost:3000/api/v1/products');
-}
-
-export const getmainimagebySKU = async (sku) => {
-    // if (!token) throw new Error('Token is required');
-    return await axios.get(`http://localhost:3000/api/v1/products/sku/${sku}/primary-image`);
-}
+export const getlistproduct = () => productApi.get('/products');
+export const getmainimagebySKU = (sku) => productApi.get(`/products/sku/${sku}/primary-image`);
 
 export default productApi;

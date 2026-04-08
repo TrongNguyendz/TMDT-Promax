@@ -20,7 +20,7 @@
       </button>
     </div>
 
-    <!-- Tabs -->
+  <!-- Tabs -->
     <div class="flex border-b border-gray-100 dark:border-gray-800">
       <button
         @click="activeTab = 'management'"
@@ -464,27 +464,27 @@ const loadStaff = async () => {
 // Shifts Data
 const shifts = ref([]);
 
-// async function loadShifts() {
-//   try {
-//     const res = await getListShifts(token.value);
-//     if (!res.data.success) return;
+async function loadShifts() {
+  try {
+    const res = await getListShifts(token.value);
+    if (!res.data.success) return;
 
-//     shifts.value = res.data.data.map((s) => {
-//       const date = new Date(s.shift_date).toISOString().split("T")[0];
-//       return {
-//         id: s.id,
-//         staffId: s.staff_id,
-//         date: date,
-//         start: `${date}T${s.start_time}`,
-//         end: `${date}T${s.end_time}`,
-//         notes: s.notes,
-//         color: s.color || '#3b82f6'
-//       };
-//     });
-//   } catch (err) {
-//     console.error("Load shifts failed:", err);
-//   }
-// }
+    shifts.value = res.data.data.map((s) => {
+      const date = new Date(s.shift_date).toISOString().split("T")[0];
+      return {
+        id: s.id,
+        staffId: s.staff_id,
+        date: date,
+        start: `${date}T${s.start_time}`,
+        end: `${date}T${s.end_time}`,
+        notes: s.notes,
+        color: s.color || '#3b82f6'
+      };
+    });
+  } catch (err) {
+    console.error("Load shifts failed:", err);
+  }
+}
 
 // Filters
 const filters = reactive({
@@ -584,32 +584,6 @@ function resetFilters() {
   filters.minHours = null;
 }
 
-async function loadShifts() {
-  try {
-    const res = await getListShifts(token.value);
-
-    if (!res.data.success) return;
-
-    shifts.value = res.data.data.map((s) => {
-      const date = new Date(s.shift_date).toISOString().split("T")[0];
-
-      return {
-        id: s.id ,
-        staffId: s.staff_id,
-        date: date,
-        start: `${date}T${s.start_time}`,
-        end: `${date}T${s.end_time}`,
-        type: s.shift_type,
-        status: s.status,
-        notes: s.notes,
-        color: s.color || '#3b82f6'
-      };
-    });
-    console.log("Loaded shifts:", shifts.value);
-  } catch (err) {
-    console.error("Load shifts failed:", err);
-  }
-}
 
 // Week Navigation
 const today = new Date();

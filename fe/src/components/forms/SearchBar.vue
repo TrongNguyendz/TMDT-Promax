@@ -91,7 +91,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/product_service_api'; 
-import Fuse from 'fuse.js';
+// import Fuse from 'fuse.js';
 
 const router = useRouter();
 const q = ref('');

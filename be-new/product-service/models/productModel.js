@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
   description: { type: String },
   price: { type: Number, required: true },
   stock_quantity: { type: Number, default: 0 },
+  sold: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   review_count: { type: Number, default: 0 },
   
@@ -115,6 +116,45 @@ exports.getProductById = async (id) => {
   return doc;
 };
 
+exports.increaseSold = async (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  const bulkOps = items.map(item => ({
+    updateOne: {
+      filter: {
+        _id: new mongoose.Types.ObjectId(
+          item.product_id || item.productId
+        )
+      },
+      update: {
+        $inc: {
+          sold: Number(item.quantity || 0)
+        }
+      }
+    }
+  }));
+
+console.log('🧪 bulkOps:', JSON.stringify(bulkOps, null, 2));
+
+  return await Product.bulkWrite(bulkOps);
+};
+
+exports.getTopProducts = async (limit = 20) => {
+  const products = await Product.find()
+    .sort({ sold: -1 }) // 🔥 sắp xếp theo bán nhiều nhất
+    .limit(Number(limit))
+    .select('name sold stock_quantity');
+
+  return products.map(p => ({
+    id: p._id,
+    name: p.name,
+    sold: p.sold,
+    stock_quantity: p.stock_quantity
+  }));
+};
+
 exports.createProduct = async (payload, files = []) => {
   const baseSlug = slugify(payload.slug || payload.name);
   // Check trùng slug 
@@ -145,6 +185,7 @@ exports.createProduct = async (payload, files = []) => {
       description: payload.description,
       price: payload.price,
       stock_quantity: payload.stock_quantity,
+      sold: payload.sold || 0,
       category_id: payload.category_id,
       images: images,       // Lưu thẳng mảng ảnh
       attributes: attributes // Lưu thẳng mảng thuộc tính
@@ -162,6 +203,7 @@ exports.updateProduct = async (id, payload, files = []) => {
   if (payload.name) product.name = payload.name;
   if (payload.price) product.price = payload.price;
   if (payload.stock_quantity) product.stock_quantity = payload.stock_quantity;
+  if (payload.sold) product.sold = payload.sold;
   if (payload.description) product.description = payload.description;
   if (payload.category_id) product.category_id = payload.category_id;
   if (payload.sku) product.sku = payload.sku;

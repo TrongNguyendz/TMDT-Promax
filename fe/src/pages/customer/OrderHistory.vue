@@ -136,10 +136,11 @@ const currentTab = ref('all');
 const tabs = [
   { key: 'all', label: 'Tất cả' },
   { key: 'pending', label: 'Chờ xác nhận' },
-  { key: 'processing', label: 'Chờ lấy hàng' },
-  { key: 'shipping', label: 'Đang giao' }, // Thêm tab Đang giao
+  { key: 'confirmed', label: 'Đã xác nhận' },
+  { key: 'packed', label: 'Đã đóng gói' },
+  { key: 'shipping', label: 'Đang giao' },
   { key: 'delivered', label: 'Đã giao' },
-  { key: 'cancelled', label: 'Đã hủy' },
+  { key: 'cancelled', label: 'Đã hủy' }
 ];
 
 const loading = computed(() => orderStore.loading);
@@ -181,11 +182,12 @@ const reorderItems = (order) => {
 
 const statusColor = (status) => {
   const map = {
-    pending: 'text-yellow-600',
-    processing: 'text-blue-600',
-    shipping: 'text-indigo-600',
-    delivered: 'text-green-600',
-    cancelled: 'text-red-500',
+    pending: 'text-yellow-500',
+    confirmed: 'text-blue-500',
+    packed: 'text-purple-500',
+    shipping: 'text-orange-500',
+    delivered: 'text-green-500',
+    cancelled: 'text-red-500'
   };
   return map[status] || 'text-gray-500';
 };
@@ -193,11 +195,11 @@ const statusColor = (status) => {
 const getStatusLabel = (status) => {
   const map = {
     pending: 'Chờ xác nhận',
-    processing: 'Chờ lấy hàng',
-    shipping: 'Đang giao hàng',
-    delivered: 'Đã giao thành công',
-    cancelled: 'Đã hủy',
-    unpaid: 'Chưa thanh toán'
+    confirmed: 'Đã xác nhận',
+    packed: 'Đã đóng gói',
+    shipping: 'Đang giao',
+    delivered: 'Đã giao',
+    cancelled: 'Đã hủy'
   };
   return map[status] || status;
 };

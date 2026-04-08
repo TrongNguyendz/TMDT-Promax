@@ -304,11 +304,12 @@ async function handleCancel() {
 // Helper: Class màu sắc cho badge trạng thái
 const statusBadgeClass = (status) => {
   const map = {
-    pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    processing: "bg-blue-100 text-blue-800 border-blue-200",
-    shipping: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    delivered: "bg-green-100 text-green-800 border-green-200",
-    cancelled: "bg-red-100 text-red-800 border-red-200",
+    pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500",
+    confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
+    packed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
+    shipping: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500",
+    delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500",
+    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500"
   };
   return map[status] || "bg-gray-100 text-gray-800 border-gray-200";
 };
@@ -317,11 +318,11 @@ const statusBadgeClass = (status) => {
 const getStatusLabel = (status) => {
   const map = {
     pending: "Chờ xác nhận",
-    processing: "Đang chuẩn bị hàng",
-    shipping: "Đang giao hàng",
-    delivered: "Giao thành công",
-    cancelled: "Đã hủy",
-    unpaid: "Chưa thanh toán",
+    confirmed: "Đã xác nhận",
+    packed: "Đã đóng gói",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy"
   };
   return map[status] || status;
 };
