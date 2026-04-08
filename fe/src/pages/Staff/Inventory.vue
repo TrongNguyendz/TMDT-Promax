@@ -97,7 +97,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getListProducts } from "@/utils/product_service_api";
+import { getlistproduct } from "../../utils/product_service_api";
 
 const searchKeyword = ref("");
 const sortBy = ref("");
@@ -109,9 +109,8 @@ const inventory = ref([]);
 
 const loadInventory = async () => {
   try {
-    const res = await getListProducts();
+    const res = await getlistproduct();
     const data = res.data.data || [];
-    console.log(data);
 
     inventory.value = data.map(p => ({
       id: p._id || p.id,
@@ -122,6 +121,7 @@ const loadInventory = async () => {
       .map(a => a.attribute_value)
       .join('/') || '---',
 
+      // ⚠️ cần backend trả
       sold: p.sold || 0,
       totalStock: p.stock_quantity || 0
     }));

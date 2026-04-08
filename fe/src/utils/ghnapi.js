@@ -3,7 +3,7 @@ import axios from "axios";
 // GHN API tạo đơn hàng
 const createOrder = async (data) => {
   try {
-    const res = await axios.post("https://tmdt-promax-ghn-service.onrender.com/api/ghn/order", data);
+    const res = await axios.post("http://localhost:3008/api/ghn/order", data);
     return res.data;
   } catch (error) {
     console.error("🔥 GHN ERROR:", error.response?.data || error.message);
@@ -13,7 +13,7 @@ const createOrder = async (data) => {
 // GHN API xem trước đơn hàng
 const getPreview = async (data) => {
   try {
-    const res = await axios.post("https://tmdt-promax-ghn-service.onrender.com/api/ghn/preview", data);
+    const res = await axios.post("http://localhost:3008/api/ghn/preview", data);
     return res.data;
   } catch (error) {
     console.error("🔥 GHN ERROR:", error.response?.data || error.message);
@@ -24,7 +24,7 @@ const getPreview = async (data) => {
 const getDeliveryTime = async (data) => {
   try {
     const res = await axios.post(
-      "https://tmdt-promax-ghn-service.onrender.com/api/ghn/delivery-time",
+      "http://localhost:3008/api/ghn/delivery-time",
       data,
     );
     return res.data;
@@ -37,7 +37,7 @@ const getDeliveryTime = async (data) => {
 const cancelOrder = async (data) => {
   try {
     const res = await axios.post(
-      "https://tmdt-promax-ghn-service.onrender.com/api/ghn/order/cancel",
+      "http://localhost:3008/api/ghn/order/cancel",
       data,
     );
     return res.data;
@@ -50,7 +50,7 @@ const cancelOrder = async (data) => {
 const calculateShippingFee = async (data) => {
   try {
     const res = await axios.post(
-      "https://tmdt-promax-ghn-service.onrender.com/api/ghn/order/fee",
+      "http://localhost:3008/api/ghn/order/fee",
       data,
     );
     return res.data;
@@ -63,7 +63,7 @@ const calculateShippingFee = async (data) => {
 // GHN API lấy thông tin đơn hàng (acter khách hàng)
 const getOrderInfov2 = async (order_code) => {
   try {
-    const res = await axios.post("https://tmdt-promax-ghn-service.onrender.com/api/ghn/order/detail", {
+    const res = await axios.post("http://localhost:3008/api/ghn/order/detail", {
       order_code,
     });
     return res.data;
