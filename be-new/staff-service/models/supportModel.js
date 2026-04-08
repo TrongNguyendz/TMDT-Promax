@@ -7,7 +7,7 @@ const SupportTicketSchema = new mongoose.Schema({
     order_id: { type: Number, ref: 'Order', required: false },
     subject: { type: String, required: true, trim: true },
     priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
-    status: { type: String, enum: ['open', 'in_progress', 'resolved', 'closed'], default: 'open' },
+    status: { type: String, enum: ['open', 'in_progress', 'pending', 'spam', 'resolved', 'closed'], default: 'open' },
     assigned_staff_id: { type: Number, ref: 'Staff', required: false },
     last_message_at: { type: Date, default: Date.now },
     
