@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { formatCurrency } from '../../utils/helpers';
 import { useCheckoutStore } from '../../stores/checkout';
 import { useUIStore } from '../../stores/ui';
@@ -74,6 +74,11 @@ const applied = computed(() => checkout.appliedVoucher);
 
 const subtotalValue = computed(() => Number(props.subtotal || 0));
 const shippingFeeValue = computed(() => Number(checkout.shippingFee || 0));
+
+// DEBUG: Kiểm tra dữ liệu props
+watch(() => props.subtotal, (newVal) => {
+  console.log('🔍 OrderSummary subtotal prop:', newVal);
+}, { immediate: true });
 
 const finalTotal = computed(() =>
   Math.max(
