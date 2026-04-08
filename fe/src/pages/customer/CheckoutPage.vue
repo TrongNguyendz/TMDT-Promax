@@ -39,13 +39,13 @@
         />
       </div>
 
-      <OrdersSummary :cart="cart" :currentStep="checkout.currentStep" />
+      <OrdersSummary :itemCount="checkoutItems.length" :subtotal="checkoutSubtotal" :currentStep="checkout.currentStep" />
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useCartStore } from '../../stores/cart';
@@ -99,13 +99,6 @@ const checkoutSubtotal = computed(() => {
     }
     return cart.subtotal;
 });
-
-// DEBUG logging
-watch(() => checkoutSubtotal.value, (newVal) => {
-  console.log('🔍 CheckoutPage checkoutSubtotal:', newVal);
-  console.log('🔍 cart.items:', cart.items);
-  console.log('🔍 cart.subtotal:', cart.subtotal);
-}, { immediate: true });
 
 onMounted(() => {
   checkout.currentStep = 1;
