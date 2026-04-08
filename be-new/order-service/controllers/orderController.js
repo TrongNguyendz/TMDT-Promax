@@ -3,7 +3,7 @@ const OrderModel = require('../models/orderModel');
 const axios = require('axios');
 
 // Cấu hình URL Gateway
-const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000/api/v1';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'https://tmdt-promax-api-gateway.onrender.com/api/v1';
 
 exports.createOrder = async (req, res) => {
     let createdOrderId = null;
