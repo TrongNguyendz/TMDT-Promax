@@ -212,7 +212,7 @@
           <div class="space-y-3">
             <button
               v-if="
-                ['pending', 'takepacking', 'shipping'].includes(order.status)
+                ['pending', 'confirmed', 'packed', 'shipping'].includes(order.status)
               "
               @click="updateStatus"
               class="w-full rounded-xl bg-blue-600 px-4 py-2.5 font-bold text-white transition-all hover:bg-blue-700 active:scale-95"
@@ -330,43 +330,37 @@ const order = ref(null);
 const loading = ref(true);
 
 const statusSteps = computed(() => {
-  const statusOrder = [
-    "pending",
-    "takepacking",
-    "shipping",
-    "deliver",
-    "delivered",
-  ];
+  const statusOrder = ["pending", "confirmed", "packed", "shipping", "delivered"];
   const currentIndex = statusOrder.indexOf(order.value?.status);
 
   const steps = [
     {
       status: "pending",
-      label: "Đơn hàng được tạo",
+      label: "Chờ xác nhận",
       completed: false,
       active: false,
     },
     {
-      status: "takepacking",
-      label: "Đã xác nhận & đóng gói",
+      status: "confirmed",
+      label: "Đã xác nhận",
+      completed: false,
+      active: false,
+    },
+    {
+      status: "packed",
+      label: "Đã đóng gói",
       completed: false,
       active: false,
     },
     {
       status: "shipping",
-      label: "Chờ vận chuyển",
-      completed: false,
-      active: false,
-    },
-    {
-      status: "deliver",
-      label: "Đang giao hàng",
+      label: "Đang giao",
       completed: false,
       active: false,
     },
     {
       status: "delivered",
-      label: "Giao hàng thành công",
+      label: "Đã giao",
       completed: false,
       active: false,
     },
@@ -386,9 +380,9 @@ const statusSteps = computed(() => {
 const getNextStepButtonLabel = (status) => {
   const steps = {
     pending: "Duyệt đơn hàng",
-    takepacking: "Xác nhận chờ vận chuyển",
-    shipping: "Xác nhận đang giao hàng",
-    deliver: "Xác nhận đã giao hàng",
+    confirmed: "Xác nhận đóng gói",
+    packed: "Xác nhận giao hàng",
+    shipping: "Xác nhận đã giao hàng",
   };
   return steps[status] || "Cập nhật trạng thái";
 };
@@ -417,15 +411,15 @@ const updateStatus = async () => {
   let msg = "";
 
   if (order.value.status === "pending") {
-    nextStatus = "takepacking";
+    nextStatus = "confirmed";
     msg = `Xác nhận duyệt đơn hàng #${order.value.order_number}?`;
-  } else if (order.value.status === "takepacking") {
+  } else if (order.value.status === "confirmed") {
+    nextStatus = "packed";
+    msg = `Xác nhận đơn hàng #${order.value.order_number} đã đóng gói?`;
+  } else if (order.value.status === "packed") {
     nextStatus = "shipping";
-    msg = `Xác nhận đơn hàng #${order.value.order_number} đang chờ vận chuyển?`;
-  } else if (order.value.status === "shipping") {
-    nextStatus = "deliver";
     msg = `Xác nhận đơn hàng #${order.value.order_number} đang giao hàng?`;
-  } else if (order.value.status === "deliver") {
+  } else if (order.value.status === "shipping") {
     nextStatus = "delivered";
     msg = `Xác nhận đơn hàng #${order.value.order_number} đã giao thành công?`;
   }
@@ -463,11 +457,11 @@ const cancelOrder = async () => {
 const getStatusLabel = (status) => {
   const map = {
     pending: "Chờ xác nhận",
-    takepacking: "Đang đóng gói",
-    shipping: "Chờ vận chuyển",
-    deliver: "Đang giao hàng",
-    delivered: "Đã giao hàng",
-    cancelled: "Đã hủy",
+    confirmed: "Đã xác nhận",
+    packed: "Đã đóng gói",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy"
   };
   return map[status] || status;
 };

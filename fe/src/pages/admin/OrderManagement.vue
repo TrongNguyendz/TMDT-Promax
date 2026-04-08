@@ -152,10 +152,10 @@ let refreshTimer = null;
 const statusOptions = [
   { value: "all", label: "Tất cả" },
   { value: "pending", label: "Chờ xác nhận" },
-  { value: "takepacking", label: "Đang đóng gói" },
-  { value: "shipping", label: "Đang chờ vận chuyển" },
-  { value: "deliver", label: "Đang giao hàng" },
-  { value: "delivered", label: "Đã giao hàng" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "packed", label: "Đã đóng gói" },
+  { value: "shipping", label: "Đang giao" },
+  { value: "delivered", label: "Đã giao" },
   { value: "cancelled", label: "Đã hủy" },
 ];
 
@@ -196,14 +196,14 @@ const handleNextStep = async (order) => {
   let nextStatus = '';
   let msg = '';
 
-  if (order.status === 'pending') {
-    nextStatus = 'takepacking';
+ if (order.status === 'pending') {
+    nextStatus = 'confirmed';
     msg = `Xác nhận duyệt đơn #${order.order_number}?`;
-  } else if (order.status === 'takepacking') {
+  } else if (order.status === 'confirmed') {
+    nextStatus = 'packed';
+    msg = `Xác nhận đơn #${order.order_number} đã đóng gói?`;
+  } else if (order.status === 'packed') {
     nextStatus = 'shipping';
-    msg = `Xác nhận đơn #${order.order_number} đang chờ vận chuyển?`;
-  } else if (order.status === 'shipping') {
-    nextStatus = 'deliver';
     msg = `Xác nhận đơn #${order.order_number} đang giao hàng?`;
   }
 
@@ -256,9 +256,9 @@ onUnmounted(() => {
 const statusBadgeClass = (s) => {
   const map = {
     pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500",
-    takepacking: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
-    shipping: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
-    deliver: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500",
+    confirmed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500",
+    packed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500",
+    shipping: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500",
     delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500",
     cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500",
   };
@@ -268,10 +268,10 @@ const statusBadgeClass = (s) => {
 const getStatusLabel = (s) => {
   const map = {
     pending: "Chờ xác nhận",
-    takepacking: "Đang đóng gói",
-    shipping: "Chờ vận chuyển",
-    deliver: "Đang giao hàng",
-    delivered: "Đã giao hàng",
+    confirmed: "Đã xác nhận",
+    packed: "Đã đóng gói",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
     cancelled: "Đã hủy"
   };
   return map[s] || s;

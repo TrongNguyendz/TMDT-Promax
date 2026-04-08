@@ -101,7 +101,7 @@
             </button>
 
             <button
-              v-if="['pending', 'unpaid'].includes(order.status)"
+              v-if="['pending'].includes(order.status)"
               @click="handleCancel(order.id)"
               class="flex-1 sm:flex-none px-5 py-2 text-xs font-bold text-red-600 border border-red-100 hover:bg-red-50 rounded"
             >
@@ -167,21 +167,18 @@ const handleCancel = async (orderId) => {
 };
 
 const reorderItems = (order) => {
-	let count = 0;
-	order.items.forEach(item => {
-		// Map lại dữ liệu snapshot sang dữ liệu Cart Store cần
-		cartStore.addToCart({
-			id: item.product_id,
-			name: item.product_name,
-			price: item.unit_price,
-			image: item.product_image,
-			selectedColor: item.color,
-			selectedSize: item.size
-		}, item.quantity);
-		count++;
-	});
-
-	
+  let count = 0;
+  order.items.forEach(item => {
+    cartStore.addToCart({
+      id: item.product_id,
+      name: item.product_name,
+      price: item.unit_price,
+      image: item.product_image,
+      selectedColor: item.color,
+      selectedSize: item.size
+    }, item.quantity);
+    count++;
+  });
 };
 
 const statusColor = (status) => {
