@@ -99,9 +99,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { useWishlistStore } from '@/stores/wishlist';
-import { useUIStore } from '@/stores/ui';
-import { formatCurrency } from '@/utils/helpers';
+import { useWishlistStore } from '../../stores/wishlist';
+import { useUIStore } from '../../stores/ui';
+import { formatCurrency } from '../../utils/helpers';
 import axios from 'axios'; //Import axios để gọi API Product Service
 
 const wishlistStore = useWishlistStore();
