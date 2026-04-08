@@ -146,14 +146,21 @@ exports.updateStock = async (req, res) => {
         const { id } = req.params;
         const { stock_quantity } = req.body;
         
+        if (typeof stock_quantity !== 'number' || isNaN(stock_quantity)) {
+            return res.status(400).json({ success: false, message: 'stock_quantity phải là số' });
+        }
+        
+        console.log(`🔄 Updating stock for product ${id} to ${stock_quantity}`);
         const updated = await ProductModel.updateStock(id, stock_quantity);
         
         if (!updated) {
+            console.log(`❌ Product ${id} not found`);
             return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' }); 
         }
+        console.log(`✅ Successfully updated stock for product ${id}`);
         res.json({ success: true, data: updated });
-        console.log(`🔄 Đang cập nhật tồn kho cho SP ${req.params.id}`); 
     } catch (error) {
+        console.error(`❌ Error in updateStock controller for ${req.params.id}:`, error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
