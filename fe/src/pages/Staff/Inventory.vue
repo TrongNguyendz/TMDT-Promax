@@ -97,7 +97,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getListProducts } from "@/utils/product_service_api";
+import { getListProducts } from "../../utils/product_service_api";
 
 const searchKeyword = ref("");
 const sortBy = ref("");
