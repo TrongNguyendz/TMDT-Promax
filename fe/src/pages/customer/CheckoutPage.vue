@@ -1,7 +1,7 @@
 <template>
   <section class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-8">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Thanh toán</h1>
+      <h1 class="text-2xl font-black text-gray-900 dark:text-gray-100 uppercase italic tracking-tighter">Thanh toán</h1>
     </div>
 
     <CheckoutStep :currentStep="checkout.currentStep" />
@@ -12,6 +12,7 @@
 
     <div v-else class="grid gap-8 md:grid-cols-[1fr_380px]">
       <div class="space-y-6">
+        
         <Step1Review 
           v-if="checkout.currentStep === 1" 
           :items="checkoutItems" 
@@ -27,23 +28,24 @@
         />
 
         <Step3Payment 
-          v-if="checkout.currentStep === 3"
-          :paymentMethod="checkout.paymentMethod"
-          :qrData="qrCodeData"
-          :checkoutUrl="checkoutUrl"
-          :finalTotal="checkoutFinalTotal"
-          :isProcessing="isProcessing"
-          @prev="handleBackStep"
-          @complete="completeCODOrder"
-          @refresh-qr="handleRefreshQR"
-        />
-      </div>
+  v-if="checkout.currentStep === 3"
+  :order-id="successOrder?.id || successOrder?._id" 
+  :paymentMethod="checkout.paymentMethod"
+  :qrData="qrCodeData"
+  :checkoutUrl="checkoutUrl"
+  :total="checkoutSubtotal"
+  :isProcessing="isProcessing"
+  @prev="handleBackStep"
+  @complete="completeCODOrder"
+  @refresh-qr="handleRefreshQR"
+  @success="finishSteps" 
+/>
+        </div>
 
-      <OrdersSummary
-        :itemCount="itemCount"
-        :subtotal="subtotal "
-        :finalTotal="checkoutFinalTotal"
-        :currentStep="checkout.currentStep"
+      <OrdersSummary 
+        :itemCount="checkoutItems.length" 
+        :subtotal="checkoutSubtotal" 
+        :currentStep="checkout.currentStep" 
       />
     </div>
   </section>
@@ -52,7 +54,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
-import { io } from 'socket.io-client';
 import { useCartStore } from '../../stores/cart';
 import { useCheckoutStore } from '../../stores/checkout';
 import { useOrderStore } from '../../stores/order';
@@ -61,8 +62,7 @@ import { useUserStore } from '../../stores/user';
 import { useRoute } from 'vue-router';
 
 // Import các component con
-import CheckoutStep from '../../components/checkout/CheckoutStep.vue';   
-// Đã sửa đường dẫn chính xác: Không có chữ 's' ở chữ OrderSummary
+import CheckoutStep from '../../components/checkout/CheckoutStep.vue'; 
 import OrdersSummary from '../../components/checkout/OrderSummary.vue'; 
 import Step1Review from '../../components/checkout/Step1Review.vue';
 import Step2Shipping from '../../components/checkout/Step2Shipping.vue';
@@ -77,97 +77,54 @@ const userStore = useUserStore();
 const route = useRoute();
 
 
-// Biến cho PayOS
 const qrCodeData = ref('');
 const checkoutUrl = ref('');
 const isProcessing = ref(false);
 const successOrder = ref(null); 
-let socket = null;
-const type = route.query.type; 
-const subtotal = Number(route.query.subtotal);
-const itemCount = Number(route.query.itemCount);
 
-// 1. Lấy sản phẩm hiển thị
 const checkoutItems = computed(() => {
-  
-    if (successOrder.value && successOrder.value.items) {
-        return successOrder.value.items;
-    }
-    
-    if (type === 'direct-buy'
-    ) {
-        return [checkout.directBuyItem]; 
-    } 
-    if (type === 'cart') {
-        return cart.items
-    }
+    if (successOrder.value && successOrder.value.items) return successOrder.value.items;
+    if (checkout.isDirectBuy && checkout.directBuyItem) return [checkout.directBuyItem]; 
+    return cart.items; 
 });
 
-// 2. Tổng tiền cuối cùng dùng chung cho Step3Payment và OrderSummary
-const checkoutFinalTotal = computed(() => {
-    if (successOrder.value) {
-        return successOrder.value.final_amount || successOrder.value.total_amount;
-    }
-    
-    
-    return Math.max(
-        0,
-        Math.round(
-            subtotal +
-            Number(checkout.shippingFee || 0) -
-            (Number(checkout.discountAmount) || 0)
-        )
-    );
+const checkoutSubtotal = computed(() => {
+    if (successOrder.value) return successOrder.value.total_amount || successOrder.value.final_amount;
+    if (checkout.isDirectBuy && checkout.directBuyItem) return checkout.directBuyItem.price * checkout.directBuyItem.quantity;
+    return cart.subtotal;
 });
 
 onMounted(() => {
-  checkout.currentStep = 1;
+    // Reset về bước 1 khi vào trang
+    checkout.currentStep = 1;
 });
 
-onBeforeUnmount(() => {
-  if (socket) {
-    socket.disconnect();
-    console.log("Socket disconnected cleanup");
-  }
-});
-
-// --- XỬ LÝ CHUYỂN BƯỚC ---
+// --- LOGIC ĐIỀU PHỐI ---
 
 async function handleShippingNext() {
-  // Nhận diện cả 'vietqr' hoặc 'vnpay' (để dự phòng nếu bạn chưa đổi value ở radio button)
-  if (checkout.paymentMethod === 'vietqr' || checkout.paymentMethod === 'payos' || checkout.paymentMethod === 'vnpay') {
+  if (['vietqr', 'payos', 'vnpay'].includes(checkout.paymentMethod)) {
     await createPendingOrderAndGetQR();
   } else {
     checkout.nextStep();
   }
 }
 
-async function handleRefreshQR() {
-    if (successOrder.value) {
-        await generatePayOSUrl(successOrder.value.id, successOrder.value.final_amount);
-    }
-}
-
-// --- LOGIC TẠO ĐƠN & THANH TOÁN PAYOS ---
-
-async function createOrderInDB() {
-    return await checkout.submitOrder(); 
-}
-
 async function createPendingOrderAndGetQR() {
     isProcessing.value = true;
     try {
-        const newOrder = await createOrderInDB();
+        const newOrder = await checkout.submitOrder();
         
-        if (newOrder && newOrder.id) {
+        if (newOrder) {
+            // ✅ Lưu đơn hàng vào successOrder để lấy ID truyền cho con
             successOrder.value = newOrder; 
-            checkout.nextStep(); // Chuyển sang Step 3: Hiện QR Code
+            checkout.nextStep(); 
 
-            // Gọi API PayOS
-            await generatePayOSUrl(newOrder.id, newOrder.final_amount);
+            // Lấy QR từ PayOS
+            await generatePayOSUrl(newOrder.id || newOrder._id, newOrder.final_amount);
         }
     } catch (error) {
         console.error("Lỗi tạo đơn:", error);
+        ui.pushToast({ type: 'error', message: 'Không thể tạo đơn hàng' });
     } finally {
         isProcessing.value = false;
     }
@@ -175,18 +132,6 @@ async function createPendingOrderAndGetQR() {
 
 async function generatePayOSUrl(orderId, amount) {
   try {
-    if (!orderId) return;
-
-    const cleanAmount = Math.round(Number(amount));
-    if (isNaN(cleanAmount) || cleanAmount <= 0) {
-        ui.pushToast({ type: 'error', message: 'Số tiền không hợp lệ' });
-        return;
-    }
-
-    console.log("📤 Tạo QR PayOS cho đơn:", orderId, "Tiền:", cleanAmount);
-
-    // 1. LẤY TOKEN ĐĂNG NHẬP
-    // Tùy vào cách bạn lưu token, có thể lấy từ userStore hoặc localStorage
     const token = userStore.token || localStorage.getItem('token'); 
 
     // 2. CẤU HÌNH HEADER ĐỂ MANG THEO TOKEN
@@ -198,34 +143,31 @@ async function generatePayOSUrl(orderId, amount) {
     }
 
     // 3. GỌI API VỚI CONFIG (Bao gồm Token)
-    const response = await axios.post('https://tmdt-promax-api-gateway.onrender.com/api/v1/payments/payos/create', {
+    const response = await axios.post('http://localhost:3000/api/v1/payments/payos/create', {
       orderId: orderId, 
-      amount: cleanAmount, 
+      amount: Math.round(Number(amount)), 
       userId: userStore.profile?.id || 'GUEST',
-    }, config); // <--- Chú ý biến config được truyền vào ở đây
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
     if (response.data.success) {
-      console.log("📸 CHECK DỮ LIỆU API TRẢ VỀ:", response.data);
       qrCodeData.value = response.data.qrCodeData; 
       checkoutUrl.value = response.data.paymentUrl; 
-      
-      if (socket) socket.disconnect();
-      setupSocketListener(orderId); 
     }
   } catch (error) {
-    console.error("Lỗi API PayOS:", error.response?.data || error.message);
-    ui.pushToast({ type: 'error', message: 'Không thể tạo mã thanh toán VietQR' });
+    console.error("Lỗi API PayOS:", error.message);
+    ui.pushToast({ type: 'error', message: 'Lỗi tạo mã QR' });
   }
 }
 
-// Hàm xử lý COD
 async function completeCODOrder() {
     isProcessing.value = true;
     try {
-        const newOrder = await createOrderInDB();
+        const newOrder = await checkout.submitOrder();
         if (newOrder) {
             successOrder.value = newOrder;
-            ui.pushToast({ type: 'success', message: 'Đặt hàng thành công, kiểm tra email để xem hóa đơn!' });
+            ui.pushToast({ type: 'success', message: 'Đặt hàng thành công!' });
             finishSteps();
         }
     } finally {
@@ -236,7 +178,7 @@ async function completeCODOrder() {
 // --- SOCKET & HOÀN TẤT ---
 
 function setupSocketListener(orderId) {
-  socket = io('https://tmdt-promax-payment-service.onrender.com', {
+  socket = io('http://localhost:3004', {
     transports: ['websocket', 'polling'],
     withCredentials: true
   });
@@ -262,35 +204,22 @@ function setupSocketListener(orderId) {
 }
 
 function finishSteps() {
-  const wasDirectBuy = checkout.isDirectBuy;
-  checkout.currentStep = 4; // Nhảy sang Bước 4 (Thành công)
+  checkout.currentStep = 4;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (!wasDirectBuy) {
-    cart.clearCart();
-  }
-  checkout.clearDirectBuy(); 
-  if (socket) socket.disconnect();
+  cart.clearCart(); 
 }
 
 async function handleBackStep() {
     if (checkout.currentStep === 3 && successOrder.value) {
-        if (!confirm('Đơn hàng chờ thanh toán hiện tại sẽ bị hủy để bạn chọn phương thức mới. Bạn chắc chắn chứ?')) {
-            return;
-        }
-
-        try {
-            isProcessing.value = true;
-            await orderStore.cancelOrder(successOrder.value.id, 'Khách đổi phương thức thanh toán');
-            successOrder.value = null;
-            qrCodeData.value = '';
-            checkoutUrl.value = '';
-            if (socket) socket.disconnect();
-
-            checkout.previousStep();
-        } catch (e) {
-            console.error("Lỗi hủy đơn:", e);
-        } finally {
-            isProcessing.value = false;
+        if (confirm('Hủy thanh toán hiện tại để chọn phương thức khác?')) {
+            try {
+                isProcessing.value = true;
+                await orderStore.cancelOrder(successOrder.value.id || successOrder.value._id, 'Đổi phương thức');
+                successOrder.value = null;
+                checkout.previousStep();
+            } finally {
+                isProcessing.value = false;
+            }
         }
     } else {
         checkout.previousStep();

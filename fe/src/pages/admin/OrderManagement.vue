@@ -187,7 +187,7 @@ const getNextStepLabel = (status) => {
     pending: 'Xác nhận đơn',
     confirmed: 'Đóng gói',
     packed: 'Giao hàng',
-    shipping: 'Hoàn thành'
+    shipping: 'Đã giao',
   };
   return steps[status] || 'Cập nhật';
 };
