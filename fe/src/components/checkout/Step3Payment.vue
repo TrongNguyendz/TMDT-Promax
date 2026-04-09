@@ -127,7 +127,7 @@ const props = defineProps({
   isProcessing: Boolean 
 });
 
-const emit = defineEmits(['prev', 'complete', 'refresh-qr']);
+const emit = defineEmits(['prev', 'complete', 'refresh-qr', 'success']);
 const router = useRouter();
 
 const TIME_LIMIT = 300; 
@@ -137,72 +137,62 @@ let pollInterval = null;
 
 const progress = computed(() => (timeLeft.value / TIME_LIMIT) * 100);
 
-// 🟢 RADAR: Quét trạng thái thanh toán từ Backend
+// 🟢 RADAR: Quét trạng thái đơn hàng
 const startPolling = () => {
-  if (!props.orderId) {
-    console.warn("⚠️ Không có OrderId để quét trạng thái.");
-    return;
-  }
+  // Nếu chưa có ID thì không quét, tránh lỗi 404
+  if (!props.orderId) return; 
   
   clearInterval(pollInterval);
-  console.log(`📡 Bắt đầu quét trạng thái đơn hàng: ${props.orderId}`);
+  console.log(`📡 [RADAR] Bắt đầu truy quét đơn hàng: ${props.orderId}`);
   
   pollInterval = setInterval(async () => {
     try {
       const res = await OrderAPI.getOrderById(props.orderId);
       const order = res.data?.data || res.data;
 
-      // Log để sếp check trạng thái thực tế trả về
-      console.log(`🔄 Check trạng thái [${props.orderId}]:`, order.payment_status, order.status);
+      console.log(`🔄 [CHECK] Trạng thái: ${order.payment_status} | ${order.status}`);
 
-      // Điều kiện nhảy trang: Một trong các trạng thái báo đã xử lý/thanh toán
-      const isPaid = ['paid', 'completed'].includes(String(order.payment_status).toLowerCase());
-      const isProcessing = ['processing', 'confirmed', 'packed', 'shipping'].includes(String(order.status).toLowerCase());
+      // Chỉ cần thấy 'paid' hoặc 'processing' là nhảy ngay
+      const isPaid = String(order.payment_status).toLowerCase() === 'paid';
+      const isProcessing = String(order.status).toLowerCase() === 'processing';
 
       if (isPaid || isProcessing) {
-        console.log("✅ Thanh toán thành công! Đang chuyển trang...");
+        console.log("✅ [SUCCESS] Tiền đã về! Phát tín hiệu nhảy Step 4...");
         clearInterval(pollInterval);
-        
-        // Nhảy sang trang thành công
-        emit('success');
+        emit('success'); // 👈 Hét lên cho thằng Cha nghe
       }
     } catch (error) {
-      console.error("❌ Lỗi Polling:", error.message);
+      console.error("❌ [ERROR] Radar mất sóng:", error.message);
     }
-  }, 3000); // 3 giây/lần
+  }, 3000); // 3 giây gõ cửa Backend 1 lần
 };
 
 const startTimer = () => {
   clearInterval(timerInterval);
   timeLeft.value = TIME_LIMIT;
   timerInterval = setInterval(() => {
-    if (timeLeft.value > 0) {
-      timeLeft.value--;
-    } else {
+    if (timeLeft.value > 0) timeLeft.value--;
+    else {
       clearInterval(timerInterval);
-      clearInterval(pollInterval); // Mã hết hạn thì ngừng quét
+      clearInterval(pollInterval);
     }
   }, 1000);
 };
 
-const handleRefresh = () => {
-  emit('refresh-qr');
-};
+const handleRefresh = () => { emit('refresh-qr'); };
 
-// Theo dõi sự thay đổi của qrData để bật timer và radar
+// 🎯 THAY ĐỔI QUAN TRỌNG: Theo dõi sát sao orderId thay vì qrData
+watch(() => props.orderId, (newId) => {
+  if (newId) {
+    console.log("🎯 Đã nhận diện ID đơn hàng:", newId);
+    startPolling();
+  }
+}, { immediate: true });
+
+// Theo dõi thêm qrData để chạy timer đếm ngược
 watch(() => props.qrData, (newVal) => {
-  if (newVal) {
-    startTimer();
-    startPolling();
-  }
-}, { immediate: true }); // Chạy ngay nếu data đã có sẵn
-
-onMounted(() => {
-  if (props.qrData) {
-    startTimer();
-    startPolling();
-  }
-});
+  if (newVal) startTimer();
+}, { immediate: true });
 
 onUnmounted(() => {
   clearInterval(timerInterval);
