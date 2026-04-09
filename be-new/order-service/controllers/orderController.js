@@ -49,13 +49,13 @@ exports.createOrder = async (req, res) => {
             customer_email: final_customer_email,
             customer_phone: final_customer_phone,
             shipping_address: final_shipping_address,
-            // total_amount: Number(total_amount || totalAmount || amount || 0),
-            // 👇 ĐÂY LÀ THAY ĐỔI DUY NHẤT QUAN TRỌNG
-            total_amount: calculated_total,  // 👈 LƯU SỐ SAU GIẢM GIÁ (450k)
             payment_method: payment_method || 'vnpay',
             items: items,
-            status: req.body.status || 'pending'
-            
+            status: req.body.status || 'pending',
+            shipping_fee: Number(req.body.shipping_fee || 0),
+            discount_amount: Number(req.body.discount_amount || 0),
+            coupon_code: req.body.voucher || null,
+            notes: req.body.notes || ''
         };
         console.log(orderPayload) ;
         // 1. Lưu đơn hàng vào Database
@@ -255,7 +255,7 @@ exports.listOrders = async (req, res) => {
         let targetUserId = req.query.user_id;
 
         // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
-        if (currentUserRole !== 'admin') {
+        if (!['admin', 'staff'].includes(currentUserRole)) {
             targetUserId = currentUserId;
         }
         

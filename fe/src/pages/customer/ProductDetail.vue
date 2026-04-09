@@ -776,6 +776,7 @@ import { formatCurrency } from "../../utils/helpers";
 import { useCheckoutStore } from '../../stores/checkout'; 
 import { useCompareStore } from "../../stores/compare";
 
+
 const router = useRouter();
 const route = useRoute();
 const productStore = useProductsStore();
@@ -1050,7 +1051,8 @@ function buyNow() {
       selectedSize: selectedSize.value,
       quantity: qty.value
   });
-  router.push('/checkout');
+
+  router.push({ name: 'checkout' , query: { subtotal: product.value.price , itemCount: 1 ,type: 'direct-buy' } });
 }
 
 function toggleWishlist() {

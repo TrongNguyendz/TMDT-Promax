@@ -12,9 +12,10 @@ export const useCartStore = defineStore('cart', () => {
     });
 
     const subtotal = computed(() => {
-        return items.value.reduce((sum, item) => {
+        const total = items.value.reduce((sum, item) => {
             return sum + (Number(item.price) * Number(item.quantity));
         }, 0);
+        return Math.round(total);
     });
 
     // --- ACTIONS ---

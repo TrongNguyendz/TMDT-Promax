@@ -61,6 +61,7 @@ import { getListVouchers1 } from '../../utils/voucher_service_api';
 const props = defineProps({
   itemCount: Number,
   subtotal: Number,
+  finalTotal: Number,
   currentStep: Number
 });
 
@@ -75,16 +76,20 @@ const applied = computed(() => checkout.appliedVoucher);
 const subtotalValue = computed(() => Number(props.subtotal || 0));
 const shippingFeeValue = computed(() => Number(checkout.shippingFee || 0));
 
-const finalTotal = computed(() =>
-  Math.max(
+const finalTotal = computed(() => {
+  if (props.finalTotal !== undefined && props.finalTotal !== null) {
+    return Number(props.finalTotal);
+  }
+
+  return Math.max(
     0,
     Math.round(
       subtotalValue.value +
       shippingFeeValue.value -
       (Number(checkout.discountAmount) || 0)
     )
-  )
-);
+  );
+});
 
 function formatDiscountText(v) {
   if (!v) return '';

@@ -60,7 +60,7 @@ const routes = [
 	{ path: '/compare', component: CompareProductPage },
 	{ path: '/product/:id', component: ProductDetail },
 	{ path: '/cart', component: CartPage, meta: { requiresAuth: true } },
-	{ path: '/checkout', component: CheckoutPage, meta: { requiresAuth: true } },
+	{ path: '/checkout', name: 'checkout', component: CheckoutPage, meta: { requiresAuth: true } },
 	{ path: '/auth', component: AuthPage, meta: { publicOnly: true } },
 	{ path: '/wishlist', component: WishlistPage, meta: { requiresAuth: true } },
 	{ path: '/search', component: SearchResults },
