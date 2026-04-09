@@ -287,8 +287,6 @@ const handleLogin = async () => {
 
   isSubmitting.value = true;
 
-  isSubmitting.value = true;
-
   try {
     const res = await Login({ username, email: username, password });
     const result = res.data;
@@ -313,6 +311,7 @@ const handleLogin = async () => {
 
       const redirect = route.query.redirect || '/';
       router.replace(result.data.user.role === 'admin' ? '/admin/welcome' : redirect);
+      router.replace(result.data.user.role === 'staff' ? '/staff/welcome' : redirect);
     } 
     else if (result.message?.toLowerCase().includes('kích hoạt') || 
              result.message?.toLowerCase().includes('chưa được kích hoạt')) {
@@ -350,10 +349,11 @@ const handleLogin = async () => {
 
 // ==================== REGISTER ====================
 // ==================== REGISTER ====================
+// ==================== REGISTER ====================
 const handleRegister = async () => {
   if (isSubmitting.value) return;
 
-  // Trim tất cả
+  // Trim tất cả input
   registerForm.fullName = registerForm.fullName.trim();
   registerForm.username = registerForm.username.trim();
   registerForm.email = registerForm.email.trim();
@@ -361,58 +361,72 @@ const handleRegister = async () => {
   registerForm.password = registerForm.password.trim();
   registerForm.confirm = registerForm.confirm.trim();
 
-  // ==================== VALIDATION ====================
+  // ==================== VALIDATION (khớp với Joi schema backend) ====================
 
-  // 1. Họ tên
-  if (!registerForm.fullName || registerForm.fullName.length < 2) {
-    ui.pushToast({ type: 'error', message: 'Họ tên phải có ít nhất 2 ký tự' });
+  // 1. Username - .alphanum().min(3).max(30)
+  if (!registerForm.username) {
+    ui.pushToast({ type: 'error', message: 'Username là bắt buộc' });
     return;
   }
-  if (registerForm.fullName.length > 100) {
-    ui.pushToast({ type: 'error', message: 'Họ tên không được vượt quá 100 ký tự' });
-    return;
-  }
-
-  // 2. Username
-  if (!registerForm.username || registerForm.username.length < 4) {
-    ui.pushToast({ type: 'error', message: 'Username phải có ít nhất 4 ký tự' });
+  if (registerForm.username.length < 3) {
+    ui.pushToast({ type: 'error', message: 'Username phải có ít nhất 3 ký tự' });
     return;
   }
   if (registerForm.username.length > 30) {
     ui.pushToast({ type: 'error', message: 'Username không được vượt quá 30 ký tự' });
     return;
   }
-  const usernameRegex = /^[a-zA-Z0-9._]+$/;
-  if (!usernameRegex.test(registerForm.username)) {
-    ui.pushToast({ type: 'error', message: 'Username chỉ được chứa chữ cái, số, dấu chấm và dấu gạch dưới' });
-    return;
-  }
-  if (/^[._]/.test(registerForm.username) || /[._]$/.test(registerForm.username)) {
-    ui.pushToast({ type: 'error', message: 'Username không được bắt đầu hoặc kết thúc bằng dấu chấm hoặc gạch dưới' });
+  if (!/^[a-zA-Z0-9]+$/.test(registerForm.username)) {
+    ui.pushToast({ type: 'error', message: 'Username chỉ được chứa chữ cái (a-z, A-Z) và số (0-9), không dấu cách, không ký tự đặc biệt' });
     return;
   }
 
-  // 3. Email
+  // 2. Email
+  if (!registerForm.email) {
+    ui.pushToast({ type: 'error', message: 'Email là bắt buộc' });
+    return;
+  }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!registerForm.email || !emailRegex.test(registerForm.email)) {
+  if (!emailRegex.test(registerForm.email)) {
     ui.pushToast({ type: 'error', message: 'Email không đúng định dạng' });
     return;
   }
-  if (registerForm.email.length > 100) {
-    ui.pushToast({ type: 'error', message: 'Email quá dài' });
+
+  // 3. Họ tên (full_name)
+  if (!registerForm.fullName) {
+    ui.pushToast({ type: 'error', message: 'Họ tên là bắt buộc' });
+    return;
+  }
+  if (registerForm.fullName.length < 2) {
+    ui.pushToast({ type: 'error', message: 'Họ tên phải có ít nhất 2 ký tự' });
+    return;
+  }
+  if (registerForm.fullName.length > 100) {
+    ui.pushToast({ type: 'error', message: 'Họ tên quá dài (tối đa 100 ký tự)' });
     return;
   }
 
-  // 4. Số điện thoại (Việt Nam)
-  const phoneRegex = /^(0|\+84)[3|5|7|8|9]\d{8}$/;
-  if (!registerForm.phone || !phoneRegex.test(registerForm.phone.replace(/\s/g, ''))) {
-    ui.pushToast({ type: 'error', message: 'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)' });
-    return;
+  // 4. Số điện thoại (optional nhưng nếu nhập thì phải hợp lệ - khuyến nghị)
+  if (registerForm.phone) {
+    // Hỗ trợ cả số Việt Nam: 0xxx hoặc +84xxx
+    const phoneClean = registerForm.phone.replace(/\s+/g, '');
+    const vnPhoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+    if (!vnPhoneRegex.test(phoneClean)) {
+      ui.pushToast({ 
+        type: 'error', 
+        message: 'Số điện thoại không hợp lệ. Ví dụ hợp lệ: 0912345678 hoặc +84912345678' 
+      });
+      return;
+    }
   }
 
   // 5. Mật khẩu
-  if (!registerForm.password || registerForm.password.length < 8) {
-    ui.pushToast({ type: 'error', message: 'Mật khẩu phải có ít nhất 8 ký tự' });
+  if (!registerForm.password) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu là bắt buộc' });
+    return;
+  }
+  if (registerForm.password.length < 6) {
+    ui.pushToast({ type: 'error', message: 'Mật khẩu phải có ít nhất 6 ký tự' });
     return;
   }
   if (registerForm.password.length > 100) {
@@ -424,23 +438,13 @@ const handleRegister = async () => {
     return;
   }
 
-  // Kiểm tra độ mạnh mật khẩu (tùy chọn nhưng khuyến khích)
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-  if (!passwordRegex.test(registerForm.password)) {
-    ui.pushToast({ 
-      type: 'error', 
-      message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số' 
-    });
-    return;
-  }
-
   // 6. Xác nhận mật khẩu
   if (registerForm.password !== registerForm.confirm) {
     ui.pushToast({ type: 'error', message: 'Mật khẩu xác nhận không khớp' });
     return;
   }
 
-  // ==================== GỌI API ====================
+  // ==================== GỌI API nếu tất cả hợp lệ ====================
   isSubmitting.value = true;
 
   try {
@@ -449,7 +453,7 @@ const handleRegister = async () => {
       email: registerForm.email,
       password: registerForm.password,
       full_name: registerForm.fullName,
-      phone: registerForm.phone,
+      phone: registerForm.phone || undefined,   // không gửi nếu rỗng
     });
 
     const result = res.data;

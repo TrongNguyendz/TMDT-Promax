@@ -2,112 +2,57 @@
   <section v-if="product">
     <!-- Breadcrumb -->
     <nav class="mb-4 text-sm text-gray-500">
-      <RouterLink to="/" class="hover:underline">Trang chủ</RouterLink> /
-      <RouterLink to="/products" class="hover:underline">Sản phẩm</RouterLink> /
-      <span class="text-gray-700 dark:text-gray-300 font-medium">{{
-        product.name
-      }}</span>
+      <RouterLink to="/" class="hover:underline">Trang chủ</RouterLink> / 
+      <RouterLink to="/products" class="hover:underline">Sản phẩm</RouterLink> / 
+      <span class="text-gray-700 dark:text-gray-300 font-medium">{{ product.name }}</span>
     </nav>
 
     <div class="grid gap-8 md:grid-cols-2">
       <!-- CỘT TRÁI: ẢNH SẢN PHẨM -->
       <div>
-        <div
-          class="relative h-[500px] w-full rounded-lg border bg-gray-50 dark:border-gray-800 dark:bg-gray-900 flex items-center justify-center overflow-hidden"
-        >
-          <img
-            :src="selectedImage"
-            :alt="product.name"
-            @error="handleImageError"
+        <div class="relative h-[500px] w-full rounded-lg border bg-gray-50 dark:border-gray-800 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+          <img 
+            :src="selectedImage || 'https://via.placeholder.com/600x600?text=No+Image'" 
+            :alt="product.name" 
             class="max-h-full max-w-full object-contain transition-opacity duration-300"
+            @error="handleImageError"
           />
-
-          <button
-            v-if="productImages.length > 1"
-            @click="previousImage"
-            class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 transition"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+          
+          <!-- Nút điều hướng ảnh -->
+          <button v-if="productImages.length > 1" @click="previousImage" class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <button
-            v-if="productImages.length > 1"
-            @click="nextImage"
-            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 transition"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
+          <button v-if="productImages.length > 1" @click="nextImage" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
           </button>
-          <div
-            v-if="productImages.length > 1"
-            class="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur-sm"
-          >
+          <div v-if="productImages.length > 1" class="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur-sm">
             {{ currentImageIndex + 1 }} / {{ productImages.length }}
           </div>
         </div>
 
-        <div
-          v-if="productImages.length > 1"
-          class="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-thin"
-        >
-          <img
-            v-for="(img, idx) in productImages"
-            :key="idx"
-            :src="img"
+        <!-- Gallery -->
+        <div v-if="productImages.length > 1" class="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          <img 
+            v-for="(img, idx) in productImages" :key="idx" :src="img" 
             @click="selectImageByIndex(idx)"
-            @error="
-              $event.target.src = 'https://placehold.co/100x100?text=No+Img'
-            "
+            @error="$event.target.src = 'https://placehold.co/100x100?text=No+Img'"
             class="h-20 w-20 shrink-0 cursor-pointer rounded border bg-white object-contain p-1 transition-all hover:border-gray-400 dark:bg-gray-800 dark:border-gray-700"
-            :class="{
-              'ring-2 ring-gray-900 dark:ring-gray-100 border-transparent':
-                selectedImage === img,
-            }"
+            :class="{ 'ring-2 ring-gray-900 dark:ring-gray-100 border-transparent': selectedImage === img }"
           />
         </div>
       </div>
 
       <!-- CỘT PHẢI: THÔNG TIN -->
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ product.name }}
-        </h1>
-        <p class="mt-2 text-sm text-gray-500 font-mono">
-          SKU: {{ product.sku }}
-        </p>
-
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ product.name }}</h1>
+        <p class="mt-2 text-sm text-gray-500 font-mono">SKU: {{ product.sku }}</p>
+        
+        <!-- Rating -->
         <div class="mt-3 flex items-center gap-2">
           <div class="flex items-center text-yellow-400 text-lg">
-            <span v-for="i in 5" :key="i">{{
-              i <= Math.round(product.rating || 5) ? "★" : "☆"
-            }}</span>
+            <span v-for="i in 5" :key="i">{{ i <= Math.round(product.rating || 5) ? '★' : '☆' }}</span>
           </div>
-          <span
-            class="text-sm text-blue-600 hover:underline cursor-pointer"
-            @click="activeTab = 'reviews'"
-          >
+          <span class="text-sm text-blue-600 hover:underline cursor-pointer" @click="activeTab = 'reviews'">
             ({{ product.reviews || 0 }} đánh giá)
           </span>
         </div>
@@ -118,108 +63,61 @@
 
         <!-- 1. CHỌN MÀU SẮC -->
         <div v-if="colors.length > 0" class="mt-6">
-          <label class="block text-sm font-semibold mb-2"
-            >Màu sắc:
-            <span class="text-gray-600 font-normal">{{
-              selectedColor?.name
-            }}</span></label
-          >
-          <div class="flex gap-3">
-            <button
-              v-for="color in colors"
-              :key="color.hex"
-              @click="selectedColor = color"
-              class="h-8 w-8 rounded-full border-2 transition-all relative shadow-sm"
-              :style="{ backgroundColor: color.hex }"
-              :class="{
-                'ring-2 ring-offset-2 ring-gray-900 dark:ring-gray-100 border-transparent':
-                  selectedColor?.hex === color.hex,
-                'border-gray-300 dark:border-gray-600':
-                  selectedColor?.hex !== color.hex,
-              }"
-              :title="color.name"
-            ></button>
-          </div>
+            <label class="block text-sm font-semibold mb-2">Màu sắc: <span class="text-gray-600 font-normal">{{ selectedColor?.name }}</span></label>
+            <div class="flex gap-3">
+                <button
+                    v-for="color in colors"
+                    :key="color.hex"
+                    @click="selectedColor = color"
+                    class="h-8 w-8 rounded-full border-2 transition-all relative shadow-sm"
+                    :style="{ backgroundColor: color.hex }"
+                    :class="{ 'ring-2 ring-offset-2 ring-gray-900 dark:ring-gray-100 border-transparent': selectedColor?.hex === color.hex, 'border-gray-300 dark:border-gray-600': selectedColor?.hex !== color.hex }"
+                    :title="color.name"
+                >
+                </button>
+            </div>
         </div>
 
         <!-- 2. CHỌN KÍCH CỠ -->
         <div class="mt-6">
-          <div class="flex justify-between items-end mb-2">
-            <label class="block text-sm font-semibold"
-              >Kích cỡ:
-              <span class="text-gray-600 font-normal">{{
-                selectedSize
-              }}</span></label
-            >
-            <button
-              @click="showSizeGuide = true"
-              class="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-              Hướng dẫn chọn size
-            </button>
-          </div>
-
-          <div v-if="sizes.length > 0" class="flex gap-2 flex-wrap">
-            <button
-              v-for="size in sizes"
-              :key="size"
-              @click="selectedSize = size"
-              class="rounded border px-4 py-2 font-medium transition-all min-w-[3rem]"
-              :class="{
-                'bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-black':
-                  selectedSize === size,
-                'border-gray-300 hover:border-gray-400 text-gray-700 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800':
-                  selectedSize !== size,
-              }"
-            >
-              {{ size }}
-            </button>
-          </div>
-          <div v-else class="text-sm text-gray-500 italic">
-            Freesize / Một kích cỡ
-          </div>
+            <div class="flex justify-between items-end mb-2">
+                <label class="block text-sm font-semibold">Kích cỡ: <span class="text-gray-600 font-normal">{{ selectedSize }}</span></label>
+                <button @click="showSizeGuide = true" class="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> 
+                    Hướng dẫn chọn size
+                </button>
+            </div>
+            
+            <div v-if="sizes.length > 0" class="flex gap-2 flex-wrap">
+                <button
+                    v-for="size in sizes"
+                    :key="size"
+                    @click="selectedSize = size"
+                    class="rounded border px-4 py-2 font-medium transition-all min-w-[3rem]"
+                    :class="{ 
+                        'bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-black': selectedSize === size,
+                        'border-gray-300 hover:border-gray-400 text-gray-700 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800': selectedSize !== size
+                    }"
+                >
+                    {{ size }}
+                </button>
+            </div>
+            <div v-else class="text-sm text-gray-500 italic">Freesize / Một kích cỡ</div>
         </div>
 
         <div class="mt-6 p-4 bg-gray-50 rounded-lg dark:bg-gray-800/50">
-          <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-            {{ product.shortDescription || product.description }}
-          </p>
+           <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+             {{ product.shortDescription || product.description }}
+           </p>
         </div>
 
         <div class="mt-6 flex items-center gap-2">
-          <div
-            class="h-2.5 w-2.5 rounded-full"
-            :class="product.inStock ? 'bg-green-500' : 'bg-red-500'"
-          ></div>
-          <p
-            v-if="product.inStock"
-            class="text-sm font-semibold text-green-600 dark:text-green-400"
-          >
-            Còn hàng ({{ product.stock }})
-          </p>
-          <p
-            v-else
-            class="text-sm font-semibold text-red-600 dark:text-red-400"
-          >
-            Hết hàng
-          </p>
+          <div class="h-2.5 w-2.5 rounded-full" :class="product.inStock ? 'bg-green-500' : 'bg-red-500'"></div>
+          <p v-if="product.inStock" class="text-sm font-semibold text-green-600 dark:text-green-400">Còn hàng ({{ product.stock }})</p>
+          <p v-else class="text-sm font-semibold text-red-600 dark:text-red-400">Hết hàng</p>
         </div>
 
-
+        <!-- Nút Mua Hàng -->
         <div class="mt-6 flex flex-wrap gap-3">
           <!-- Tăng giảm số lượng -->
           <div class="flex items-center rounded border bg-white dark:bg-gray-900 dark:border-gray-700 h-12">
@@ -253,7 +151,6 @@
             MUA NGAY
           </button>
         </div>
-        <!-- [END CHANGE] -->
 
         <!-- Try On & Compare Buttons -->
         <div class="flex flex-wrap items-center gap-2 mt-6">
@@ -280,51 +177,23 @@
     <!-- TABS -->
     <div class="mt-16 border-t pt-8 dark:border-gray-800">
       <div class="flex gap-8 border-b dark:border-gray-800 overflow-x-auto">
-        <button
-          @click="activeTab = 'description'"
-          class="pb-4 text-lg font-semibold transition-colors relative whitespace-nowrap"
-          :class="
-            activeTab === 'description'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-500 hover:text-gray-700'
-          "
-        >
-          Mô tả
-          <div
-            v-if="activeTab === 'description'"
-            class="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 dark:bg-white"
-          ></div>
+        <button @click="activeTab = 'description'" class="pb-4 text-lg font-semibold transition-colors relative whitespace-nowrap" :class="activeTab === 'description' ? 'text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'">
+          Mô tả <div v-if="activeTab === 'description'" class="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 dark:bg-white"></div>
         </button>
-        <button
-          @click="activeTab = 'reviews'"
-          class="pb-4 text-lg font-semibold transition-colors relative whitespace-nowrap"
-          :class="
-            activeTab === 'reviews'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-500 hover:text-gray-700'
-          "
-        >
-          Đánh giá ({{ product.reviews }})
-          <div
-            v-if="activeTab === 'reviews'"
-            class="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 dark:bg-white"
-          ></div>
+        <button @click="activeTab = 'reviews'" class="pb-4 text-lg font-semibold transition-colors relative whitespace-nowrap" :class="activeTab === 'reviews' ? 'text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'">
+          Đánh giá ({{ product.reviews }}) <div v-if="activeTab === 'reviews'" class="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 dark:bg-white"></div>
         </button>
       </div>
 
       <div class="py-8 min-h-[300px]">
         <!-- 1. Mô tả -->
-        <div
-          v-if="activeTab === 'description'"
-          class="prose max-w-none text-gray-700 dark:prose-invert dark:text-gray-300"
-        >
-          <p class="whitespace-pre-line leading-relaxed text-lg">
-            {{ product.description || "Chưa có mô tả chi tiết." }}
-          </p>
+        <div v-if="activeTab === 'description'" class="prose max-w-none text-gray-700 dark:prose-invert dark:text-gray-300">
+          <p class="whitespace-pre-line leading-relaxed text-lg">{{ product.description || "Chưa có mô tả chi tiết." }}</p>
         </div>
 
         <!-- 2. Đánh giá -->
         <div v-else-if="activeTab === 'reviews'" class="space-y-8">
+          
           <!-- Form Viết đánh giá -->
           <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
             <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Viết đánh giá của bạn</h3>
@@ -347,17 +216,43 @@
             </div>
           </div>
 
-          <!-- Danh sách đánh giá -->
+          <!-- Khu vực Danh sách Đánh giá -->
           <div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              
+              <!-- FILTER STAR (LỌC THEO SAO) -->
+              <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button 
+                  @click="filterStar = 0" 
+                  class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors whitespace-nowrap"
+                  :class="filterStar === 0 ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black' : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+                >
+                  Tất cả
+                </button>
+                <button 
+                  v-for="star in [5,4,3,2,1]" 
+                  :key="star" 
+                  @click="filterStar = star" 
+                  class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors flex items-center gap-1 whitespace-nowrap"
+                  :class="filterStar === star ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black' : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+                >
+                  {{ star }} <span class="text-yellow-400">★</span>
+                </button>
+              </div>
+            </div>
             
+            <!-- Trạng thái trống -->
             <div v-if="reviews.length === 0" class="text-center py-10 text-gray-500 border border-dashed rounded-lg dark:border-gray-700">
               Chưa có đánh giá nào. Hãy là người đầu tiên!
             </div>
+            <div v-else-if="filteredReviews.length === 0" class="text-center py-10 text-gray-500 border border-dashed rounded-lg dark:border-gray-700">
+              Không có đánh giá {{ filterStar }} sao nào.
+            </div>
 
+            <!-- Danh sách -->
             <div v-else class="space-y-8">
-              <div v-for="review in reviews" :key="review.id" class="pb-8 border-b dark:border-gray-700 last:border-0 last:pb-0">
+              <div v-for="review in filteredReviews" :key="review.id" class="pb-8 border-b dark:border-gray-700 last:border-0 last:pb-0">
 
-                <!-- Header review -->
                 <div class="flex justify-between items-start mb-3">
                   <div class="flex gap-3">
                     <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 shrink-0">
@@ -373,10 +268,9 @@
                   <span class="text-xs text-gray-400">{{ formatRelativeTime(review.created_at) }}</span>
                 </div>
 
-                <!-- Nội dung comment -->
                 <p class="text-gray-700 dark:text-gray-300 ml-13 leading-relaxed">{{ review.comment || '(Chỉ đánh giá sao)' }}</p>
 
-                <!-- Replies với Xem thêm / Thu gọn -->
+                <!-- Replies -->
                 <div v-if="review.replies && review.replies.length > 0" class="ml-13 mt-5 space-y-4">
                   <!-- Preview (chỉ 1 reply mới nhất) -->
                   <div v-if="!expandedReviews.has(review.id)">
@@ -405,7 +299,7 @@
                     </div>
                   </div>
 
-                  <!-- Expanded: tất cả trừ reply cuối (đã preview) -->
+                  <!-- Expanded: tất cả replies -->
                   <div v-if="expandedReviews.has(review.id)" class="space-y-4">
                     <div
                       v-for="(reply, rIdx) in getExpandedReplies(review.replies)"
@@ -470,7 +364,7 @@
                   </button>
 
                   <button
-                    v-if="['admin', 'staff'].includes(userStore.profile?.role) || userStore.profile?.id === review.user_id"
+                    v-if="['admin', 'staff'].includes(userStore.profile?.role) || Number(userStore.profile?.id) === Number(review.user_id)"
                     @click="handleDeleteReview(review.id)"
                     class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition"
                   >
@@ -480,25 +374,9 @@
 
                 <!-- Input reply -->
                 <div v-if="activeReplyId === review.id" class="ml-13 mt-4 flex gap-3">
-                  <input
-                    v-model="replyText"
-                    type="text"
-                    :placeholder="`Trả lời ${review.user_name}...`"
-                    class="flex-1 text-sm px-4 py-3 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    @keyup.enter="submitReply(review.id)"
-                  />
-                  <button
-                    @click="submitReply(review.id)"
-                    class="px-6 py-3 bg-gray-900 dark:bg-white dark:text-black text-white text-sm font-bold rounded-xl hover:opacity-90 transition"
-                  >
-                    Gửi
-                  </button>
-                  <button
-                    @click="activeReplyId = null"
-                    class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition"
-                  >
-                    Hủy
-                  </button>
+                  <input v-model="replyText" type="text" :placeholder="`Trả lời ${review.user_name}...`" class="flex-1 text-sm px-4 py-3 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition" @keyup.enter="submitReply(review.id)" />
+                  <button @click="submitReply(review.id)" class="px-6 py-3 bg-gray-900 dark:bg-white dark:text-black text-white text-sm font-bold rounded-xl hover:opacity-90 transition">Gửi</button>
+                  <button @click="activeReplyId = null" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 transition">Hủy</button>
                 </div>
               </div>
             </div>
@@ -506,9 +384,13 @@
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Modal Size Guide (giữ nguyên) -->
-    <div
+  <!-- Skeleton Loading -->
+  <div v-else class="container mx-auto px-4 py-8 animate-pulse"><div class="h-64 bg-gray-200 rounded"></div></div>
+
+  <!-- Modal Bảng Size (Đã thu gọn để tiết kiệm dòng, bạn giữ nguyên code modal của bạn ở đây) -->
+   <div
     v-if="showSizeGuide"
     class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
     @click.self="showSizeGuide = false"
@@ -879,25 +761,20 @@
       </div>
     </div>
   </div>
-  </section>
-
-  <div v-else class="container mx-auto px-4 py-8 animate-pulse">
-    <div class="h-64 bg-gray-200 rounded"></div>
-  </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch, reactive } from "vue";
-import { useRoute, useRouter } from 'vue-router'; 
+import { onMounted, ref, watch, reactive, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useProductsStore } from "../../stores/products";
 import { useCartStore } from "../../stores/cart";
 import { useWishlistStore } from "../../stores/wishlist";
 import { useUserStore } from "../../stores/user";
-import { useCompareStore } from "../../stores/compare";
 import { useUIStore } from "../../stores/ui";
 import api from "../../utils/product_service_api";
 import { formatCurrency } from "../../utils/helpers";
 import { useCheckoutStore } from '../../stores/checkout'; 
+import { useCompareStore } from "../../stores/compare";
 
 const router = useRouter();
 const route = useRoute();
@@ -905,9 +782,9 @@ const productStore = useProductsStore();
 const cart = useCartStore();
 const wishlist = useWishlistStore();
 const userStore = useUserStore();
-const compareStore = useCompareStore();
-const ui = useUIStore(); // nếu bạn dùng toast thì có thể dùng ui.pushToast
 const checkoutStore = useCheckoutStore(); 
+const ui = useUIStore(); 
+const compareStore = useCompareStore();
 
 const showSizeGuide = ref(false);
 const sizeTab = ref("Nam");
@@ -929,12 +806,20 @@ const selectedSize = ref("");
 const imageColorMap = ref({});
 const imageIndexToColor = ref({});
 
+// MỚI: State cho Lọc Sao
+const filterStar = ref(0); // 0 nghĩa là Tất cả
+
 // Review states
 const activeReplyId = ref(null);
 const replyText = ref('');
 const expandedReviews = ref(new Set());
 
-// Fetch product & reviews
+// MỚI: Computed để Lọc Đánh Giá theo Sao
+const filteredReviews = computed(() => {
+  if (filterStar.value === 0) return reviews.value;
+  return reviews.value.filter(r => Math.round(r.rating) === filterStar.value);
+});
+
 onMounted(async () => {
   const id = route.params.id;
   await productStore.fetchProductById(id);
@@ -953,7 +838,6 @@ onMounted(async () => {
       reviews: data.review_count || 0,
     };
 
-    // Attributes (colors, sizes)
     if (data.attributes) {
       data.attributes.forEach((attr) => {
         const name = attr.attribute_name.toLowerCase();
@@ -970,7 +854,6 @@ onMounted(async () => {
     if (colors.value.length > 0) selectedColor.value = colors.value[0];
     if (sizes.value.length > 0) selectedSize.value = sizes.value[0];
 
-    // Images
     if (data.images && data.images.length > 0) {
       const sortedImages = [...data.images].sort((a, b) => a.sort_order - b.sort_order);
       productImages.value = sortedImages.map((img) => img.image_url);
@@ -985,18 +868,17 @@ onMounted(async () => {
         }
       });
     } else {
-      productImages.value = ["https://placehold.co/600x600?text=No+Image"];
+      productImages.value =["https://placehold.co/600x600?text=No+Image"];
     }
 
     selectedImage.value = productImages.value[0];
     if (product.value) {
       product.value.image = selectedImage.value;
     }
-    fetchReviews(id);
+    await fetchReviews(id);
   }
 });
 
-// Watchers
 watch(selectedColor, (newColor) => {
   if (newColor?.hex) {
     const idx = imageColorMap.value[newColor.hex.toLowerCase()];
@@ -1014,7 +896,6 @@ watch(currentImageIndex, (newIndex) => {
   }
 });
 
-// Reply logic
 const toggleReplies = (reviewId) => {
   if (expandedReviews.value.has(reviewId)) {
     expandedReviews.value.delete(reviewId);
@@ -1026,13 +907,13 @@ const toggleReplies = (reviewId) => {
 const getPreviewReplies = (replies) => {
   if (!replies?.length) return [];
   const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  return [sorted[sorted.length - 1]]; // reply mới nhất
+  return [sorted[sorted.length - 1]]; // chỉ reply mới nhất
 };
 
 const getExpandedReplies = (replies) => {
   if (!replies?.length) return [];
   const sorted = [...replies].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  return sorted;// tất cả reply theo thứ tự thời gian (cũ nhất -> mới nhất)
+  return sorted;
 };
 
 const formatRelativeTime = (dateStr) => {
@@ -1049,7 +930,6 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-// API calls
 async function fetchReviews(productId) {
   try {
     const res = await api.get(`/products/${productId}/reviews`);
@@ -1058,6 +938,18 @@ async function fetchReviews(productId) {
     }
   } catch (e) {
     console.error("Lỗi tải đánh giá:", e);
+  }
+}
+
+// MỚI: Hàm Refresh thông số sản phẩm (Số review và Số sao trung bình)
+async function refreshProductStats() {
+  if (!product.value) return;
+  // Cập nhật lại thông tin product từ API
+  await productStore.fetchProductById(product.value.id);
+  const data = productStore.currentProduct;
+  if (data) {
+     product.value.rating = data.rating || 0;
+     product.value.reviews = data.review_count || 0;
   }
 }
 
@@ -1075,17 +967,17 @@ async function submitReview() {
     if (res.data.success) {
       newReview.comment = '';
       newReview.rating = 5;
-      fetchReviews(product.value.id);
-      ui.pushToast({
-  message: "Đánh giá đã được gửi!",
-  type: "success"
-});
+      
+      // Load lại danh sách comment
+      await fetchReviews(product.value.id);
+      
+      // CẬP NHẬT: Load lại thông số sản phẩm để hiện số (Ví dụ: 1 đánh giá) ngay lập tức
+      await refreshProductStats();
+
+      ui.pushToast({ message: "Đánh giá đã được gửi!", type: "success" });
     }
   } catch (e) {
-    ui.pushToast({
-      message: 'Lỗi: ' + (e.response?.data?.message || e.message),
-      type: "error"
-    });
+    ui.pushToast({ message: 'Lỗi: ' + (e.response?.data?.message || e.message), type: "error" });
   } finally {
     isSubmitting.value = false;
   }
@@ -1102,13 +994,10 @@ async function submitReply(reviewId) {
     if (res.data.success) {
       activeReplyId.value = null;
       replyText.value = '';
-      fetchReviews(product.value.id);
+      await fetchReviews(product.value.id);
     }
   } catch (error) {
-    ui.pushToast({
-      message: 'Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message),
-      type: "error"
-    });
+    ui.pushToast({ message: 'Lỗi gửi phản hồi: ' + (error.response?.data?.message || error.message), type: "error" });
   }
 }
 
@@ -1116,33 +1005,23 @@ async function handleDeleteReview(reviewId) {
   if (!confirm("Xác nhận xóa đánh giá này?")) return;
   try {
     await api.delete(`/products/reviews/${reviewId}`);
-    fetchReviews(product.value.id);
+    
+    // Load lại danh sách review
+    await fetchReviews(product.value.id);
+    
+    // CẬP NHẬT: Cập nhật lại số lượng và sao
+    await refreshProductStats();
+    
+    ui.pushToast({ message: "Đã xóa đánh giá", type: "success" });
   } catch (e) {
-    ui.pushToast({
-      message: "Lỗi xóa đánh giá",
-      type: "error"
-    });
+    ui.pushToast({ message: "Lỗi xóa đánh giá", type: "error" });
   }
 }
 
-function handleImageError(e) {
-  e.target.src = "https://placehold.co/600x600?text=Error";
-}
-
-function nextImage() {
-  currentImageIndex.value = (currentImageIndex.value + 1) % productImages.value.length;
-  selectedImage.value = productImages.value[currentImageIndex.value];
-}
-
-function previousImage() {
-  currentImageIndex.value = (currentImageIndex.value - 1 + productImages.value.length) % productImages.value.length;
-  selectedImage.value = productImages.value[currentImageIndex.value];
-}
-
-function selectImageByIndex(idx) {
-  currentImageIndex.value = idx;
-  selectedImage.value = productImages.value[idx];
-}
+function handleImageError(e) { e.target.src = "https://placehold.co/600x600?text=Error"; }
+function nextImage() { currentImageIndex.value = (currentImageIndex.value + 1) % productImages.value.length; selectedImage.value = productImages.value[currentImageIndex.value]; }
+function previousImage() { currentImageIndex.value = (currentImageIndex.value - 1 + productImages.value.length) % productImages.value.length; selectedImage.value = productImages.value[currentImageIndex.value]; }
+function selectImageByIndex(idx) { currentImageIndex.value = idx; selectedImage.value = productImages.value[idx]; }
 
 function addToCart() {
   if (!product.value) return;
@@ -1161,7 +1040,6 @@ function addToCart() {
 
 function buyNow() {
   if (!product.value) return;
-
   checkoutStore.setDirectBuy({
       id: product.value.id,
       product_id: product.value.id,
@@ -1172,7 +1050,6 @@ function buyNow() {
       selectedSize: selectedSize.value,
       quantity: qty.value
   });
-
   router.push('/checkout');
 }
 
@@ -1194,5 +1071,13 @@ function toggleWishlist() {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+/* Ẩn scrollbar cho bộ lọc sao */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 </style>

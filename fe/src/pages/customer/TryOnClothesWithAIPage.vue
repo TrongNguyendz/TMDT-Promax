@@ -183,6 +183,82 @@
         </div>
       </transition>
     </div>
+
+    <!-- BẢNG LỊCH SỬ THỬ ĐỒ TẠM THỜI -->
+    <transition name="fade">
+      <div v-if="tryOnHistory.length > 0" class="mt-10">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Lịch sử thử đồ
+            <span class="text-xs font-normal text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {{ tryOnHistory.length }} lần
+            </span>
+          </h3>
+          <button @click="clearHistory"
+            class="text-xs text-red-500 hover:text-red-700 hover:underline transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Xóa tất cả
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div v-for="item in tryOnHistory" :key="item.id"
+            class="group relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+
+            <!-- Ảnh kết quả -->
+            <div class="relative aspect-[3/4] bg-gray-100 dark:bg-gray-900 cursor-pointer"
+              @click="viewHistoryResult(item)">
+              <img :src="item.resultImage" class="w-full h-full object-cover" alt="Kết quả thử đồ" />
+
+              <!-- Overlay xem lại -->
+              <div
+                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span class="text-white text-xs font-semibold bg-black/50 px-3 py-1.5 rounded-full">
+                  Xem lại
+                </span>
+              </div>
+
+              <!-- Badge màu -->
+              <div class="absolute bottom-2 left-2 flex items-center gap-1 bg-white/90 dark:bg-gray-800/90 px-2 py-0.5 rounded-full shadow-sm">
+                <div class="w-2.5 h-2.5 rounded-full border border-gray-300 flex-shrink-0"
+                  :style="{ backgroundColor: item.colorHex }"></div>
+                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-300 truncate max-w-[60px]">
+                  {{ item.colorName }}
+                </span>
+              </div>
+
+              <!-- Nút xóa -->
+              <button @click.stop="removeHistoryItem(item.id)"
+                class="absolute top-2 right-2 bg-white/90 text-red-500 p-1 rounded-full hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Footer thẻ -->
+            <div class="px-2 py-1.5 border-t dark:border-gray-700 flex items-center justify-between">
+              <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ item.time }}</span>
+              <!-- Ảnh gốc thu nhỏ -->
+              <img :src="item.personImage"
+                class="w-6 h-6 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                alt="Ảnh gốc" />
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-center text-gray-400 dark:text-gray-500 mt-4 italic">
+          * Lịch sử chỉ lưu tạm thời trong phiên làm việc hiện tại, sẽ mất khi tải lại trang.
+        </p>
+      </div>
+    </transition>
   </section>
   <div v-else class="container mx-auto px-4 py-8 animate-pulse">
     <div class="h-64 bg-gray-200 rounded"></div>
@@ -352,6 +428,9 @@ const pollAttempts = ref(0);
 const pollMaxAttempts = ref(40);
 const showTryOnGuide = ref(false);
 
+// State Lịch sử thử đồ (tạm thời trong phiên)
+const tryOnHistory = ref([]);
+
 /**
  * Chuyển bất kỳ URL ảnh về Blob định dạng PNG
  */
@@ -446,6 +525,16 @@ async function startTryOn() {
         tryOnResultImage.value = resultData.data.image;
         isProcessing.value = false;
         console.log("🎉 THÀNH CÔNG! Ảnh thử đồ:", tryOnResultImage.value);
+        // Lưu vào lịch sử tạm thời
+        tryOnHistory.value.unshift({
+          id: Date.now(),
+          personImage: tryOnImage.value,
+          resultImage: resultData.data.image,
+          colorName: tryOnSelectedColor.value.name,
+          colorHex: tryOnSelectedColor.value.hex,
+          clothesImage: getColorImage(tryOnSelectedColor.value.hex),
+          time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+        });
         return;
       }
 
@@ -498,6 +587,22 @@ function getColorImage(hex) {
 
 function tryOnSelectColor(color) {
   tryOnSelectedColor.value = color;
+}
+
+function removeHistoryItem(id) {
+  tryOnHistory.value = tryOnHistory.value.filter((item) => item.id !== id);
+}
+
+function clearHistory() {
+  tryOnHistory.value = [];
+}
+
+function viewHistoryResult(item) {
+  tryOnImage.value = item.personImage;
+  tryOnSelectedColor.value = { name: item.colorName, hex: item.colorHex };
+  tryOnResultImage.value = item.resultImage;
+  isTryingOn.value = true;
+  isProcessing.value = false;
 }
 
 function handleTryOnImageUpload(e) {
