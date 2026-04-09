@@ -89,7 +89,7 @@
 
                 <!-- Nút duyệt nhanh -->
                 <button 
-                  v-if="['pending', 'takepacking', 'shipping'].includes(order.status)"
+                  v-if="['pending', 'confirmed', 'packed', 'shipping'].includes(order.status)"
                   @click="handleNextStep(order)"
                   class="group relative flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-green-500 hover:bg-green-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-green-500/50"
                   :title="getNextStepLabel(order.status)">
@@ -184,9 +184,10 @@ const loadOrders = async () => {
 // Lấy nhãn cho bước tiếp theo
 const getNextStepLabel = (status) => {
   const steps = {
-    pending: 'Duyệt đơn',
-    takepacking: 'Chờ vận chuyển',
-    shipping: 'Giao hàng'
+    pending: 'Xác nhận đơn',
+    confirmed: 'Đóng gói',
+    packed: 'Giao hàng',
+    shipping: 'Hoàn thành'
   };
   return steps[status] || 'Cập nhật';
 };
@@ -196,7 +197,7 @@ const handleNextStep = async (order) => {
   let nextStatus = '';
   let msg = '';
 
- if (order.status === 'pending') {
+  if (order.status === 'pending') {
     nextStatus = 'confirmed';
     msg = `Xác nhận duyệt đơn #${order.order_number}?`;
   } else if (order.status === 'confirmed') {
@@ -205,6 +206,9 @@ const handleNextStep = async (order) => {
   } else if (order.status === 'packed') {
     nextStatus = 'shipping';
     msg = `Xác nhận đơn #${order.order_number} đang giao hàng?`;
+  } else if (order.status === 'shipping') {
+    nextStatus = 'delivered';
+    msg = `Xác nhận đơn #${order.order_number} đã giao thành công?`;
   }
 
   if (nextStatus && confirm(msg)) {
