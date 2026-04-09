@@ -255,7 +255,7 @@ exports.listOrders = async (req, res) => {
         let targetUserId = req.query.user_id;
 
         // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
-        if (currentUserRole !== 'admin') {
+        if (currentUserRole !== 'admin' && currentUserRole !== 'staff') {
             targetUserId = currentUserId;
         }
         
