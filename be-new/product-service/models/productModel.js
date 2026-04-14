@@ -29,6 +29,7 @@ const productSchema = new mongoose.Schema({
   sold: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   review_count: { type: Number, default: 0 },
+  is_active: { type: Boolean, default: true },
   
   // Liên kết sang Category
   category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },

@@ -15,6 +15,24 @@ const cartStore = useCartStore();
 const checkoutStore = useCheckoutStore();
 const info = props.shippingInfo;
 
+// === THÊM: Loại giao hàng ===
+const deliveryTypes = [
+  {
+    value: 1,                    // service_type_id GHN
+    label: 'Giao hàng nhanh (Express)',
+    description: 'Nhận hàng trong 1-2 ngày, phí cao hơn',
+    estimated: '1-2 ngày'
+  },
+  {
+    value: 2,
+    label: 'Giao hàng bình thường (Standard)',
+    description: 'Nhận hàng trong 2-4 ngày, tiết kiệm hơn',
+    estimated: '2-4 ngày'
+  }
+];
+
+const selectedDeliveryType = ref(checkoutStore.deliveryType || 2); // mặc định là Standard
+
 // Danh sách đổ vào Select
 const provinces = ref([]);
 const districts = ref([]);
@@ -134,7 +152,9 @@ const updateShippingFee = async () => {
 
   try {
     const payload = {
+      service_type_id: 2,
       from_district_id: 1451,
+      
       to_district_id: Number(selectedDistrictCode.value) || 0,
       to_ward_code: selectedWardCode.value || '',
       height: 10,
@@ -162,6 +182,7 @@ const updateShippingFee = async () => {
 const updateShippingFeeValue = (value) => {
   shippingFee.value = Number(value || 0);
   checkoutStore.shippingFee = shippingFee.value;
+  checkoutStore.deliveryType = selectedDeliveryType.value;
 };
 
 watch(
@@ -320,7 +341,34 @@ onMounted(async () => {
           <p v-if="errors.address" class="error-msg">{{ errors.address }}</p>
         </div>
       </div>
+<!-- === PHẦN MỚI: Chọn loại giao hàng === -->
+    <div class="space-y-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Loại hình giao hàng <span class="text-red-500">*</span>
+      </label>
+      <div v-for="type in deliveryTypes" :key="type.value"
+           @click="selectedDeliveryType = type.value"
+           class="flex items-center gap-4 rounded-lg border p-4 cursor-pointer transition-all"
+           :class="selectedDeliveryType === type.value 
+             ? 'border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20' 
+             : 'border-gray-200 dark:border-gray-800'">
 
+        <input type="radio" :checked="selectedDeliveryType === type.value" class="h-4 w-4 text-blue-600" />
+
+        <div class="flex-1">
+          <p class="font-semibold">{{ type.label }}</p>
+          <p class="text-sm text-gray-500">{{ type.description }}</p>
+          <p class="text-xs text-green-600">Thời gian ước tính: {{ type.estimated }}</p>
+        </div>
+
+        <div class="text-right">
+          <p class="font-medium text-gray-900 dark:text-white">
+            {{ formatCurrency(type.value === 1 ? shippingFeeFast || shippingFee : shippingFee) }}
+          </p>
+        </div>
+      </div>
+      <p v-if="errors.deliveryType" class="error-msg">{{ errors.deliveryType }}</p>
+    </div>
       <div class="mt-3 rounded-lg border border-gray-200 p-3 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
           <span>Phí vận chuyển ước tính</span>

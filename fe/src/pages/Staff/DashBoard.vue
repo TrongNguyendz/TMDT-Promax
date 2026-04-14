@@ -158,7 +158,7 @@ const filteredProducts = computed(() => {
       return b.name.localeCompare(a.name)
     }
 
-    return 0
+    return b.sold - a.sold
   })
 
   return data
@@ -183,7 +183,7 @@ const loadTopProducts = async () => {
       name: p.name,
       sold: p.sold,
       totalStock: p.stock_quantity,
-      status: p.sold > 20 ? 'Bán chạy' : 'Bán chậm'
+      status: p.sold / p.stock_quantity >= 0.2 ? 'Bán chạy' : 'Bán chậm'
     }))
 
   } catch (err) {

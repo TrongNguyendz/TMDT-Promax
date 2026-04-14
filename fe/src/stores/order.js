@@ -15,7 +15,7 @@ export const useOrderStore = defineStore('order', () => {
     // 1. Lấy danh sách đơn hàng của user hiện tại
     const fetchMyOrders = async () => {
         const userStore = useUserStore();
-
+        console.log('🚀 User Store khi fetchMyOrders:', userStore); // Debug user profile
         // SỬA: Kiểm tra an toàn, tránh lỗi undefined
         if (!userStore.isAuthenticated || !userStore.profile?.id) {
             orders.value = [];
@@ -78,6 +78,7 @@ export const useOrderStore = defineStore('order', () => {
     const createOrder = async (payload) => {
         const uiStore = useUIStore();
         loading.value = true;
+        console.log('🚀 Payload gửi lên API tạo đơn:',payload); // Debug payload trước khi gửi
         try {
             const res = await OrderService.createOrder(payload);
             if (res.data?.success) {

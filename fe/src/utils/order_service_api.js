@@ -50,7 +50,7 @@ export default {
     return orderApi.post('/orders', data);
   },
   getOrders(params) {
-    return orderApi.get('/orders', { params });
+    return orderApi.get('/orders',{ params });
   },
   getOrderById(id) {
     return orderApi.get(`/orders/${id}`);

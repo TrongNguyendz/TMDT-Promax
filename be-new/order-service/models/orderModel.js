@@ -37,6 +37,7 @@ const OrderSchema = new mongoose.Schema({
     payment_status: { type: String, default: 'unpaid' },
     paid_at: Date,
     notes: String,
+    delivery_type: { type: Number, default: 1 }, // 1: 'standard', 2: 'express'
     
     items: [OrderItemSchema] 
 }, { 
@@ -56,7 +57,8 @@ module.exports = {
     createOrder: async (payload) => {
         const { 
             user_id, items, shipping_address, 
-            shipping_fee = 0, discount_amount = 0, coupon_code, notes, payment_method, status = 'pending'
+            shipping_fee = 0, discount_amount = 0, coupon_code, notes, payment_method, status = 'pending',
+            delivery_type
         } = payload;
 
         // Tính toán tiền từ items
@@ -77,6 +79,7 @@ module.exports = {
             coupon_code,
             final_amount: finalAmount,  // Tổng cuối cùng sau shipping và discount
             payment_method,
+            delivery_type: delivery_type || 1,
             notes,
             status,
             items: items.map(item => ({

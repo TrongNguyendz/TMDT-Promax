@@ -11,7 +11,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
 
     const shippingInfo = ref({
         fullName: '', email: '', phone: '', address: '',
-        ward: '', district: '', province: '', note: ''
+        ward: '', district: '', province: '', note: '',deliveryType: 2
     });
     
     const paymentMethod = ref('cod'); 
@@ -26,6 +26,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
     // State Mua ngay
     const isDirectBuy = ref(false);
     const directBuyItem = ref(null);
+    
 
     // --- ACTIONS ---
 
@@ -142,6 +143,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
                     address: fullAddressString,
                     city: info.province
                 },
+                delivery_type: info.deliveryType || 2, // Lấy deliveryType từ shippingInfo
                 payment_method: paymentMethod.value,
                 shipping_fee: Number(shippingFee.value || 0), 
                 notes: info.note,
@@ -151,6 +153,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
             };
 
             // 🚀 GỌI API TẠO ĐƠN
+            console.log('🚀 Payload gửi lên API tạo đơn:', payload); // Debug payload trước khi gửi
             const newOrder = await orderStore.createOrder(payload);
 
             if (newOrder) {
