@@ -3,7 +3,7 @@
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Tiêu đề -->
       <h2 class="text-3xl font-semibold text-center text-gray-900 dark:text-white mb-12">
-        Mừng Giáng Sinh - Ưu Đãi Lớn Cùng Mã Giảm Giá
+      ƯU ĐÃI TUYỆT VỜI , THỬ NGAY !
       </h2>
 
       <!-- Danh sách mã giảm giá -->

@@ -292,16 +292,16 @@ exports.listOrders = async (req, res) => {
 
     let targetUserId = req.query.user_id;
 
-    // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
-    if (currentUserRole !== "admin" && currentUserRole !== "staff") {
-      targetUserId = currentUserId;
+        // Nếu là khách thường -> Ép buộc targetUserId phải là ID của chính nó (Bỏ qua query từ Frontend)
+        if (!['admin', 'staff'].includes(currentUserRole)) {
+            targetUserId = currentUserId;
+        }
+        
+        const data = await OrderModel.listOrders(targetUserId);
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    const data = await OrderModel.listOrders(targetUserId);
-    res.json({ success: true, data });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 exports.getDetail = async (req, res) => {

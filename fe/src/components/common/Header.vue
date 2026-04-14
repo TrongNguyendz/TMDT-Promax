@@ -127,7 +127,7 @@ import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
 import SearchBar from '../forms/SearchBar.vue';
 
-const logoUrl = new URL('../../assets/logoweb.png', import.meta.url).href;
+const logoUrl = new URL('../../assets/logo1.jpg', import.meta.url).href;
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=random';
 
 const router = useRouter();
